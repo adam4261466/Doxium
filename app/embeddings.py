@@ -3,8 +3,8 @@ import numpy as np
 import re
 
 class EmbeddingGenerator:
-    def __init__(self, model_name="sentence-transformers/all-mpnet-base-v2"):
-        self.model = SentenceTransformer(model_name)
+    def __init__(self, model_name="nomic-ai/nomic-embed-text-v1.5"):  #    def __init__(self, model_name="sentence-transformers/all-mpnet-base-v2"):
+        self.model = SentenceTransformer(model_name, trust_remote_code=True)
         self.dimension = 768  # all-mpnet-base-v2 has 768 dimensions
 
     def embed_text(self, text):

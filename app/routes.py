@@ -9,8 +9,6 @@ from .models import User, File
 from . import db, limiter
 from flask_login import login_user, login_required, logout_user, current_user
 from flask_limiter.util import get_remote_address
-from limits import parse
-
 from .document_processor import extract_text
 from .faiss_index import FaissIndex
 from .embeddings import EmbeddingGenerator
@@ -489,39 +487,65 @@ def query_documents():
     if not current_user.is_pilot:
         flash("Upgrade to Pilot to query documents.", "warning")
         return redirect(url_for("main.pricing"))
+
     from .document_processor import search_similar_chunks
     from transformers import pipeline
+    import time
 
     query_text = request.form.get("query")
     if not query_text:
         flash("Please enter a query.", "danger")
         return redirect(url_for("main.dashboard"))
 
-    # Check query length (max 1000 characters)
     max_query_length = 1000
     if len(query_text.strip()) > max_query_length:
-        flash(f"Your query is too long ({len(query_text)} characters). Please shorten it to {max_query_length} characters or less. Consider breaking complex queries into smaller, focused questions.", "warning")
+        flash(f"Your query is too long ({len(query_text)} characters). Please shorten it to {max_query_length} characters or less.", "warning")
         return redirect(url_for("main.dashboard"))
 
-    # Warn for very long queries (over 500 characters)
     if len(query_text.strip()) > 500:
-        flash("Your query is quite long. For better results, consider making it more specific or breaking it into smaller questions.", "info")
+        flash("Your query is quite long. Consider breaking it into smaller questions.", "info")
 
     max_retries = 3
     retry_delay = 2  # seconds
 
+    # Initialize a CPU-friendly generative model
+    try:
+        gen_pipeline = pipeline(
+            "text2text-generation",
+            model="google/flan-t5-small",
+            device=-1,  # CPU
+            max_length=150,
+            do_sample=True,
+            temperature=0.3
+        )
+    except Exception as init_e:
+        flash(f"AI model initialization failed: {str(init_e)}", "danger")
+        return redirect(url_for("main.dashboard"))
+
     for attempt in range(max_retries):
         try:
+            # Retrieve only the top 1 chunk
             similar_chunks = search_similar_chunks(current_user.id, query_text, top_k=1)
             if not similar_chunks:
                 flash("No relevant documents found for your query.", "info")
                 return redirect(url_for("main.dashboard"))
 
-            context = "\n\n".join([chunk['chunk'].text for chunk in similar_chunks])
-            qa_pipeline = pipeline("question-answering", model="distilbert-base-cased-distilled-squad", device=-1)
-            result = qa_pipeline(question=query_text, context=context, max_answer_length=500)
-            answer = result.get('answer', 'No answer found')
-            return render_template("query_results.html", user=current_user, query=query_text, answer=answer, supporting_chunks=similar_chunks)
+            context = similar_chunks[0]['chunk'].text
+
+            # Construct prompt for generative model
+            prompt = f"Read the following document and answer the question naturally.\n\nDocument:\n{context}\n\nQuestion: {query_text}\nAnswer:"
+
+            # Generate human-like answer
+            result = gen_pipeline(prompt)
+            answer = result[0]['generated_text'].strip()
+
+            return render_template(
+                "query_results.html",
+                user=current_user,
+                query=query_text,
+                answer=answer,
+                supporting_chunks=similar_chunks
+            )
 
         except Exception as e:
             error_msg = str(e).lower()
@@ -531,18 +555,22 @@ def query_documents():
                     time.sleep(retry_delay)
                     continue
                 else:
-                    flash("AI model is currently unavailable after multiple attempts. Showing relevant documents instead.", "warning")
-                    if 'similar_chunks' in locals() and similar_chunks:
-                        answer = "I found these relevant documents that might answer your question:"
-                        return render_template("query_results.html", user=current_user, query=query_text, answer=answer, supporting_chunks=similar_chunks)
-                    flash("No relevant documents found and AI model failed.", "danger")
+                    flash("AI model is unavailable after multiple attempts. Showing relevant document instead.", "warning")
+                    if similar_chunks:
+                        answer = "I found this relevant document that might answer your question:"
+                        return render_template(
+                            "query_results.html",
+                            user=current_user,
+                            query=query_text,
+                            answer=answer,
+                            supporting_chunks=similar_chunks
+                        )
+                    flash("No relevant document found and AI model failed.", "danger")
                     return redirect(url_for("main.dashboard"))
             else:
-                # Non-model related error, don't retry
                 flash(f"Query failed: {str(e)}", "danger")
                 return redirect(url_for("main.dashboard"))
 
-    # This should not be reached, but just in case
     flash("Query processing failed after all retries.", "danger")
     return redirect(url_for("main.dashboard"))
 

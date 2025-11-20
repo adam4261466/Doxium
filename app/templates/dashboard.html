@@ -9,7 +9,7 @@
                 <div class="card-body py-4">
                     <div class="row align-items-center">
                         <div class="col-md-8">
-                            <h2 class="mb-2"><i class="fas fa-user-circle me-3 text-primary"></i>Welcome back, {{ user.username }}!</h2>
+                            <h2 class="mb-2"><i class="fas fa-user-circle me-3 text-primary"></i>Welcome back!</h2>
                             <p class="mb-0 text-muted">Ready to explore your documents with AI-powered insights.</p>
                         </div>
                         <div class="col-md-4 text-end">
@@ -170,91 +170,7 @@
         <!-- Sidebar -->
         <div class="col-lg-4">
             <!-- Account Status -->
-            {% if user.is_pilot %}
-            <div class="card mb-4 border-success glow-success">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="fas fa-star me-2"></i>DocHub Pilot Member</h5>
-                </div>
-                <div class="card-body">
-                    <div class="text-center mb-3">
-                        <i class="fas fa-crown fa-3x text-warning mb-2"></i>
-                        <h6 class="text-success">Premium Access Unlocked!</h6>
-                    </div>
-                    <div class="alert alert-success py-2">
-                        <small><strong>Member since:</strong> {{ user.pilot_purchased_at.strftime('%B %d, %Y') if user.pilot_purchased_at else 'Recently' }}</small>
-                    </div>
-                    <div class="premium-benefits">
-                        <h6 class="mb-2">🎁 Your Benefits:</h6>
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <small class="d-block">
-                                    <i class="fas fa-check text-success me-1"></i>Unlimited uploads
-                                </small>
-                            </div>
-                            <div class="col-6">
-                                <small class="d-block">
-                                    <i class="fas fa-check text-success me-1"></i>Advanced AI
-                                </small>
-                            </div>
-                            <div class="col-6">
-                                <small class="d-block">
-                                    <i class="fas fa-check text-success me-1"></i>Priority support
-                                </small>
-                            </div>
-                            <div class="col-6">
-                                <small class="d-block">
-                                    <i class="fas fa-check text-success me-1"></i>Export features
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% else %}
-            <div class="card mb-4 border-warning">
-                <div class="card-header bg-warning">
-                    <h5 class="mb-0"><i class="fas fa-rocket me-2"></i>🚀 Upgrade to Premium</h5>
-                </div>
-                <div class="card-body">
-                    <div class="text-center mb-3">
-                        <span class="badge bg-primary fs-5 px-3 py-2 mb-2">$150</span>
-                        <p class="text-muted small">One-time payment, lifetime access</p>
-                    </div>
-                    <div class="upgrade-benefits mb-3">
-                        <h6 class="mb-2">✨ Unlock Premium Features:</h6>
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <small class="d-block">
-                                    <i class="fas fa-plus text-primary me-1"></i>Unlimited uploads
-                                </small>
-                            </div>
-                            <div class="col-6">
-                                <small class="d-block">
-                                    <i class="fas fa-plus text-primary me-1"></i>Advanced AI
-                                </small>
-                            </div>
-                            <div class="col-6">
-                                <small class="d-block">
-                                    <i class="fas fa-plus text-primary me-1"></i>Priority support
-                                </small>
-                            </div>
-                            <div class="col-6">
-                                <small class="d-block">
-                                    <i class="fas fa-plus text-primary me-1"></i>Export features
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                    <form action="{{ url_for('main.create_checkout_session') }}" method="POST">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-warning btn-lg w-100">
-                            <i class="fas fa-credit-card me-2"></i>💳 Upgrade Now
-                        </button>
-                    </form>
-                    <small class="text-muted d-block mt-2 text-center">Secure payment powered by Stripe</small>
-                </div>
-            </div>
-            {% endif %}
+            
 
             <!-- Document Library -->
             <div class="card">
@@ -274,7 +190,7 @@
                                                 <strong class="d-block text-truncate" title="{{ file.filename }}">{{ file.filename }}</strong>
                                             </div>
                                             <small class="text-muted d-block">
-                                                {{ (file.size / 1024)|round(2) }} KB • {{ file.chunks|length }} chunks
+                                                {{ (file.size / 1024)|round(2) }} KB
                                                 {% if file.processed %}
                                                     <span class="badge bg-success ms-1">Processed</span>
                                                 {% else %}
