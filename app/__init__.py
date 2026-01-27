@@ -21,10 +21,13 @@ csrf = CSRFProtect()
 mail = Mail()
 
 # Rate limiting per IP
+# Rate limiting per IP with Redis storage
 limiter = Limiter(
     key_func=get_remote_address,
-    default_limits=["60 per minute"]
+    default_limits=["60 per minute"],
+    storage_uri="redis://localhost:6379/1"  # Different DB from Celery (0)
 )
+
 
 # Import after db initialization
 from .models import User

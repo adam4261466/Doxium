@@ -442,6 +442,7 @@ def process_file_route(file_id):
 @main.route("/delete/<int:file_id>", methods=["POST"])
 @login_required
 def delete_file(file_id):
+    from .tasks import rebuild_index_task
     if not current_user.is_pilot:
         flash("Upgrade to Pilot to delete files.", "warning")
         return redirect(url_for("main.pricing"))
@@ -456,13 +457,14 @@ def delete_file(file_id):
 
     if was_processed:
         try:
-            embedder = EmbeddingGenerator()
-            faiss_index = FaissIndex(dim=embedder.get_dimension(), user_id=current_user.id)
-            faiss_index.rebuild_index_from_chunks()
+            # Run the rebuild asynchronously in the background
+            rebuild_index_task.delay(current_user.id)
+            flash("File deleted. FAISS index is rebuilding in the background.", "info")
         except Exception as e:
-            flash("File deleted but FAISS index rebuild failed. Some search results may be inaccurate.", "warning")
-
-    flash("File deleted successfully.", "success")
+            flash("File deleted but FAISS index rebuild failed to start. Some search results may be inaccurate.", "warning")
+    else:
+        flash("File deleted successfully.", "success")
+    
     return redirect(url_for("main.dashboard"))
 
 
@@ -483,7 +485,7 @@ def view_file(filepath: str):
 # -----------------------
 # Query Route with fallback and retry
 # -----------------------
-import time
+
 
 @main.route("/query", methods=["POST"])
 @limiter.limit("2 per minute")
@@ -492,9 +494,6 @@ def query_documents():
     if not current_user.is_pilot:
         flash("Upgrade to Pilot to query documents.", "warning")
         return redirect(url_for("main.pricing"))
-
-    from .document_processor import search_similar_chunks
-    import time
 
     query_text = request.form.get("query")
     if not query_text:
@@ -509,75 +508,41 @@ def query_documents():
     if len(query_text.strip()) > 500:
         flash("Your query is quite long. Consider breaking it into smaller questions.", "info")
 
-    max_retries = 3
-    retry_delay = 2  # seconds
+    from .tasks import generate_query_answer  # Add this import at top
+    # INSTANT RESPONSE - Fire Celery task
+    task = generate_query_answer.delay(current_user.id, query_text)
+    flash("Generating answer... This may take 10-30 seconds.", "info")
+    
+    return redirect(url_for('main.query_status', task_id=task.id))
 
-    # Initialize a CPU-friendly generative model
-    try:
-        from transformers import pipeline
-        gen_pipeline = pipeline(
-            "text2text-generation",
-            model="google/flan-t5-small",
-            device=-1,  # CPU
-            max_length=150,
-            do_sample=True,
-            temperature=0.3
-        )
-    except Exception as init_e:
-        flash(f"AI model initialization failed: {str(init_e)}", "danger")
-        return redirect(url_for("main.dashboard"))
-
-    for attempt in range(max_retries):
-        try:
-            # Retrieve only the top 1 chunk
-            similar_chunks = search_similar_chunks(current_user.id, query_text, top_k=1)
-            if not similar_chunks:
-                flash("No relevant documents found for your query.", "info")
+@main.route("/query/status/<task_id>")
+@login_required
+def query_status(task_id):
+    from celery.result import AsyncResult
+    from app.celery_app import celery
+    
+    result = AsyncResult(task_id, app=celery)
+    
+    if result.ready():
+        if result.successful():
+            data = result.get()
+            if 'error' in data:
+                flash(data['error'], "danger")
                 return redirect(url_for("main.dashboard"))
-
-            context = similar_chunks[0]['chunk'].text
-
-            # Construct prompt for generative model
-            prompt = f"Read the following document and answer the question naturally.\n\nDocument:\n{context}\n\nQuestion: {query_text}\nAnswer:"
-
-            # Generate human-like answer
-            result = gen_pipeline(prompt)
-            answer = result[0]['generated_text'].strip()
-
+            
+            # ✅ Pass serializable data directly
             return render_template(
                 "query_results.html",
                 user=current_user,
-                query=query_text,
-                answer=answer,
-                supporting_chunks=similar_chunks
+                query=data['query'],
+                answer=data['answer'],
+                supporting_chunks=data['chunks']  # Already serializable dicts
             )
-
-        except Exception as e:
-            error_msg = str(e).lower()
-            if "model" in error_msg or "transformers" in error_msg or "pipeline" in error_msg:
-                if attempt < max_retries - 1:
-                    flash(f"AI model temporarily unavailable. Retrying... ({attempt + 1}/{max_retries})", "warning")
-                    time.sleep(retry_delay)
-                    continue
-                else:
-                    flash("AI model is unavailable after multiple attempts. Showing relevant document instead.", "warning")
-                    if similar_chunks:
-                        answer = "I found this relevant document that might answer your question:"
-                        return render_template(
-                            "query_results.html",
-                            user=current_user,
-                            query=query_text,
-                            answer=answer,
-                            supporting_chunks=similar_chunks
-                        )
-                    flash("No relevant document found and AI model failed.", "danger")
-                    return redirect(url_for("main.dashboard"))
-            else:
-                flash(f"Query failed: {str(e)}", "danger")
-                return redirect(url_for("main.dashboard"))
-
-    flash("Query processing failed after all retries.", "danger")
-    return redirect(url_for("main.dashboard"))
+        else:
+            flash("Query generation failed after retries. Please try again.", "danger")
+            return redirect(url_for("main.dashboard"))
+    
+    return render_template("query_processing.html", task_id=task_id)
 
 
 # -----------------------

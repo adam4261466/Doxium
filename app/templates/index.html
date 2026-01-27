@@ -2,81 +2,114 @@
 
 {% block content %}
 <div class="container-fluid py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8 text-center">
-            <!-- Hero Section -->
-            <div class="card mb-5 glow-primary">
-                <div class="card-body py-5">
-                    <i class="fas fa-file-alt fa-5x text-primary mb-4"></i>
-                    <h1 class="display-4 fw-bold mb-3">Welcome to DocHub</h1>
-                    <p class="lead mb-4">Transform your document workflow with AI-powered insights and intelligent search capabilities. </p>
-                    {% if user.is_authenticated %}
-                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg me-3">
-                            <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
-                        </a>
-                        <a href="{{ url_for('main.logout') }}" class="btn btn-outline-primary btn-lg">
-                            <i class="fas fa-sign-out-alt me-2"></i>Logout
-                        </a>
-                    {% else %}
-                        <a href="{{ url_for('main.register') }}" class="btn btn-primary btn-lg me-3">
-                            <i class="fas fa-user-plus me-2"></i>Get Started
-                        </a>
-                        <a href="{{ url_for('main.login') }}" class="btn btn-outline-primary btn-lg">
-                            <i class="fas fa-sign-in-alt me-2"></i>Sign In
-                        </a>
-                    {% endif %}
+
+    <!-- Hero -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-10">
+
+            <div class="card hero-card border-0 shadow-lg text-center p-5">
+                <div class="hero-icon-wrapper mb-4">
+                    <i class="fas fa-file-alt fa-6x text-primary"></i>
                 </div>
+
+                <h1 class="display-4 fw-bold mb-3">DocHub</h1>
+                <p class="lead text-muted mb-4">
+                    The smartest way to search, analyze, and understand your documents with AI.
+                </p>
+
+                {% if user.is_authenticated %}
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg px-4 me-3">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                    <a href="{{ url_for('main.logout') }}" class="btn btn-outline-primary btn-lg px-4">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('main.register') }}" class="btn btn-primary btn-lg px-4 me-3">
+                        <i class="fas fa-user-plus me-2"></i>Create Account
+                    </a>
+                    <a href="{{ url_for('main.login') }}" class="btn btn-outline-primary btn-lg px-4">
+                        <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                    </a>
+                {% endif %}
             </div>
 
-            <!-- Features Section -->
-            <div class="row g-4 mb-5">
-                <div class="col-md-4">
-                    <div class="card h-100">
-                        <div class="card-body text-center">
-                            <i class="fas fa-brain fa-2x text-primary mb-3"></i>
-                            <h5 class="card-title">AI-Powered Search</h5>
-                            <p class="card-text">Ask questions about your documents and get intelligent answers powered by advanced AI. </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card h-100">
-                        <div class="card-body text-center">
-                            <i class="fas fa-cloud-upload-alt fa-2x text-success mb-3"></i>
-                            <h5 class="card-title">Easy Upload</h5>
-                            <p class="card-text">Drag and drop your documents or browse to upload. Supports multiple formats. </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card h-100">
-                        <div class="card-body text-center">
-                            <i class="fas fa-shield-alt fa-2x text-warning mb-3"></i>
-                            <h5 class="card-title">Secure & Private</h5>
-                            <p class="card-text">Your documents are processed securely with enterprise-grade encryption. </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- CTA Section -->
-            {% if not user.is_authenticated %}
-            <div class="card bg-success">
-                <div class="card-body py-4">
-                    <h3 class="text-white mb-3">Ready to unlock the power of AI for your documents? </h3>
-                    <p class="text-white-50 mb-0">Join thousands of users who are already transforming their document workflows. </p>
-                    <div class="mt-3">
-                        <a href="{{ url_for('main.pricing') }}" class="btn btn-light btn-lg me-3">
-                            <i class="fas fa-crown me-2"></i>View Pricing
-                        </a>
-                        <a href="{{ url_for('main.register') }}" class="btn btn-outline-light btn-lg">
-                            <i class="fas fa-rocket me-2"></i>Start Free Trial
-                        </a>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
         </div>
     </div>
-</div>
+
+    <!-- Features -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="feature-card card h-100 shadow-sm border-0">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-brain fa-3x text-primary mb-3"></i>
+                    <h4 class="fw-bold mb-2">AI Search</h4>
+                    <p class="text-muted">
+                        Ask natural-language questions and get accurate answers instantly.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="feature-card card h-100 shadow-sm border-0">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-cloud-upload-alt fa-3x text-success mb-3"></i>
+                    <h4 class="fw-bold mb-2">Effortless Uploads</h4>
+                    <p class="text-muted">
+                        Drag & drop documents. Supports PDF, Word, text, slides, and more.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="feature-card card h-100 shadow-sm border-0">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-shield-alt fa-3x text-warning mb-3"></i>
+                    <h4 class="fw-bold mb-2">Private & Secure</h4>
+                    <p class="text-muted">
+                        Enterprise-grade encryption protects your data end-to-end.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+<style>
+    .hero-card {
+        background: linear-gradient(140deg, #21496d, #070b26);
+        border-radius: 20px;
+        transition: 0.3s;
+    }
+    .hero-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .hero-icon-wrapper i {
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0% { transform: translateY(0); opacity: 1; }
+        50% { transform: translateY(-10px); opacity: 0.9; }
+        100% { transform: translateY(0); opacity: 1; }
+    }
+
+    .feature-card {
+        transition: 0.25s;
+        border-radius: 16px;
+    }
+    .feature-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    .cta-card {
+        border-radius: 20px;
+    }
+</style>
+
 {% endblock %}

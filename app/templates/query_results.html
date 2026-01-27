@@ -70,17 +70,22 @@
                             <div class="d-flex align-items-start mb-2">
                                 <i class="fas fa-file text-primary me-2 mt-1"></i>
                                 <div class="flex-grow-1">
-                                    <strong class="text-primary">{{ chunk.chunk.file.filename }}</strong>
+                                    <strong class="text-primary">{{ chunk.filename|default('Unknown file') }}</strong>
                                     <br>
                                     <small class="text-muted">
                                         <i class="fas fa-chart-line me-1"></i>
-                                        Similarity: {{ "%.3f"|format(chunk.distance) }}
+                                        Similarity: {{ "%.3f"|format(chunk.score|default(0.0)) }}
                                     </small>
                                 </div>
                             </div>
                             <div class="chunk-text p-2 rounded" style="background-color: #21262d; font-size: 0.9em; max-height: 150px; overflow-y: auto;">
-                                {{ chunk.chunk.text }}
+                                {{ chunk.text|truncate(300) }}
                             </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-info-circle text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2">No supporting documents found</p>
                         </div>
                     {% endfor %}
                 </div>
@@ -92,7 +97,6 @@
 
 {% block scripts %}
 <script>
-// Add smooth scrolling and animations
 document.addEventListener('DOMContentLoaded', function() {
     // Animate cards on load
     const cards = document.querySelectorAll('.card');
@@ -117,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 });
