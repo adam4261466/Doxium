@@ -1,7 +1,9 @@
 import os
 import uuid
 import re
-import stripe
+import requests
+import hmac
+import hashlib
 from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify, send_file
 from werkzeug.utils import secure_filename, safe_join
@@ -16,8 +18,8 @@ from .embeddings import EmbeddingGenerator
 
 main = Blueprint("main", __name__)
 
-# Stripe setup
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+# Lemon Squeezy setup
+LS_API_BASE = "https://api.lemonsqueezy.com/v1"
 
 # -----------------------
 # Home Route
@@ -186,58 +188,62 @@ def logout():
 @login_required
 @csrf.exempt
 def create_checkout_session():
+    if current_user.is_pilot:
+        flash("You're already a Pilot member.", "info")
+        return redirect(url_for("main.dashboard"))
+
     try:
-        success_url = url_for("main.payment_success", _external=True) + "?session_id={CHECKOUT_SESSION_ID}"
-        checkout_session = stripe.checkout.Session.create(
-            payment_method_types=["card"],
-            line_items=[{
-                "price_data": {
-                    "currency": "usd",
-                    "product_data": {
-                        "name": "DocHub Pilot",
-                    },
-                    "unit_amount": 15000,  # $150
-                },
-                "quantity": 1,
-            }],
-            mode="payment",
-            success_url=success_url,
-            cancel_url=url_for("main.dashboard", _external=True),
-            client_reference_id=str(current_user.id),
+        checkout_url = _create_ls_checkout_url(
+            user_id=str(current_user.id),
+            redirect_url=url_for("main.payment_success", _external=True),
         )
-        return redirect(checkout_session.url, code=303)
+        return redirect(checkout_url, code=303)
     except Exception as e:
+        current_app.logger.exception("Failed to create Lemon Squeezy checkout")
         return jsonify(error=str(e)), 400
+
+
+@main.route("/create-checkout", methods=["POST"])
+@login_required
+@csrf.exempt
+def create_checkout():
+    if current_user.is_pilot:
+        return jsonify({"error": "already_pilot"}), 400
+
+    data = request.get_json(silent=True) or {}
+    redirect_url = data.get("redirect_url") or url_for("main.payment_success", _external=True)
+
+    try:
+        checkout_url = _create_ls_checkout_url(
+            user_id=str(current_user.id),
+            redirect_url=redirect_url,
+        )
+        return jsonify({"checkout_url": checkout_url})
+    except Exception as e:
+        current_app.logger.exception("Failed to create Lemon Squeezy checkout")
+        return jsonify({"error": "failed_to_create_checkout"}), 400
 
 
 @main.route("/payment-success")
 @login_required
 def payment_success():
-    session_id = request.args.get('session_id')
-    if not session_id:
-        flash("Payment verification failed. No session ID provided.", "danger")
-        return redirect(url_for("main.pricing"))
+    if current_user.is_pilot:
+        flash("You're all set! Your Pilot access is active.", "success")
+        return redirect(url_for("main.dashboard"))
 
-    try:
-        session = stripe.checkout.Session.retrieve(session_id)
-        if session.payment_status == 'paid' and session.client_reference_id == str(current_user.id):
-            if not current_user.is_pilot:
-                current_user.is_pilot = True
-                current_user.pilot_purchased_at = datetime.utcnow()
-                db.session.commit()
-                flash("Payment verified! Welcome to DocHub Pilot.", "success")
-            else:
-                flash("Welcome back, Pilot user!", "success")
-            return redirect(url_for("main.dashboard"))
-        else:
-            flash("Payment verification failed. Please contact support.", "danger")
-            return redirect(url_for("main.pricing"))
-    except stripe.error.StripeError as e:
-        flash(f"Stripe error: {str(e)}", "danger")
-        return redirect(url_for("main.pricing"))
-    except Exception as e:
-        flash(f"Verification error: {str(e)}", "danger")
-        return redirect(url_for("main.pricing"))
+    # Lemon Squeezy webhooks are the source of truth for activation.
+    return render_template("success.html", user=current_user)
+
+
+@main.route("/api/me-status")
+@login_required
+def me_status():
+    return jsonify(
+        {
+            "is_pilot": bool(current_user.is_pilot),
+            "subscription_status": current_user.subscription_status,
+        }
+    )
 
 
 @main.route("/pricing")
@@ -247,38 +253,197 @@ def pricing():
 
 
 @main.route("/webhook", methods=["POST"])
-def stripe_webhook():
-    webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
+@main.route("/webhook/lemonsqueezy", methods=["POST"])
+@csrf.exempt
+def lemonsqueezy_webhook():
+    webhook_secret = os.getenv("LEMON_SQUEEZY_WEBHOOK_SECRET")
     if not webhook_secret:
         return jsonify(error="Webhook secret not configured"), 500
 
     payload = request.get_data()
-    sig_header = request.headers.get("Stripe-Signature")
+    sig_header = (
+        request.headers.get("X-Signature")
+        or request.headers.get("X-Signature-256")
+        or request.headers.get("X-Lemon-Signature")
+    )
+    if not sig_header:
+        current_app.logger.warning("Webhook missing signature header. Headers: %s", list(request.headers.keys()))
+        return jsonify(error="Missing signature"), 400
 
-    try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, webhook_secret
-        )
-    except ValueError:
-        return jsonify(error="Invalid payload"), 400
-    except stripe.error.SignatureVerificationError:
+    computed = hmac.new(webhook_secret.encode(), payload, hashlib.sha256).hexdigest()
+    sig_value = sig_header.split("=", 1)[-1] if "=" in sig_header else sig_header
+    if not hmac.compare_digest(computed, sig_value):
         return jsonify(error="Invalid signature"), 400
 
-    if event["type"] == "checkout.session.completed":
-        session = event["data"]["object"]
-        user_id = session.get("client_reference_id")
-        if user_id:
-            user = User.query.get(int(user_id))
-            if user:
-                if not user.is_pilot:  # Idempotent update
-                    user.is_pilot = True
-                    user.pilot_purchased_at = datetime.utcnow()
-                    db.session.commit()
-                    print(f"Webhook updated user {user_id} to Pilot")  # Debug log
-                else:
-                    print(f"Webhook: User {user_id} already Pilot")  # Debug log
+    event_name = request.headers.get("X-Event-Name", "")
+    event = request.get_json(silent=True) or {}
+    data = event.get("data") or {}
+    attrs = data.get("attributes") or {}
+    meta = event.get("meta") or {}
+    if not event_name:
+        event_name = meta.get("event_name", "")
+    if not event_name:
+        event_name = event.get("event") or event.get("type") or ""
+    event_name = event_name.lower()
+    custom = meta.get("custom_data") or attrs.get("custom_data") or {}
+    user_id = custom.get("user_id") or attrs.get("user_id")
+
+    user = None
+    if user_id:
+        user = User.query.get(int(user_id))
+    email = attrs.get("user_email") or attrs.get("customer_email") or attrs.get("email")
+    if not user and email:
+        user = User.query.filter_by(email=email).first()
+
+    if not user:
+        current_app.logger.warning(
+            "Webhook user not found for event %s (user_id=%s, email=%s)",
+            event_name,
+            user_id,
+            email,
+        )
+        return jsonify(success=True)
+
+    if event_name == "order_created":
+        _set_user_pilot(
+            user,
+            is_pilot=True,
+            status="active",
+            purchased_at=datetime.utcnow(),
+        )
+    elif event_name == "order_refunded":
+        _set_user_pilot(
+            user,
+            is_pilot=False,
+            status="refunded",
+        )
+    elif event_name.startswith("subscription_"):
+        sub_id = attrs.get("id") or data.get("id")
+        status = attrs.get("status") or event_name
+        ends_at = attrs.get("ends_at") or attrs.get("renews_at")
+
+        if event_name in ("subscription_created", "subscription_updated", "subscription_resumed", "subscription_payment_success"):
+            _set_user_pilot(
+                user,
+                is_pilot=True,
+                status=status,
+                subscription_id=sub_id,
+                expires_at=_parse_ls_datetime(ends_at),
+            )
+        elif event_name in ("subscription_cancelled", "subscription_canceled"):
+            _set_user_pilot(
+                user,
+                is_pilot=True,  # Keep access during grace period if applicable
+                status="cancelled",
+                subscription_id=sub_id,
+                expires_at=_parse_ls_datetime(ends_at),
+            )
+        elif event_name == "subscription_expired":
+            _set_user_pilot(
+                user,
+                is_pilot=False,
+                status="expired",
+                subscription_id=sub_id,
+                expires_at=_parse_ls_datetime(ends_at),
+            )
 
     return jsonify(success=True)
+
+
+def _ls_headers():
+    api_key = os.getenv("LEMON_SQUEEZY_API_KEY")
+    if not api_key:
+        raise ValueError("LEMON_SQUEEZY_API_KEY not configured")
+    return {
+        "Authorization": f"Bearer {api_key}",
+        "Accept": "application/vnd.api+json",
+        "Content-Type": "application/vnd.api+json",
+    }
+
+
+def _create_ls_checkout_url(user_id: str, redirect_url: str) -> str:
+    store_id = os.getenv("LEMON_SQUEEZY_STORE_ID")
+    variant_id = os.getenv("LEMON_SQUEEZY_VARIANT_ID")
+    if not store_id or not variant_id:
+        raise ValueError("LEMON_SQUEEZY_STORE_ID/LEMON_SQUEEZY_VARIANT_ID not configured")
+
+    if "?" in redirect_url:
+        redirect_url = f"{redirect_url}&order_id=[order_id]&email=[email]"
+    else:
+        redirect_url = f"{redirect_url}?order_id=[order_id]&email=[email]"
+
+    payload = {
+        "data": {
+            "type": "checkouts",
+            "attributes": {
+                "product_options": {
+                    "redirect_url": redirect_url,
+                    "enabled_variants": [int(variant_id)],
+                },
+                "checkout_data": {
+                    "custom": {
+                        "user_id": user_id,
+                    }
+                },
+            },
+            "relationships": {
+                "store": {
+                    "data": {
+                        "type": "stores",
+                        "id": str(store_id),
+                    }
+                },
+                "variant": {
+                    "data": {
+                        "type": "variants",
+                        "id": str(variant_id),
+                    }
+                },
+            },
+        }
+    }
+
+    resp = requests.post(
+        f"{LS_API_BASE}/checkouts",
+        headers=_ls_headers(),
+        json=payload,
+        timeout=15,
+    )
+    if resp.status_code not in (200, 201):
+        raise RuntimeError(f"Lemon Squeezy checkout failed: {resp.text}")
+
+    resp_json = resp.json()
+    attrs = (resp_json.get("data") or {}).get("attributes", {})
+    checkout_url = attrs.get("url") or attrs.get("checkout_url")
+    if not checkout_url:
+        raise RuntimeError("No checkout URL returned from Lemon Squeezy")
+    return checkout_url
+
+
+
+
+def _parse_ls_datetime(value):
+    if not value:
+        return None
+    try:
+        if value.endswith("Z"):
+            value = value.replace("Z", "+00:00")
+        return datetime.fromisoformat(value)
+    except Exception:
+        return None
+
+
+def _set_user_pilot(user, is_pilot, status=None, subscription_id=None, expires_at=None, purchased_at=None):
+    user.is_pilot = bool(is_pilot)
+    if status:
+        user.subscription_status = status
+    if subscription_id:
+        user.lemonsqueezy_subscription_id = str(subscription_id)
+    if expires_at:
+        user.subscription_expires_at = expires_at
+    if purchased_at:
+        user.pilot_purchased_at = purchased_at
+    db.session.commit()
 
 
 # -----------------------

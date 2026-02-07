@@ -4,21 +4,31 @@ from flask_login import UserMixin
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
-    is_pilot = db.Column(db.Boolean, default=False, nullable=True)  # Track if user has paid for Pilot
-    pilot_purchased_at = db.Column(db.DateTime, nullable=True)  # When they purchased Pilot
-    is_admin = db.Column(db.Boolean, default=False, nullable=False) # Admin flag added
+
+    # OLD (keep for now)
+    is_pilot = db.Column(db.Boolean, default=False, nullable=True)
+    pilot_purchased_at = db.Column(db.DateTime, nullable=True)
+
+    # Admin
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
+
+    # ✅ NEW — Lemon Squeezy subscription fields
+    subscription_status = db.Column(db.String(20), default="inactive")
+    subscription_expires_at = db.Column(db.DateTime, nullable=True)
+    lemonsqueezy_subscription_id = db.Column(db.String(100), nullable=True)
 
     # Relationship to files
     files = db.relationship('File', backref='user', lazy=True)
-    
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
-    
+
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 

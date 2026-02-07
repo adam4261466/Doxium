@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Checkout</title>
+</head>
+<body>
+  <!-- ...existing HTML... -->
+  <button id="buy-btn">Buy</button>
+
+  <script>
+  document.getElementById('buy-btn').addEventListener('click', async function () {
+    const res = await fetch('/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ redirect_url: window.location.origin + '/payment-success' })
+    });
+    const data = await res.json();
+    if (data.checkout_url) {
+      window.location.href = data.checkout_url;
+    } else {
+      alert('Failed to create checkout');
+      console.error(data);
+    }
+  });
+  </script>
+  <!-- ...existing HTML... -->
+</body>
+</html>

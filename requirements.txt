@@ -20,7 +20,6 @@ torch
 numpy
 faiss-cpu
 huggingface-hub
-stripe
 psycopg2-binary
 limits
 psutil
@@ -31,7 +30,7 @@ python-pptx
 pandas
 beautifulsoup4
 numpy
-stripe
 einops
 accelerate
 sentencepiece
+requests>=2.28

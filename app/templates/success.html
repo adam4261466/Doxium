@@ -7,29 +7,24 @@
             <div class="card">
                 <div class="card-body text-center p-5">
                     <div class="mb-4">
-                        <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                        <i class="fas fa-hourglass-half text-primary" style="font-size: 4rem;"></i>
                     </div>
-                    <h1 class="card-title text-success mb-4">Payment Successful!</h1>
-                    <p class="card-text lead mb-4">
-                        Thank you for upgrading to <strong>DocHub Pilot</strong>!
-                        Your payment of $150 has been processed successfully.
+                    <h1 class="card-title mb-3">Activating Your Account</h1>
+                    <p class="card-text lead mb-3">
+                        Thanks for your purchase! We’re confirming your subscription now.
                     </p>
-                    <div class="alert alert-success" role="alert">
-                        <h5 class="alert-heading">🎉 Welcome to DocHub Pilot!</h5>
-                        <p class="mb-0">
-                            You now have access to unlimited document processing, advanced AI features,
-                            and priority support. Start exploring your enhanced capabilities!
-                        </p>
+                    <div class="alert alert-info" role="alert">
+                        <strong>Keep this page open.</strong> We’ll redirect you automatically as soon as your
+                        access is active.
                     </div>
                     <div class="mt-4">
-                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg">
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-primary btn-lg">
                             <i class="fas fa-tachometer-alt"></i> Go to Dashboard
                         </a>
                     </div>
                     <div class="mt-3">
-                        <small class="text-muted">
-                            Payment ID: {{ session_id or 'N/A' }}<br>
-                            Questions? Contact our support team.
+                        <small class="text-muted" id="status-text">
+                            Waiting for webhook confirmation...
                         </small>
                     </div>
                 </div>
@@ -37,4 +32,39 @@
         </div>
     </div>
 </div>
+<script>
+  (function () {
+    const statusEl = document.getElementById('status-text');
+    let attempts = 0;
+    const maxAttempts = 60; // ~2 minutes at 2s interval
+
+    async function poll() {
+      attempts += 1;
+      try {
+        const res = await fetch('{{ url_for("main.me_status") }}', { credentials: 'same-origin' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.is_pilot) {
+            statusEl.textContent = 'Access active. Redirecting...';
+            window.location.href = '{{ url_for("main.dashboard") }}';
+            return;
+          }
+          if (data.subscription_status) {
+            statusEl.textContent = 'Waiting for webhook confirmation... (' + data.subscription_status + ')';
+          }
+        }
+      } catch (e) {
+        // ignore and retry
+      }
+
+      if (attempts < maxAttempts) {
+        setTimeout(poll, 2000);
+      } else {
+        statusEl.textContent = 'Still waiting. You can refresh or return later.';
+      }
+    }
+
+    poll();
+  })();
+</script>
 {% endblock %}
