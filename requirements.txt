@@ -34,3 +34,4 @@ einops
 accelerate
 sentencepiece
 requests>=2.28
+gunicorn
