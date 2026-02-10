@@ -1,4 +1,4 @@
-import os
+"""import os
 import psutil
 import torch
 from dotenv import load_dotenv
@@ -12,7 +12,6 @@ load_dotenv()
 # Hardware Monitoring Setup
 # =============================================
 def print_hardware_info():
-    """Print current hardware usage statistics"""
     print("\n" + "="*60)
     print("HARDWARE MONITORING")
     print("="*60)
@@ -54,4 +53,14 @@ if __name__ == "__main__":
     print("🚀 Starting DocHub application...")
     ########################app.run(debug=True)
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port)"""
+
+from app import create_app, db
+
+# Create Flask app for Gunicorn
+app = create_app()
+
+# MVP-safe: create tables on boot (OK for now)
+with app.app_context():
+    db.create_all()
+
