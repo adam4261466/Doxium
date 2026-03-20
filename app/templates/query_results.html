@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Query Results - DocHub{% endblock %}
+{% block title %}Query Results - Doxium{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
@@ -48,7 +48,7 @@
                     <h5 class="mb-0"><i class="fas fa-brain me-2"></i>AI Answer</h5>
                 </div>
                 <div class="card-body">
-                    <div class="answer-content p-3 rounded" style="background-color: rgba(35, 134, 54, 0.1); border-left: 4px solid #28a745;">
+                    <div class="answer-content p-3 rounded">
                         <i class="fas fa-lightbulb text-success me-2"></i>
                         {{ answer }}
                     </div>
@@ -64,9 +64,9 @@
                     <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Supporting Documents</h5>
                     <small class="text-muted">({{ supporting_chunks|length }} sources)</small>
                 </div>
-                <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                <div class="card-body scroll-panel-lg">
                     {% for chunk in supporting_chunks %}
-                        <div class="document-chunk mb-3 p-3 rounded border" style="background-color: #161b22; border-color: #30363d;">
+                        <div class="document-chunk mb-3 p-3 rounded border">
                             <div class="d-flex align-items-start mb-2">
                                 <i class="fas fa-file text-primary me-2 mt-1"></i>
                                 <div class="flex-grow-1">
@@ -78,13 +78,13 @@
                                     </small>
                                 </div>
                             </div>
-                            <div class="chunk-text p-2 rounded" style="background-color: #21262d; font-size: 0.9em; max-height: 150px; overflow-y: auto;">
+                            <div class="chunk-text p-2 rounded">
                                 {{ chunk.text|truncate(300) }}
                             </div>
                         </div>
                     {% else %}
                         <div class="text-center py-4">
-                            <i class="fas fa-info-circle text-muted" style="font-size: 2rem;"></i>
+                            <i class="fas fa-info-circle text-muted fs-2"></i>
                             <p class="text-muted mt-2">No supporting documents found</p>
                         </div>
                     {% endfor %}
@@ -127,43 +127,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<style>
-.answer-content {
-    line-height: 1.6;
-    font-size: 1.1em;
-}
-
-.document-chunk {
-    transition: all 0.3s ease;
-}
-
-.document-chunk:hover {
-    background-color: #21262d !important;
-    border-color: #58a6ff !important;
-    transform: translateX(5px);
-}
-
-.chunk-text {
-    color: #c9d1d9;
-    line-height: 1.5;
-}
-
-/* Custom scrollbar for chunks */
-.card-body::-webkit-scrollbar {
-    width: 6px;
-}
-
-.card-body::-webkit-scrollbar-track {
-    background: #0d1117;
-}
-
-.card-body::-webkit-scrollbar-thumb {
-    background: #30363d;
-    border-radius: 3px;
-}
-
-.card-body::-webkit-scrollbar-thumb:hover {
-    background: #58a6ff;
-}
-</style>
 {% endblock %}

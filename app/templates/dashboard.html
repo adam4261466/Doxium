@@ -178,7 +178,7 @@
                     <h5 class="mb-0"><i class="fas fa-folder me-2"></i>Your Documents</h5>
                     <small class="text-muted">({{ files|length }} files)</small>
                 </div>
-                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                <div class="card-body scroll-panel">
                     {% if files %}
                         <div class="document-list">
                             {% for file in files %}
@@ -252,7 +252,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <pre id="previewContent" class="p-3 rounded" style="white-space: pre-wrap; max-height: 400px; overflow-y: auto; background-color: #161b22; color: #ffffff; border: 1px solid #30363d;"></pre>
+                <pre id="previewContent" class="preview-content p-3 rounded"></pre>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -443,75 +443,4 @@ document.querySelectorAll('.preview-btn').forEach(btn => {
 });
 </script>
 
-<style>
-.drop-zone {
-    border: 2px dashed #ccc;
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.drop-zone:hover,
-.drop-zone.border-primary,
-.drop-zone.highlight {
-    border-color: #007bff;
-    background-color: #f8f9fa;
-}
-
-.drop-zone.highlight {
-    border-width: 3px;
-    background-color: #e3f2fd;
-}
-
-.border-dashed {
-    border-style: dashed !important;
-}
-
-.query-item {
-    transition: background-color 0.2s ease;
-}
-
-.query-item:hover {
-    background-color: #f8f9fa;
-}
-
-.list-group-item {
-    transition: background-color 0.2s ease;
-}
-
-.list-group-item:hover {
-    background-color: #f8f9fa;
-}
-
-/* New dashboard styles */
-.timeline-marker {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.document-item {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    transition: all 0.2s ease;
-}
-
-.document-item:hover {
-    background-color: #e9ecef;
-    border-color: #007bff;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.premium-benefits .row > div {
-    padding: 2px 0;
-}
-
-.upgrade-benefits .row > div {
-    padding: 2px 0;
-}
-</style>
 {% endblock %}

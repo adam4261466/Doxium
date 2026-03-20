@@ -14,7 +14,7 @@
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <div class="mb-3">
                             <label for="email" class="form-label">Email Address</label>
-                            <input name="email" type="email" class="form-control" id="email" placeholder="Enter your email" required>
+                            <input name="email" type="email" class="form-control" id="email" placeholder="Enter your email" required autofocus>
                         </div>
                         <div class="mb-3">
                             <label for="password" class="form-label">Password</label>
@@ -35,3 +35,11 @@
     </div>
 </div>
 {% endblock %}
+
+<script>
+document.querySelector("form").addEventListener("submit", function(){
+    const btn = document.querySelector("button[type='submit']");
+    btn.innerHTML = "<i class='fas fa-spinner fa-spin me-2'></i>Signing in...";
+    btn.disabled = true;
+});
+</script>

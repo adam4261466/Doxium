@@ -89,6 +89,9 @@ def check_system_load():
         # If we can't check load, assume not overloaded
         return False, 0.0
 
+@main.route("/health")
+def health():
+    return {"status": "ok"}, 200
 
 # -----------------------
 # Auth Routes
@@ -118,20 +121,20 @@ def register():
 
         # ✅ Send welcome email
         msg = Message(
-            subject="Welcome to DocHub 🚀",
+            subject="Welcome to Doxium 🚀",
             recipients=[new_user.email]
         )
         msg.body = f"""
         Hi {new_user.username},
 
-        Welcome to DocHub! 🎉  
+        Welcome to Doxium! 🎉  
         You’re all set to start your pilot.
 
         👉 Book your 30-min setup call here:  
         https://calendly.com/yourname/30min  
 
         Best,  
-        The DocHub Team
+        The Doxium Team
         """
 
         try:

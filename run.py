@@ -50,11 +50,32 @@ if __name__ == "__main__":
         db.create_all()  # Ensure tables are created
         print("Tables created successfully!\n")
     
-    print("🚀 Starting DocHub application...")
+    print("🚀 Starting Doxium application...")
     ########################app.run(debug=True)
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)"""
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""
 from app import create_app, db
 
 # Create Flask app for Gunicorn
@@ -63,4 +84,18 @@ app = create_app()
 # MVP-safe: create tables on boot (OK for now)
 with app.app_context():
     db.create_all()
+
+"""
+# doc-hub/run.py
+import os
+from app import create_app, db
+
+app = create_app()
+
+with app.app_context():
+    db.create_all()
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
 
