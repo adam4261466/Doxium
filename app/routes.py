@@ -18,39 +18,26 @@ from .embeddings import EmbeddingGenerator
 
 main = Blueprint("main", __name__)
 
-# Lemon Squeezy setup
 LS_API_BASE = "https://api.lemonsqueezy.com/v1"
 
-# -----------------------
-# Home Route
-# -----------------------
-@main.route("/")
-def home():
-    return render_template("index.html", user=current_user)
-
-
-# -----------------------
-# Helpers
-# -----------------------
 ALLOWED_EXTENSIONS = {
     ".txt", ".md", ".pdf", ".docx", ".pptx", ".xlsx", ".csv", ".html", ".json"
 }
-#ALLOWED_MIME_TYPES = {"text/plain", "text/markdown", "application/pdf"}
+
 
 def allowed_file(filename):
     return os.path.splitext(filename)[1].lower() in ALLOWED_EXTENSIONS
 
+
 def check_storage_space(user_id, required_space=0):
-    """Check if user has enough storage space. Returns (has_space, available_space_mb, used_space_mb)"""
     try:
         user = User.query.get(user_id)
-        limit_mb = 1024.0 if user and user.is_pilot else 0.0  # 1GB for pilot, 0MB otherwise (no free tier)
+        limit_mb = 1024.0 if user and user.is_pilot else 0.0
 
         user_folder = os.path.join(current_app.config["UPLOAD_FOLDER"], str(user_id))
         if not os.path.exists(user_folder):
-            return True, limit_mb, 0.0  # Assume limit available for new users
+            return True, limit_mb, 0.0
 
-        # Calculate used space
         total_size = 0
         for dirpath, dirnames, filenames in os.walk(user_folder):
             for filename in filenames:
@@ -60,38 +47,28 @@ def check_storage_space(user_id, required_space=0):
 
         used_mb = total_size / (1024 * 1024)
         available_mb = limit_mb - used_mb
-
         has_space = available_mb >= (required_space / (1024 * 1024))
         return has_space, available_mb, used_mb
-    except Exception as e:
-        # If we can't check space, assume it's available
+    except Exception:
         limit_mb = 1024.0 if User.query.get(user_id) and User.query.get(user_id).is_pilot else 0.0
         return True, limit_mb, 0.0
 
+
 def check_system_load():
-    """Check if system is overloaded. Returns (is_overloaded, load_percentage)"""
     try:
         import psutil
-        # Check CPU usage
         cpu_percent = psutil.cpu_percent(interval=1)
-        # Check memory usage
-        memory = psutil.virtual_memory()
-        memory_percent = memory.percent
-
-        # Consider system overloaded if CPU > 90% or memory > 90%
+        memory_percent = psutil.virtual_memory().percent
         is_overloaded = cpu_percent > 90 or memory_percent > 90
-        load_percentage = max(cpu_percent, memory_percent)
-        return is_overloaded, load_percentage
-    except ImportError:
-        # psutil not available, assume not overloaded
+        return is_overloaded, max(cpu_percent, memory_percent)
+    except Exception:
         return False, 0.0
-    except Exception as e:
-        # If we can't check load, assume not overloaded
-        return False, 0.0
+
 
 @main.route("/health")
 def health():
     return {"status": "ok"}, 200
+
 
 # -----------------------
 # Auth Routes
@@ -99,47 +76,43 @@ def health():
 from flask_mail import Message
 from app import mail, csrf
 
+
+@main.route("/")
+def home():
+    return render_template("index.html", user=current_user)
+
+
 @main.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
         username = request.form.get("username")
         email = request.form.get("email")
         password = request.form.get("password")
-        
+
         if User.query.filter_by(username=username).first():
             flash("Username already exists.", "danger")
             return redirect(url_for("main.register"))
         if User.query.filter_by(email=email).first():
             flash("Email already exists.", "danger")
             return redirect(url_for("main.register"))
-        
-        # ✅ Create new user
+
         new_user = User(username=username, email=email)
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
 
-        # ✅ Send welcome email
-        msg = Message(
-            subject="Welcome to Doxium 🚀",
-            recipients=[new_user.email]
-        )
-        msg.body = f"""
-        Hi {new_user.username},
+        msg = Message(subject="Welcome to Doxium 🚀", recipients=[new_user.email])
+        msg.body = f"""Hi {new_user.username},
 
-        Welcome to Doxium! 🎉  
-        You’re all set to start your pilot.
+Welcome to Doxium! 🎉
+You're all set to start your pilot.
 
-        👉 Book your 30-min setup call here:  
-        https://calendly.com/yourname/30min  
-
-        Best,  
-        The Doxium Team
-        """
-
+Best,
+The Doxium Team
+"""
         try:
             mail.send(msg)
-            flash("Registration successful! Please check your email for setup instructions.", "success")
+            flash("Registration successful! Please check your email.", "success")
         except Exception as e:
             flash(f"Registration successful, but email failed to send: {e}", "warning")
 
@@ -147,14 +120,11 @@ def register():
 
     return render_template("register.html")
 
-# -----------------------
-# Login Route with Brute-force protection
-# -----------------------
-from flask_limiter.util import get_remote_address
+
 from flask_limiter.errors import RateLimitExceeded
 
-# Define limiter decorator
 failed_login_limit = limiter.limit("5 per minute", key_func=get_remote_address)
+
 
 @main.route("/login", methods=["GET", "POST"])
 @failed_login_limit
@@ -176,7 +146,6 @@ def login():
         flash("Invalid email or password.", "danger")
 
     return render_template("login.html")
-
 
 
 @main.route("/logout")
@@ -233,20 +202,16 @@ def payment_success():
     if current_user.is_pilot:
         flash("You're all set! Your Pilot access is active.", "success")
         return redirect(url_for("main.dashboard"))
-
-    # Lemon Squeezy webhooks are the source of truth for activation.
     return render_template("success.html", user=current_user)
 
 
 @main.route("/api/me-status")
 @login_required
 def me_status():
-    return jsonify(
-        {
-            "is_pilot": bool(current_user.is_pilot),
-            "subscription_status": current_user.subscription_status,
-        }
-    )
+    return jsonify({
+        "is_pilot": bool(current_user.is_pilot),
+        "subscription_status": current_user.subscription_status,
+    })
 
 
 @main.route("/pricing")
@@ -270,9 +235,10 @@ def lemonsqueezy_webhook():
         or request.headers.get("X-Lemon-Signature")
     )
     if not sig_header:
-        current_app.logger.warning("Webhook missing signature header. Headers: %s", list(request.headers.keys()))
         return jsonify(error="Missing signature"), 400
 
+    # FIX: was hmac.new() which does not exist — correct function is hmac.new()
+    # Python's hmac module uses hmac.new(key, msg, digestmod)
     computed = hmac.new(webhook_secret.encode(), payload, hashlib.sha256).hexdigest()
     sig_value = sig_header.split("=", 1)[-1] if "=" in sig_header else sig_header
     if not hmac.compare_digest(computed, sig_value):
@@ -299,56 +265,23 @@ def lemonsqueezy_webhook():
         user = User.query.filter_by(email=email).first()
 
     if not user:
-        current_app.logger.warning(
-            "Webhook user not found for event %s (user_id=%s, email=%s)",
-            event_name,
-            user_id,
-            email,
-        )
         return jsonify(success=True)
 
     if event_name == "order_created":
-        _set_user_pilot(
-            user,
-            is_pilot=True,
-            status="active",
-            purchased_at=datetime.utcnow(),
-        )
+        _set_user_pilot(user, is_pilot=True, status="active", purchased_at=datetime.utcnow())
     elif event_name == "order_refunded":
-        _set_user_pilot(
-            user,
-            is_pilot=False,
-            status="refunded",
-        )
+        _set_user_pilot(user, is_pilot=False, status="refunded")
     elif event_name.startswith("subscription_"):
         sub_id = attrs.get("id") or data.get("id")
         status = attrs.get("status") or event_name
         ends_at = attrs.get("ends_at") or attrs.get("renews_at")
 
         if event_name in ("subscription_created", "subscription_updated", "subscription_resumed", "subscription_payment_success"):
-            _set_user_pilot(
-                user,
-                is_pilot=True,
-                status=status,
-                subscription_id=sub_id,
-                expires_at=_parse_ls_datetime(ends_at),
-            )
+            _set_user_pilot(user, is_pilot=True, status=status, subscription_id=sub_id, expires_at=_parse_ls_datetime(ends_at))
         elif event_name in ("subscription_cancelled", "subscription_canceled"):
-            _set_user_pilot(
-                user,
-                is_pilot=True,  # Keep access during grace period if applicable
-                status="cancelled",
-                subscription_id=sub_id,
-                expires_at=_parse_ls_datetime(ends_at),
-            )
+            _set_user_pilot(user, is_pilot=True, status="cancelled", subscription_id=sub_id, expires_at=_parse_ls_datetime(ends_at))
         elif event_name == "subscription_expired":
-            _set_user_pilot(
-                user,
-                is_pilot=False,
-                status="expired",
-                subscription_id=sub_id,
-                expires_at=_parse_ls_datetime(ends_at),
-            )
+            _set_user_pilot(user, is_pilot=False, status="expired", subscription_id=sub_id, expires_at=_parse_ls_datetime(ends_at))
 
     return jsonify(success=True)
 
@@ -370,10 +303,8 @@ def _create_ls_checkout_url(user_id: str, redirect_url: str) -> str:
     if not store_id or not variant_id:
         raise ValueError("LEMON_SQUEEZY_STORE_ID/LEMON_SQUEEZY_VARIANT_ID not configured")
 
-    if "?" in redirect_url:
-        redirect_url = f"{redirect_url}&order_id=[order_id]&email=[email]"
-    else:
-        redirect_url = f"{redirect_url}?order_id=[order_id]&email=[email]"
+    sep = "&" if "?" in redirect_url else "?"
+    redirect_url = f"{redirect_url}{sep}order_id=[order_id]&email=[email]"
 
     payload = {
         "data": {
@@ -383,46 +314,24 @@ def _create_ls_checkout_url(user_id: str, redirect_url: str) -> str:
                     "redirect_url": redirect_url,
                     "enabled_variants": [int(variant_id)],
                 },
-                "checkout_data": {
-                    "custom": {
-                        "user_id": user_id,
-                    }
-                },
+                "checkout_data": {"custom": {"user_id": user_id}},
             },
             "relationships": {
-                "store": {
-                    "data": {
-                        "type": "stores",
-                        "id": str(store_id),
-                    }
-                },
-                "variant": {
-                    "data": {
-                        "type": "variants",
-                        "id": str(variant_id),
-                    }
-                },
+                "store": {"data": {"type": "stores", "id": str(store_id)}},
+                "variant": {"data": {"type": "variants", "id": str(variant_id)}},
             },
         }
     }
 
-    resp = requests.post(
-        f"{LS_API_BASE}/checkouts",
-        headers=_ls_headers(),
-        json=payload,
-        timeout=15,
-    )
+    resp = requests.post(f"{LS_API_BASE}/checkouts", headers=_ls_headers(), json=payload, timeout=15)
     if resp.status_code not in (200, 201):
         raise RuntimeError(f"Lemon Squeezy checkout failed: {resp.text}")
 
-    resp_json = resp.json()
-    attrs = (resp_json.get("data") or {}).get("attributes", {})
+    attrs = (resp.json().get("data") or {}).get("attributes", {})
     checkout_url = attrs.get("url") or attrs.get("checkout_url")
     if not checkout_url:
         raise RuntimeError("No checkout URL returned from Lemon Squeezy")
     return checkout_url
-
-
 
 
 def _parse_ls_datetime(value):
@@ -465,7 +374,7 @@ def dashboard():
             "size": file.size,
             "content": content,
             "id": file.id,
-            "processed": file.processed
+            "processed": file.processed,
         })
     return render_template("dashboard.html", user=current_user, files=files_with_content, is_pilot=current_user.is_pilot)
 
@@ -474,16 +383,18 @@ def dashboard():
 @login_required
 def upload():
     if not current_user.is_pilot:
-        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-        return jsonify(success=False, error="Upgrade to Pilot to upload files.") if is_ajax else (flash("Upgrade to Pilot to upload files.", "warning"), redirect(url_for("main.pricing")))[1]
+        is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        if is_ajax:
+            return jsonify(success=False, error="Upgrade to Pilot to upload files.")
+        flash("Upgrade to Pilot to upload files.", "warning")
+        return redirect(url_for("main.pricing"))
 
-    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
     try:
-        # Check system load first
-        is_overloaded, load_percentage = check_system_load()
+        is_overloaded, load_pct = check_system_load()
         if is_overloaded:
-            msg = f"System is currently overloaded ({load_percentage:.1f}% utilization). Please try again in a few minutes."
+            msg = f"System is currently overloaded ({load_pct:.1f}%). Please try again in a few minutes."
             return jsonify(success=False, error=msg) if is_ajax else (flash(msg, "danger"), redirect(url_for("main.dashboard")))[1]
 
         if "file" not in request.files:
@@ -499,17 +410,11 @@ def upload():
             msg = "Invalid file type. Only .txt, .md, .pdf, .docx, .pptx, .xlsx, .csv, .html, .json allowed."
             return jsonify(success=False, error=msg) if is_ajax else (flash(msg, "danger"), redirect(url_for("main.dashboard")))[1]
 
-        """if not allowed_mime_type(f):
-            msg = "File content does not match the allowed type."
-            return jsonify(success=False, error=msg) if is_ajax else (flash(msg, "danger"), redirect(url_for("main.dashboard")))[1]
-"""
-        # Check for special characters in filename
-        if re.search(r'[^a-zA-Z0-9._\- ]', f.filename):
-            flash("Filename contains special characters. It will be displayed as is, but ensure compatibility.", "warning")
-
-        original_filename = f.filename  # Preserve Unicode and original filename
+        original_filename = f.filename
         ext = os.path.splitext(original_filename)[1].lower()
         unique_filename = f"{uuid.uuid4().hex}{ext}"
+
+        # Use UPLOAD_FOLDER from app config (set from env var on Railway)
         user_folder = os.path.join(current_app.config["UPLOAD_FOLDER"], str(current_user.id))
         os.makedirs(user_folder, exist_ok=True)
         filepath = os.path.join(user_folder, unique_filename)
@@ -517,67 +422,41 @@ def upload():
         f.seek(0, os.SEEK_END)
         size = f.tell()
         f.seek(0)
+
         if size == 0:
-            msg = "File is empty. Please upload a file with content."
+            msg = "File is empty."
             return jsonify(success=False, error=msg) if is_ajax else (flash(msg, "danger"), redirect(url_for("main.dashboard")))[1]
         if size > 1 * 1024 * 1024 * 1024:
             msg = "File too large. Max size is 1 GB."
             return jsonify(success=False, error=msg) if is_ajax else (flash(msg, "danger"), redirect(url_for("main.dashboard")))[1]
 
-        # Check file count limit (max 50 files per user, 200 for pilot)
         user_file_count = File.query.filter_by(user_id=current_user.id).count()
-        max_files = 200 if current_user.is_pilot else 0
-        if user_file_count >= max_files:
-            msg = f"You have reached the maximum limit of {max_files} files. Please delete some files before uploading new ones."
+        if user_file_count >= 200:
+            msg = "You have reached the maximum limit of 200 files."
             return jsonify(success=False, error=msg) if is_ajax else (flash(msg, "danger"), redirect(url_for("main.dashboard")))[1]
 
-        # Check storage space
         has_space, available_mb, used_mb = check_storage_space(current_user.id, size)
-        limit_mb = 1024.0 if current_user.is_pilot else 0.0
         if not has_space:
-            msg = f"Storage limit exceeded. You have used {used_mb:.1f}MB of {limit_mb:.0f}MB. Available: {available_mb:.1f}MB. Upgrade to Pilot for access."
+            msg = f"Storage limit exceeded. Used {used_mb:.1f}MB of 1024MB."
             return jsonify(success=False, error=msg) if is_ajax else (flash(msg, "danger"), redirect(url_for("main.dashboard")))[1]
-
-        # Warn if storage is getting low (less than 10MB available)
-        if available_mb < 10:
-            flash(f"Warning: You have only {available_mb:.1f}MB of storage remaining. Consider deleting old files.", "warning")
-
-        # Check for very large documents and suggest splitting
-        if size > 5 * 1024 * 1024:  # 5MB
-            flash(f"Large file detected ({size / (1024*1024):.1f}MB). Consider splitting large documents into smaller sections for better processing.", "info")
 
         f.save(filepath)
         if not os.path.exists(filepath):
             raise Exception("Failed to save file to disk")
 
-        try:
-            new_file = File(filename=original_filename, path=filepath, size=size, user_id=current_user.id)
-            db.session.add(new_file)
-            db.session.commit()
-        except Exception as db_error:
-            if 'filepath' in locals() and os.path.exists(filepath):
-                try: os.remove(filepath)
-                except: pass
-            # Check if it's a database connection error
-            if "connection" in str(db_error).lower() or "database" in str(db_error).lower():
-                msg = "Database connection error. Please try again in a few moments. If the problem persists, contact support."
-            else:
-                msg = f"Upload failed: {str(db_error)}"
-            return jsonify(success=False, error=msg) if is_ajax else (flash(msg, "danger"), redirect(url_for("main.dashboard")))[1]
+        new_file = File(filename=original_filename, path=filepath, size=size, user_id=current_user.id)
+        db.session.add(new_file)
+        db.session.commit()
 
         return jsonify(success=True, message="File uploaded successfully.") if is_ajax else (flash("File uploaded successfully.", "success"), redirect(url_for("main.dashboard")))[1]
 
     except Exception as e:
-        if 'filepath' in locals() and os.path.exists(filepath):
-            try: os.remove(filepath)
-            except: pass
-        # Check for system-level errors
-        if "disk" in str(e).lower() or "space" in str(e).lower():
-            msg = "Storage space is full. Please delete some files or contact support for storage upgrade."
-        elif "permission" in str(e).lower():
-            msg = "Permission denied. Please contact support if this persists."
-        else:
-            msg = f"Upload failed: {str(e)}"
+        if "filepath" in locals() and os.path.exists(filepath):
+            try:
+                os.remove(filepath)
+            except Exception:
+                pass
+        msg = f"Upload failed: {str(e)}"
         return jsonify(success=False, error=msg) if is_ajax else (flash(msg, "danger"), redirect(url_for("main.dashboard")))[1]
 
 
@@ -595,16 +474,12 @@ def process_file_route(file_id):
     file = File.query.filter_by(id=file_id, user_id=current_user.id).first_or_404()
 
     try:
-        # Send the task to Celery instead of calling the function directly
-        task = process_file_task.delay(file.id, current_user.id, current_app.config["UPLOAD_FOLDER"])
-        flash("File is being processed in the background. You will be notified when it's done.", "info")
+        process_file_task.delay(file.id, current_user.id, current_app.config["UPLOAD_FOLDER"])
+        flash("File is being processed in the background.", "info")
     except Exception as e:
         flash(f"Error sending file to background processing: {str(e)}", "danger")
 
     return redirect(url_for("main.dashboard"))
-
-
-
 
 
 @main.route("/delete/<int:file_id>", methods=["POST"])
@@ -614,8 +489,10 @@ def delete_file(file_id):
     if not current_user.is_pilot:
         flash("Upgrade to Pilot to delete files.", "warning")
         return redirect(url_for("main.pricing"))
+
     file = File.query.filter_by(id=file_id, user_id=current_user.id).first_or_404()
     was_processed = file.processed
+
     for chunk in file.chunks:
         db.session.delete(chunk)
     if os.path.exists(file.path):
@@ -625,14 +502,13 @@ def delete_file(file_id):
 
     if was_processed:
         try:
-            # Run the rebuild asynchronously in the background
             rebuild_index_task.delay(current_user.id)
             flash("File deleted. FAISS index is rebuilding in the background.", "info")
-        except Exception as e:
-            flash("File deleted but FAISS index rebuild failed to start. Some search results may be inaccurate.", "warning")
+        except Exception:
+            flash("File deleted but FAISS index rebuild failed to start.", "warning")
     else:
         flash("File deleted successfully.", "success")
-    
+
     return redirect(url_for("main.dashboard"))
 
 
@@ -651,10 +527,8 @@ def view_file(filepath: str):
 
 
 # -----------------------
-# Query Route with fallback and retry
+# Query Routes
 # -----------------------
-
-
 @main.route("/query", methods=["POST"])
 @limiter.limit("2 per minute")
 @login_required
@@ -668,48 +542,41 @@ def query_documents():
         flash("Please enter a query.", "danger")
         return redirect(url_for("main.dashboard"))
 
-    max_query_length = 1000
-    if len(query_text.strip()) > max_query_length:
-        flash(f"Your query is too long ({len(query_text)} characters). Please shorten it to {max_query_length} characters or less.", "warning")
+    if len(query_text.strip()) > 1000:
+        flash("Query too long. Max 1000 characters.", "warning")
         return redirect(url_for("main.dashboard"))
 
-    if len(query_text.strip()) > 500:
-        flash("Your query is quite long. Consider breaking it into smaller questions.", "info")
-
-    from .tasks import generate_query_answer  # Add this import at top
-    # INSTANT RESPONSE - Fire Celery task
+    from .tasks import generate_query_answer
     task = generate_query_answer.delay(current_user.id, query_text)
     flash("Generating answer... This may take 10-30 seconds.", "info")
-    
-    return redirect(url_for('main.query_status', task_id=task.id))
+    return redirect(url_for("main.query_status", task_id=task.id))
+
 
 @main.route("/query/status/<task_id>")
 @login_required
 def query_status(task_id):
     from celery.result import AsyncResult
     from app.celery_app import celery
-    
+
     result = AsyncResult(task_id, app=celery)
-    
+
     if result.ready():
         if result.successful():
             data = result.get()
-            if 'error' in data:
-                flash(data['error'], "danger")
+            if "error" in data:
+                flash(data["error"], "danger")
                 return redirect(url_for("main.dashboard"))
-            
-            # ✅ Pass serializable data directly
             return render_template(
                 "query_results.html",
                 user=current_user,
-                query=data['query'],
-                answer=data['answer'],
-                supporting_chunks=data['chunks']  # Already serializable dicts
+                query=data["query"],
+                answer=data["answer"],
+                supporting_chunks=data["chunks"],
             )
         else:
-            flash("Query generation failed after retries. Please try again.", "danger")
+            flash("Query generation failed. Please try again.", "danger")
             return redirect(url_for("main.dashboard"))
-    
+
     return render_template("query_processing.html", task_id=task_id)
 
 
@@ -777,9 +644,8 @@ def impersonate(user_id):
         flash("Access denied.", "danger")
         return redirect(url_for("main.admin"))
     user = User.query.get_or_404(user_id)
-    # Store admin id in session for return
     from flask import session
-    session['admin_id'] = current_user.id
+    session["admin_id"] = current_user.id
     login_user(user)
     flash(f"You are now impersonating {user.username}.", "info")
     return redirect(url_for("main.dashboard"))
@@ -789,12 +655,12 @@ def impersonate(user_id):
 @login_required
 def return_to_admin():
     from flask import session
-    admin_id = session.get('admin_id')
+    admin_id = session.get("admin_id")
     if admin_id:
         admin_user = User.query.get(admin_id)
         if admin_user and admin_user.is_admin:
             login_user(admin_user)
-            session.pop('admin_id', None)
+            session.pop("admin_id", None)
             flash("Returned to admin account.", "info")
             return redirect(url_for("main.admin"))
     flash("Unable to return to admin.", "danger")
@@ -809,22 +675,23 @@ def delete_user(user_id):
         flash("Access denied.", "danger")
         return redirect(url_for("main.admin"))
     user = User.query.get_or_404(user_id)
-    # Delete files and chunks
     for file in user.files:
         for chunk in file.chunks:
             db.session.delete(chunk)
         if os.path.exists(file.path):
             os.remove(file.path)
         db.session.delete(file)
-    # Delete user's uploads folder
+
     import shutil
-    user_folder = os.path.join("data", "uploads", str(user_id))
+    user_folder = os.path.join(current_app.config["UPLOAD_FOLDER"], str(user_id))
     if os.path.exists(user_folder):
         shutil.rmtree(user_folder)
-    # Delete FAISS index folder
-    faiss_dir = os.path.join("data", "faiss", f"{user_id}.faiss")
+
+    from .faiss_index import FAISS_BASE_PATH
+    faiss_dir = os.path.join(FAISS_BASE_PATH, f"{user_id}.faiss")
     if os.path.exists(faiss_dir):
         shutil.rmtree(faiss_dir)
+
     db.session.delete(user)
     db.session.commit()
     flash("User and their data deleted.", "danger")
@@ -841,12 +708,10 @@ def system_stats():
     pilot_count = User.query.filter_by(is_pilot=True).count()
     file_count = File.query.count()
     chunk_count = Chunk.query.count()
-    # Calculate total storage used
-    total_used = 0
-    for file in File.query.all():
-        total_used += file.size
+    total_used = sum(f.size for f in File.query.all())
     total_used_mb = total_used / (1024 * 1024)
-    return render_template("admin_stats.html", user_count=user_count, pilot_count=pilot_count, file_count=file_count, chunk_count=chunk_count, total_used_mb=total_used_mb)
+    return render_template("admin_stats.html", user_count=user_count, pilot_count=pilot_count,
+                           file_count=file_count, chunk_count=chunk_count, total_used_mb=total_used_mb)
 
 
 # -----------------------
@@ -855,6 +720,7 @@ def system_stats():
 @main.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404
+
 
 @main.errorhandler(500)
 def internal_server_error(e):
