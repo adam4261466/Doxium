@@ -3,4 +3,5 @@ dockerfile = "Dockerfile"
 
 [deploy]
 healthcheckPath = "/health"
-restartPolicyType = "on-failure"
+restartPolicyType = "on_failure"
+releaseCommand = "flask db upgrade"
