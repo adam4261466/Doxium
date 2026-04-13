@@ -75,7 +75,7 @@ def chunk_text(text, chunk_size=1000, overlap=200):
 
 def process_file(file_id, user_id, upload_folder=None):
     if upload_folder is None:
-        upload_folder = UPLOAD_FOLDER
+        upload_folder = os.getenv("UPLOAD_FOLDER", "data/uploads")
 
     file = File.query.get(file_id)
     file_path = file.path
