@@ -29,6 +29,7 @@ class FaissIndex:
 
         # Allow override via argument, else use env-based default
         base_path = path if path is not None else FAISS_BASE_PATH
+        base_path = path if path is not None else FAISS_BASE_PATH
         base_dir = os.path.join(base_path, f"{self.user_id}.faiss")
         self.index_path = os.path.join(base_dir, f"{self.user_id}.index")
         self.metadata_path = os.path.join(base_dir, f"{self.user_id}_metadata.json")
