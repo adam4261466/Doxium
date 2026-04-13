@@ -5,3 +5,6 @@ dockerfile = "Dockerfile"
 healthcheckPath = "/health"
 restartPolicyType = "on_failure"
 releaseCommand = "flask db upgrade"
+
+[[services]]
+internalPort = 8000
