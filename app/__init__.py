@@ -22,10 +22,12 @@ mail = Mail()
 
 # Rate limiting per IP
 # Rate limiting per IP with Redis storage
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+
 limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["60 per minute"],
-    storage_uri="redis://localhost:6379/1"  # Different DB from Celery (0)
+    storage_uri=REDIS_URL,
 )
 
 
@@ -59,7 +61,7 @@ def create_app():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # Uploads
-    app.config["UPLOAD_FOLDER"] = "data/uploads"
+    app.config["UPLOAD_FOLDER"] = os.getenv("UPLOAD_FOLDER", "data/uploads")
     app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024 * 1024  # 1GB
 
     # Cookies
@@ -76,14 +78,8 @@ def create_app():
     app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER")
 
     # Celery Defaults
-    app.config.setdefault(
-        "CELERY_BROKER_URL",
-        os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
-    )
-    app.config.setdefault(
-        "CELERY_RESULT_BACKEND",
-        os.getenv("CELERY_RESULT_BACKEND", app.config["CELERY_BROKER_URL"])
-    )
+    app.config.setdefault("CELERY_BROKER_URL", REDIS_URL)
+    app.config.setdefault("CELERY_RESULT_BACKEND", REDIS_URL)
 
     # Init Extensions
     db.init_app(app)
