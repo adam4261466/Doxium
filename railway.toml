@@ -1,7 +1,12 @@
 [build]
 dockerfile = "Dockerfile"
 
-[deploy]
+# This section now only applies to the 'web' service
+[services.web]
 healthcheckPath = "/health"
 restartPolicyType = "on_failure"
-releaseCommand = "flask db upgrade"
+
+# This section applies to your worker
+[services.worker]
+healthcheckPath = ""  # Disables healthcheck for the worker
+restartPolicyType = "on_failure"
