@@ -52,15 +52,25 @@ def unauthorized():
 # ---------------------------------------
 # Application Factory
 # ---------------------------------------
-def create_app():
-    app = Flask(__name__, template_folder="templates")
+import logging
 
-    # Basic Config
-    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
-    database_url = os.getenv("DATABASE_URL") or os.getenv("DATABASE_PUBLIC_URL")
-    if not database_url:
-        raise RuntimeError("DATABASE_URL or DATABASE_PUBLIC_URL must be set")
-    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+def get_database_uri():
+    database_url = os.getenv("DATABASE_URL")
+    public_url = os.getenv("DATABASE_PUBLIC_URL")
+
+    chosen = public_url if database_url and "postgres.railway.internal" in database_url and public_url else database_url or public_url
+
+    logging.warning("DATABASE_URL=%s PUBLIC_URL=%s chosen=%s", database_url, public_url, chosen)
+    return chosen
+
+def create_app():
+    app = Flask(__name__, template_folder="templates", static_folder="static")
+
+    database_uri = get_database_uri()
+    if not database_uri:
+        raise RuntimeError("DATABASE_URL or DATABASE_PUBLIC_URL is required")
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # Uploads
