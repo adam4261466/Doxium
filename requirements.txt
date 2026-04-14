@@ -30,3 +30,4 @@ celery[redis]
 filelock
 redis
 groq
+psycopg2-binary
