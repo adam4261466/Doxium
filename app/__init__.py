@@ -57,10 +57,10 @@ def create_app():
 
     # Basic Config
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
-    db_url = os.getenv("DATABASE_URL", "")
-    if db_url.startswith("postgres://"):
-        db_url = db_url.replace("postgres://", "postgresql://", 1)
-    app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+    database_url = os.getenv("DATABASE_URL") or os.getenv("DATABASE_PUBLIC_URL")
+    if not database_url:
+        raise RuntimeError("DATABASE_URL or DATABASE_PUBLIC_URL must be set")
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # Uploads
