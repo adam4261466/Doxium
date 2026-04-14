@@ -65,7 +65,7 @@ def get_database_uri():
 
 def create_app():
     app = Flask(__name__, template_folder="templates", static_folder="static")
-
+    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
     database_uri = get_database_uri()
     if not database_uri:
         raise RuntimeError("DATABASE_URL or DATABASE_PUBLIC_URL is required")
