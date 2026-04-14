@@ -13,5 +13,10 @@ COPY . .
 
 RUN mkdir -p /data/faiss /data/uploads
 
-ENTRYPOINT ["/bin/sh", "-lc"]
-CMD ["/bin/sh", "-c", "gunicorn 'app:create_app()' --bind 0.0.0.0:${PORT:-8080} --workers 2 --timeout 120"]
+COPY . .
+
+RUN mkdir -p /data/faiss /data/uploads
+
+RUN chmod +x start.sh
+
+CMD ["/bin/sh", "start.sh"]
