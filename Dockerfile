@@ -13,4 +13,5 @@ COPY . .
 
 RUN mkdir -p /data/faiss /data/uploads
 
-CMD sh -c 'flask db upgrade && gunicorn "app:create_app()" --bind 0.0.0.0:$PORT --workers 2 --timeout 120'
+ENTRYPOINT ["/bin/sh", "-lc"]
+CMD ["flask db upgrade && gunicorn \"app:create_app()\" --bind \"0.0.0.0:${PORT:-8080}\" --workers 2 --timeout 120"]
