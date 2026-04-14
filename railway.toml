@@ -1,12 +1,13 @@
 [build]
 dockerfile = "Dockerfile"
 
-# This section now only applies to the 'web' service
-[services.web]
+[[services]]
+name = "web"
+startCommand = "gunicorn 'app:create_app()' --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
 healthcheckPath = "/health"
-restartPolicyType = "on_failure"
+restartPolicyType = "on-failure"
 
-# This section applies to your worker
-[services.worker]
-healthcheckPath = ""  # Disables healthcheck for the worker
-restartPolicyType = "on_failure"
+[[services]]
+name = "worker"
+startCommand = "celery -A app.celery_app.celery worker --loglevel=info --concurrency=2 -P prefork"
+restartPolicyType = "on-failure"
