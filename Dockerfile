@@ -13,6 +13,4 @@ COPY . .
 
 RUN mkdir -p /data/faiss /data/uploads
 
-RUN chmod +x start.sh
 
-CMD ["/bin/sh", "start.sh"]
