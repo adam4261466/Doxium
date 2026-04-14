@@ -97,7 +97,7 @@ def create_app():
     # Init Extensions
     db.init_app(app)
     with app.app_context():
-    db.create_all()
+        db.create_all()
     migrate.init_app(app, db)
     login_manager.init_app(app)
     csrf.init_app(app)
