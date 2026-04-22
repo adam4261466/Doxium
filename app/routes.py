@@ -4,7 +4,7 @@ import re
 import requests
 import hmac
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify, send_file
 from werkzeug.utils import secure_filename, safe_join
 from .models import User, File, Chunk
@@ -21,92 +21,59 @@ main = Blueprint("main", __name__)
 LS_API_BASE = "https://api.lemonsqueezy.com/v1"
 
 # -------------------------------------------------------
-# Plan limits — single source of truth
+# Plan limits
 # -------------------------------------------------------
 FREE_LIMITS = {
     "max_files": 3,
     "max_queries_per_month": 10,
     "storage_mb": 50,
-    "max_file_size_bytes": 5 * 1024 * 1024,          # 5 MB
+    "max_file_size_bytes": 5 * 1024 * 1024,
     "allowed_extensions": {".pdf"},
 }
- 
+
 PRO_LIMITS = {
     "max_files": 50,
     "max_queries_per_month": 100,
     "storage_mb": 500,
-    "max_file_size_bytes": 50 * 1024 * 1024,          # 50 MB
+    "max_file_size_bytes": 50 * 1024 * 1024,
     "allowed_extensions": {".txt", ".md", ".pdf", ".docx", ".pptx",
                            ".xlsx", ".csv", ".html", ".json"},
 }
- 
+
 def get_limits(user):
     return PRO_LIMITS if user.is_pilot else FREE_LIMITS
- 
-# Keep ALLOWED_EXTENSIONS as the union (used for the view-file safety check only)
+
 ALLOWED_EXTENSIONS = {".txt", ".md", ".pdf", ".docx", ".pptx",
                       ".xlsx", ".csv", ".html", ".json"}
- 
+
 def allowed_file(filename, user):
     ext = os.path.splitext(filename)[1].lower()
     return ext in get_limits(user)["allowed_extensions"]
- 
- 
-# -------------------------------------------------------
-# Storage check — uses per-plan storage_mb
-# -------------------------------------------------------
+
 def check_storage_space(user_id, required_space=0):
     try:
         user = User.query.get(user_id)
         limits = get_limits(user)
         limit_mb = limits["storage_mb"]
- 
+
         user_folder = os.path.join(current_app.config["UPLOAD_FOLDER"], str(user_id))
         if not os.path.exists(user_folder):
             return True, limit_mb, 0.0
- 
+
         total_size = 0
         for dirpath, dirnames, filenames in os.walk(user_folder):
             for fname in filenames:
                 fp = os.path.join(dirpath, fname)
                 if os.path.exists(fp):
                     total_size += os.path.getsize(fp)
- 
+
         used_mb = total_size / (1024 * 1024)
         available_mb = limit_mb - used_mb
         has_space = available_mb >= (required_space / (1024 * 1024))
         return has_space, available_mb, used_mb
     except Exception:
-        return True, get_limits(User.query.get(user_id))["storage_mb"], 0.0
- 
- 
-# -------------------------------------------------------
-# Query limit helpers
-# -------------------------------------------------------
-from datetime import datetime, timezone
- 
-def get_monthly_query_count(user):
-    """Return current month query count, resetting if a new billing month has started."""
-    now = datetime.now(timezone.utc)
-    if user.query_reset_date is None or now >= user.query_reset_date:
-        user.query_count = 0
-        # Next reset = same day next month
-        try:
-            next_reset = user.query_reset_date.replace(month=user.query_reset_date.month % 12 + 1) \
-                if user.query_reset_date else now.replace(day=now.day,
-                    month=now.month % 12 + 1 if now.month < 12 else 1,
-                    year=now.year if now.month < 12 else now.year + 1)
-        except Exception:
-            next_reset = now.replace(year=now.year + (1 if now.month == 12 else 0),
-                                     month=now.month % 12 + 1, day=1)
-        user.query_reset_date = next_reset
-        db.session.commit()
-    return user.query_count
- 
-def increment_query_count(user):
-    user.query_count = (user.query_count or 0) + 1
-    db.session.commit()
- 
+        return True, 500, 0.0
+
 def check_system_load():
     try:
         import psutil
@@ -157,7 +124,6 @@ def register():
         msg.body = f"""Hi {new_user.username},
 
 Welcome to Doxium! 🎉
-You're all set to start your pilot.
 
 Best,
 The Doxium Team
@@ -189,10 +155,10 @@ def login():
         if user and user.check_password(password):
             login_user(user)
             if user.is_pilot:
-                flash("Welcome back, Pilot user!", "success")
+                flash("Welcome back!", "success")
                 return redirect(url_for("main.dashboard"))
             else:
-                flash("Logged in successfully. Upgrade to Pilot for access to all features.", "info")
+                flash("Logged in. Upgrade to Pro for full access.", "info")
                 return redirect(url_for("main.pricing"))
 
         flash("Invalid email or password.", "danger")
@@ -213,9 +179,8 @@ def logout():
 @csrf.exempt
 def create_checkout_session():
     if current_user.is_pilot:
-        flash("You're already a Pilot member.", "info")
+        flash("You're already on Pro.", "info")
         return redirect(url_for("main.dashboard"))
-
     try:
         checkout_url = _create_ls_checkout_url(
             user_id=str(current_user.id),
@@ -252,7 +217,7 @@ def create_checkout():
 @login_required
 def payment_success():
     if current_user.is_pilot:
-        flash("You're all set! Your Pilot access is active.", "success")
+        flash("You're all set! Pro access is active.", "success")
         return redirect(url_for("main.dashboard"))
     return render_template("success.html", user=current_user)
 
@@ -267,7 +232,6 @@ def me_status():
 
 
 @main.route("/pricing")
-@login_required
 def pricing():
     return render_template("pricing.html", user=current_user)
 
@@ -289,8 +253,6 @@ def lemonsqueezy_webhook():
     if not sig_header:
         return jsonify(error="Missing signature"), 400
 
-    # FIX: was hmac.new() which does not exist — correct function is hmac.new()
-    # Python's hmac module uses hmac.new(key, msg, digestmod)
     computed = hmac.new(webhook_secret.encode(), payload, hashlib.sha256).hexdigest()
     sig_value = sig_header.split("=", 1)[-1] if "=" in sig_header else sig_header
     if not hmac.compare_digest(computed, sig_value):
@@ -435,77 +397,72 @@ def dashboard():
 @login_required
 def upload():
     is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
- 
+
     def fail(msg):
         if is_ajax:
             return jsonify(success=False, error=msg)
         flash(msg, "danger")
         return redirect(url_for("main.dashboard"))
- 
+
     if not current_user.is_pilot:
         return fail("Upgrade to Pro to upload files.")
- 
+
     limits = get_limits(current_user)
- 
+
     try:
         is_overloaded, load_pct = check_system_load()
         if is_overloaded:
             return fail(f"System overloaded ({load_pct:.1f}%). Try again in a few minutes.")
- 
+
         if "file" not in request.files:
             return fail("No file part.")
- 
+
         f = request.files["file"]
         if not f.filename:
             return fail("No file selected.")
- 
+
         ext = os.path.splitext(f.filename)[1].lower()
         if ext not in limits["allowed_extensions"]:
             allowed = ", ".join(sorted(limits["allowed_extensions"]))
             return fail(f"File type not allowed on your plan. Allowed: {allowed}")
- 
+
         f.seek(0, os.SEEK_END)
         size = f.tell()
         f.seek(0)
- 
+
         if size == 0:
             return fail("File is empty.")
- 
+
         if size > limits["max_file_size_bytes"]:
             max_mb = limits["max_file_size_bytes"] // (1024 * 1024)
             return fail(f"File too large. Max size on your plan is {max_mb} MB.")
- 
+
         user_file_count = File.query.filter_by(user_id=current_user.id).count()
         if user_file_count >= limits["max_files"]:
             return fail(f"You have reached the {limits['max_files']}-file limit on your plan.")
- 
+
         has_space, available_mb, used_mb = check_storage_space(current_user.id, size)
         if not has_space:
             return fail(f"Storage limit reached. Used {used_mb:.1f} MB of {limits['storage_mb']} MB.")
- 
+
         unique_filename = f"{uuid.uuid4().hex}{ext}"
         user_folder = os.path.join(current_app.config["UPLOAD_FOLDER"], str(current_user.id))
         os.makedirs(user_folder, exist_ok=True)
         filepath = os.path.join(user_folder, unique_filename)
- 
+
         f.save(filepath)
         if not os.path.exists(filepath):
             raise Exception("Failed to save file to disk.")
- 
-        new_file = File(
-            filename=f.filename,
-            path=filepath,
-            size=size,
-            user_id=current_user.id
-        )
+
+        new_file = File(filename=f.filename, path=filepath, size=size, user_id=current_user.id)
         db.session.add(new_file)
         db.session.commit()
- 
+
         if is_ajax:
             return jsonify(success=True, message="File uploaded successfully.")
         flash("File uploaded successfully.", "success")
         return redirect(url_for("main.dashboard"))
- 
+
     except Exception as e:
         if "filepath" in locals() and os.path.exists(filepath):
             try:
@@ -513,6 +470,7 @@ def upload():
             except Exception:
                 pass
         return fail(f"Upload failed: {str(e)}")
+
 
 # -----------------------
 # Process / Delete / View Routes
@@ -522,7 +480,7 @@ def upload():
 def process_file_route(file_id):
     from .tasks import process_file_task
     if not current_user.is_pilot:
-        flash("Upgrade to Pilot to process files.", "warning")
+        flash("Upgrade to Pro to process files.", "warning")
         return redirect(url_for("main.pricing"))
 
     file = File.query.filter_by(id=file_id, user_id=current_user.id).first_or_404()
@@ -541,7 +499,7 @@ def process_file_route(file_id):
 def delete_file(file_id):
     from .tasks import rebuild_index_task
     if not current_user.is_pilot:
-        flash("Upgrade to Pilot to delete files.", "warning")
+        flash("Upgrade to Pro to delete files.", "warning")
         return redirect(url_for("main.pricing"))
 
     file = File.query.filter_by(id=file_id, user_id=current_user.id).first_or_404()
@@ -557,7 +515,7 @@ def delete_file(file_id):
     if was_processed:
         try:
             rebuild_index_task.delay(current_user.id)
-            flash("File deleted. FAISS index is rebuilding in the background.", "info")
+            flash("File deleted. FAISS index is rebuilding.", "info")
         except Exception:
             flash("File deleted but FAISS index rebuild failed to start.", "warning")
     else:
@@ -590,30 +548,16 @@ def query_documents():
     if not current_user.is_pilot:
         flash("Upgrade to Pro to query documents.", "warning")
         return redirect(url_for("main.pricing"))
- 
+
     query_text = request.form.get("query", "").strip()
     if not query_text:
         flash("Please enter a query.", "danger")
         return redirect(url_for("main.dashboard"))
- 
+
     if len(query_text) > 1000:
         flash("Query too long. Max 1000 characters.", "warning")
         return redirect(url_for("main.dashboard"))
- 
-    # Monthly query limit check
-    limits = get_limits(current_user)
-    current_count = get_monthly_query_count(current_user)
-    if limits["max_queries_per_month"] is not None and current_count >= limits["max_queries_per_month"]:
-        flash(
-            f"You've reached your {limits['max_queries_per_month']} queries/month limit. "
-            "Your quota resets on your next billing date.",
-            "warning"
-        )
-        return redirect(url_for("main.dashboard"))
- 
-    # Increment before dispatching so concurrent requests can't race past the limit
-    increment_query_count(current_user)
- 
+
     from .tasks import generate_query_answer
     task = generate_query_answer.delay(current_user.id, query_text)
     flash("Generating answer… This may take 10–30 seconds.", "info")
@@ -646,6 +590,22 @@ def query_status(task_id):
             return redirect(url_for("main.dashboard"))
 
     return render_template("query_processing.html", task_id=task_id)
+
+
+# -----------------------
+# Legal Routes
+# -----------------------
+@main.route("/terms")
+def terms():
+    return render_template("terms.html")
+
+@main.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
+
+@main.route("/refund")
+def refund():
+    return render_template("refund.html")
 
 
 # -----------------------
@@ -780,19 +740,6 @@ def system_stats():
     total_used_mb = total_used / (1024 * 1024)
     return render_template("admin_stats.html", user_count=user_count, pilot_count=pilot_count,
                            file_count=file_count, chunk_count=chunk_count, total_used_mb=total_used_mb)
-
-
-@main.route("/terms")
-def terms():
-    return render_template("terms.html")
- 
-@main.route("/privacy")
-def privacy():
-    return render_template("privacy.html")
- 
-@main.route("/refund")
-def refund():
-    return render_template("refund.html")
 
 
 # -----------------------
