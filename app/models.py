@@ -10,6 +10,10 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    
+    # Query tracking for monthly limit enforcement
+    query_count = db.Column(db.Integer, default=0, nullable=False)
+    query_reset_date = db.Column(db.DateTime, nullable=True)
 
     # OLD (keep for now)
     is_pilot = db.Column(db.Boolean, default=False, nullable=True)
