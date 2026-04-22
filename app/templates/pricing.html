@@ -1,120 +1,147 @@
 {% extends "base.html" %}
-
 {% block title %}Pricing - Doxium{% endblock %}
-
 {% block content %}
 <div class="container-fluid py-5">
     <div class="row justify-content-center">
-        <div class="col-lg-10">
+        <div class="col-lg-9">
+ 
             <div class="text-center mb-5">
-                <h1 class="display-4 fw-bold mb-3">Level Up Your Productivity</h1>
-                <p class="lead">Transform the way you manage, search, and analyze documents with our AI subscription.</p>
+                <h1 class="display-4 fw-bold mb-3">Simple, Honest Pricing</h1>
+                <p class="lead text-muted">Start free. Upgrade when you need more power.</p>
             </div>
-
-            {% if current_user.is_authenticated %}
-                {% if current_user.is_pilot %}
-                    <div class="row justify-content-center">
-                        <div class="col-md-8">
-                            <div class="alert alert-success text-center">
-                                <h4 class="mb-1">You're a Doxium Pilot member</h4>
-                                <p class="mb-2 small">Thank you for being a subscriber.</p>
-                                <a href="{{ url_for('main.dashboard') }}" class="btn btn-success">Go to Dashboard</a>
-                            </div>
-                        </div>
-                    </div>
-                {% else %}
-                    <!-- Subscribe to Pilot -->
-                    <div class="row justify-content-center">
-                        <div class="col-lg-6">
-                            <div class="card glow-primary">
-                                <div class="card-header text-center">
-                                    <i class="fas fa-rocket fa-4x text-primary mb-3"></i>
-                                    <h2 class="mb-0">Doxium Pilot</h2>
-                                    <div class="mt-3">
-                                        <span class="badge bg-primary fs-4">$15/month</span>
-                                        <small class="text-muted d-block">Billed monthly</small>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <p class="lead text-center mb-4">Access advanced AI features and unlimited document management .</p>
-
-                                    <div class="mb-4">
-                                        <h5 class="text-center mb-3">What’s included:</h5>
-                                        <div class="row g-3">
-                                            <div class="col-12">
-                                                <div class="d-flex align-items-center">
-                                                    <i class="fas fa-check-circle text-success me-3 fa-lg"></i>
-                                                    <span>Unlimited document uploads per month</span>
-                                                </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="d-flex align-items-center">
-                                                    <i class="fas fa-check-circle text-success me-3 fa-lg"></i>
-                                                    <span>AI-powered semantic search across all documents</span>
-                                                </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="d-flex align-items-center">
-                                                    <i class="fas fa-check-circle text-success me-3 fa-lg"></i>
-                                                    <span>Advanced file processing (PDF, DOCX, PPTX, CSV, HTML, JSON)</span>
-                                                </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="d-flex align-items-center">
-                                                    <i class="fas fa-check-circle text-success me-3 fa-lg"></i>
-                                                    <span>Smart document summaries & insights</span>
-                                                </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="d-flex align-items-center">
-                                                    <i class="fas fa-check-circle text-success me-3 fa-lg"></i>
-                                                    <span>Secure cloud storage with encryption</span>
-                                                </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="d-flex align-items-center">
-                                                    <i class="fas fa-check-circle text-success me-3 fa-lg"></i>
-                                                    <span>Priority support</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="text-center">
-                                        <form action="{{ url_for('main.create_checkout_session') }}" method="POST">
-                                            <button type="submit" class="btn btn-success btn-lg w-100">
-                                                <i class="fas fa-credit-card me-2"></i>Subscribe to Pilot - $15/month
-                                            </button>
-                                        </form>
-                                        <small class="text-muted d-block mt-2">Secure payment powered by Lemon Squeezy</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% endif %}
-            {% else %}
-                <!-- Not Authenticated -->
-                <div class="row justify-content-center">
+ 
+            {% if current_user.is_authenticated and current_user.is_pilot %}
+                <div class="row justify-content-center mb-4">
                     <div class="col-md-8">
-                        <div class="card glow-primary">
-                            <div class="card-body text-center py-5">
-                                <i class="fas fa-sign-in-alt fa-4x text-primary mb-4"></i>
-                                <h3 class="mb-3">Sign In to View Pricing</h3>
-                                <p class="lead mb-4">Create an account or sign in to explore Doxium's premium features and subscription options.</p>
-                                <div class="d-flex justify-content-center gap-3">
-                                    <a href="{{ url_for('main.register') }}" class="btn btn-primary btn-lg">
-                                        <i class="fas fa-user-plus me-2"></i>Get Started
-                                    </a>
-                                    <a href="{{ url_for('main.login') }}" class="btn btn-outline-primary btn-lg">
-                                        <i class="fas fa-sign-in-alt me-2"></i>Sign In
-                                    </a>
-                                </div>
-                            </div>
+                        <div class="alert alert-success text-center">
+                            <i class="fas fa-star me-2"></i><strong>You're on Doxium Pro.</strong>
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-success btn-sm ms-3">Dashboard</a>
                         </div>
                     </div>
                 </div>
             {% endif %}
+ 
+            <div class="row g-4 justify-content-center">
+ 
+                <!-- FREE -->
+                <div class="col-lg-5 col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header text-center py-4">
+                            <h5 class="text-muted mb-1">FREE</h5>
+                            <div class="display-5 fw-bold">$0</div>
+                            <small class="text-muted">No credit card needed</small>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>3 document uploads (lifetime)</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>10 AI queries / month</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>50 MB storage</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>PDF files only</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>5 MB max file size</li>
+                                <li class="mb-2 text-muted"><i class="fas fa-times text-danger me-2"></i>No DOCX / PPTX / CSV / JSON</li>
+                                <li class="mb-2 text-muted"><i class="fas fa-times text-danger me-2"></i>Community support only</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer text-center pb-4">
+                            {% if current_user.is_authenticated %}
+                                <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-primary w-100">Go to Dashboard</a>
+                            {% else %}
+                                <a href="{{ url_for('main.register') }}" class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-user-plus me-2"></i>Get Started Free
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+ 
+                <!-- PRO -->
+                <div class="col-lg-5 col-md-6">
+                    <div class="card h-100" style="border-color: var(--accent) !important; box-shadow: 0 0 30px rgba(99,102,241,0.3);">
+                        <div class="card-header text-center py-4" style="background: var(--accent-gradient);">
+                            <span class="badge bg-warning mb-2">RECOMMENDED</span>
+                            <h5 class="text-white mb-1">PRO</h5>
+                            <div class="display-5 fw-bold text-white">$7<small class="fs-6 fw-normal">/month</small></div>
+                            <small class="text-white-50">Billed monthly · Cancel anytime</small>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>50</strong> document uploads (lifetime)</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>100</strong> AI queries / month</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>500 MB</strong> storage</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>All file types (PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, HTML, JSON)</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>50 MB</strong> max file size</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Email support</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>7-day money-back guarantee</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer text-center pb-4">
+                            {% if current_user.is_authenticated and not current_user.is_pilot %}
+                                <form action="{{ url_for('main.create_checkout_session') }}" method="POST">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-primary w-100 btn-lg">
+                                        <i class="fas fa-bolt me-2"></i>Upgrade to Pro — $7/mo
+                                    </button>
+                                </form>
+                            {% elif not current_user.is_authenticated %}
+                                <a href="{{ url_for('main.register') }}" class="btn btn-primary w-100 btn-lg">
+                                    <i class="fas fa-bolt me-2"></i>Get Pro — $7/mo
+                                </a>
+                            {% else %}
+                                <button class="btn btn-primary w-100 btn-lg" disabled>
+                                    <i class="fas fa-check me-2"></i>Current Plan
+                                </button>
+                            {% endif %}
+                            <small class="text-muted d-block mt-2">
+                                <i class="fas fa-lock me-1"></i>Secure payment by Lemon Squeezy
+                            </small>
+                        </div>
+                    </div>
+                </div>
+ 
+            </div>
+ 
+            <!-- FAQ -->
+            <div class="row justify-content-center mt-5">
+                <div class="col-lg-9">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>Frequently Asked Questions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <strong>What file types does Pro support?</strong>
+                                <p class="text-muted mb-0 mt-1">PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, HTML, and JSON. Free plan is PDF only.</p>
+                            </div>
+                            <div class="mb-4">
+                                <strong>Do document upload limits reset monthly?</strong>
+                                <p class="text-muted mb-0 mt-1">No — they are lifetime totals. You can upload up to 50 documents total on Pro. AI query limits (100/month) do reset on your billing date.</p>
+                            </div>
+                            <div class="mb-4">
+                                <strong>What happens when I cancel?</strong>
+                                <p class="text-muted mb-0 mt-1">Your Pro access continues until the billing period ends, then your account reverts to Free limits. Files beyond the Free limit are kept for 30 days for you to download.</p>
+                            </div>
+                            <div class="mb-4">
+                                <strong>Is there a free trial?</strong>
+                                <p class="text-muted mb-0 mt-1">We offer a 7-day money-back guarantee instead — you get full Pro access immediately and can request a full refund within 7 days if you're not satisfied.</p>
+                            </div>
+                            <div>
+                                <strong>How are queries counted?</strong>
+                                <p class="text-muted mb-0 mt-1">Each question submitted in the dashboard counts as 1 query, regardless of how long your documents are. Queries reset on your monthly billing date.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+ 
+            <div class="text-center mt-4">
+                <small class="text-muted">
+                    By subscribing you agree to our
+                    <a href="{{ url_for('main.terms') }}" class="text-primary">Terms of Service</a>,
+                    <a href="{{ url_for('main.privacy') }}" class="text-primary">Privacy Policy</a>, and
+                    <a href="{{ url_for('main.refund') }}" class="text-primary">Refund Policy</a>.
+                </small>
+            </div>
+ 
         </div>
     </div>
 </div>
