@@ -11,9 +11,6 @@ import os
 
 load_dotenv()
 
-# ---------------------------------------
-# Extensions
-# ---------------------------------------
 db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
@@ -30,13 +27,9 @@ limiter = Limiter(
 
 from .models import User
 
-# ---------------------------------------
-# Flask-Login configuration
-# ---------------------------------------
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
 
 @login_manager.unauthorized_handler
 def unauthorized():
@@ -44,12 +37,7 @@ def unauthorized():
         return jsonify(success=False, error="Unauthorized"), 401
     return redirect(url_for("main.login"))
 
-
-# ---------------------------------------
-# Application Factory
-# ---------------------------------------
 import logging
-from sqlalchemy import text
 
 def get_database_uri():
     database_url = os.getenv("DATABASE_URL")
@@ -57,29 +45,6 @@ def get_database_uri():
     chosen = public_url if database_url and "postgres.railway.internal" in database_url and public_url else database_url or public_url
     logging.warning("DATABASE_URL=%s PUBLIC_URL=%s chosen=%s", database_url, public_url, chosen)
     return chosen
-
-
-def _run_safe_migrations(app):
-    """
-    Add any missing columns to existing tables without needing Alembic migrations.
-    Safe to run on every startup — uses IF NOT EXISTS so it never fails twice.
-    """
-    with app.app_context():
-        with db.engine.connect() as conn:
-            migrations = [
-                # query tracking columns added in April 2026
-                "ALTER TABLE users ADD COLUMN IF NOT EXISTS query_count INTEGER NOT NULL DEFAULT 0",
-                "ALTER TABLE users ADD COLUMN IF NOT EXISTS query_reset_date TIMESTAMP WITHOUT TIME ZONE",
-            ]
-            for sql in migrations:
-                try:
-                    conn.execute(text(sql))
-                    conn.commit()
-                    logging.info("Migration OK: %s", sql[:60])
-                except Exception as e:
-                    conn.rollback()
-                    logging.warning("Migration skipped (%s): %s", sql[:60], e)
-
 
 def create_app():
     app = Flask(__name__, template_folder="templates", static_folder="static")
@@ -91,35 +56,23 @@ def create_app():
 
     app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-    # Uploads
     app.config["UPLOAD_FOLDER"] = os.getenv("UPLOAD_FOLDER", "data/uploads")
-    app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024 * 1024  # 1GB
-
-    # Cookies
+    app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024 * 1024
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SECURE"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-
-    # Mail Config
     app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER")
     app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT", 587))
     app.config["MAIL_USE_TLS"] = os.getenv("MAIL_USE_TLS", "True") == "True"
     app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
     app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
     app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER")
-
-    # Celery Defaults
     app.config.setdefault("CELERY_BROKER_URL", REDIS_URL)
     app.config.setdefault("CELERY_RESULT_BACKEND", REDIS_URL)
 
-    # Init Extensions
     db.init_app(app)
     with app.app_context():
         db.create_all()
-
-    # Run safe column migrations AFTER db.create_all()
-    _run_safe_migrations(app)
 
     migrate.init_app(app, db)
     login_manager.init_app(app)
@@ -127,13 +80,11 @@ def create_app():
     limiter.init_app(app)
     mail.init_app(app)
 
-    # Session Injection for templates
     @app.context_processor
     def inject_session():
         from flask import session
         return dict(session=session)
 
-    # Register Blueprints
     from .routes import main
     app.register_blueprint(main)
 
