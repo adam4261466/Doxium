@@ -3,13 +3,11 @@
 
 [[services]]
   name = "web"
-  # Override the Docker CMD for the web service
-  startCommand = "gunicorn 'app:create_app()' --bind 0.0.0.0:${PORT:-8080} --workers 2 --timeout 120"
+  startCommand = "flask db upgrade && gunicorn 'app:create_app()' --bind 0.0.0.0:${PORT:-8080} --workers 2 --timeout 120"
   healthcheckPath = "/health"
   restartPolicyType = "on-failure"
 
 [[services]]
   name = "worker"
-  # Override the Docker CMD for the worker service
   startCommand = "celery -A app.celery_app.celery worker --loglevel=info --concurrency=2 -P prefork"
   restartPolicyType = "on-failure"
