@@ -1,3 +1,5 @@
+import os
+import logging
 from flask import Flask, request, jsonify, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -7,7 +9,7 @@ from dotenv import load_dotenv
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_mail import Mail
-import os
+from sqlalchemy import text # Needed for the column fix
 
 load_dotenv()
 
@@ -37,17 +39,19 @@ def unauthorized():
         return jsonify(success=False, error="Unauthorized"), 401
     return redirect(url_for("main.login"))
 
-import logging
-
 def get_database_uri():
     database_url = os.getenv("DATABASE_URL")
     public_url = os.getenv("DATABASE_PUBLIC_URL")
+    # Railway internal URLs can sometimes be finicky; this prioritizes the working one
     chosen = public_url if database_url and "postgres.railway.internal" in database_url and public_url else database_url or public_url
-    logging.warning("DATABASE_URL=%s PUBLIC_URL=%s chosen=%s", database_url, public_url, chosen)
+    logging.warning("DATABASE_URL Connection Attempted")
     return chosen
 
 def create_app():
-    app = Flask(__name__, template_folder="templates", static_folder="static")
+    # Use absolute path for templates to avoid TemplateNotFound errors
+    template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'templates'))
+    app = Flask(__name__, template_folder=template_dir, static_folder="static")
+    
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
     database_uri = get_database_uri()
@@ -71,8 +75,17 @@ def create_app():
     app.config.setdefault("CELERY_RESULT_BACKEND", REDIS_URL)
 
     db.init_app(app)
+
     with app.app_context():
         db.create_all()
+        # This part ensures your new columns are added even if you didn't use migrations
+        try:
+            db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS query_count INTEGER DEFAULT 0'))
+            db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS query_reset_date TIMESTAMP'))
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            logging.info("Column check skipped: %s", e)
 
     migrate.init_app(app, db)
     login_manager.init_app(app)
