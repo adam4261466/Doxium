@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy - Doxium{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 860px;">
+    <div class="card mb-4">
+        <div class="card-body p-5">
+            <div class="text-center mb-5">
+                <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
+                <h1 class="fw-bold">Privacy Policy</h1>
+                <p class="text-muted">Last updated: April 2026</p>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>1. Introduction</h4>
+                <p class="text-muted">Doxium ("we", "our", "us") is committed to protecting your personal data. This Privacy Policy explains what data we collect, how we use it, and your rights. It applies to all users (Free and Pro plans). By using Doxium you agree to the practices described here.</p>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>2. Data We Collect</h4>
+
+                <p class="text-muted mb-1"><strong class="text-white">Account data</strong></p>
+                <p class="text-muted mb-3">Username, email address, and a hashed password (never stored as plain text). Pro subscribers also have a subscription status and billing dates stored on their account.</p>
+
+                <p class="text-muted mb-1"><strong class="text-white">Uploaded documents</strong></p>
+                <p class="text-muted mb-3">Files you upload are stored on Railway cloud infrastructure in a private per-user volume. Document text is chunked and converted into vector embeddings stored in a per-user FAISS index used only for your queries. Storage limit: 50 MB (Free) / 500 MB (Pro).</p>
+
+                <p class="text-muted mb-1"><strong class="text-white">Query data</strong></p>
+                <p class="text-muted mb-3">When you submit a query, the query text and the top relevant document excerpts are sent to Groq's API to generate an answer. We track your monthly query count to enforce plan limits (10/month Free, 100/month Pro). We do not permanently store query text or AI-generated answers.</p>
+
+                <p class="text-muted mb-1"><strong class="text-white">Usage & technical data</strong></p>
+                <p class="text-muted mb-3">We log upload events, query counts, and errors to monitor system health and enforce limits. We collect your IP address for rate limiting and abuse detection only. We do not run third-party analytics on Doxium.</p>
+
+                <p class="text-muted mb-1"><strong class="text-white">Payment data</strong></p>
+                <p class="text-muted">Pro plan payments ($7/month) are processed by <a href="https://www.lemonsqueezy.com" target="_blank" class="text-primary">Lemon Squeezy</a>. We do not store credit card details. We receive subscription status (active, cancelled, expired) and your email via Lemon Squeezy webhooks.</p>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>3. How We Use Your Data</h4>
+                <ul class="text-muted">
+                    <li>To authenticate your account and enforce plan feature limits</li>
+                    <li>To process, store, and retrieve your documents for AI-powered queries</li>
+                    <li>To manage your Pro subscription via Lemon Squeezy</li>
+                    <li>To send transactional emails (welcome, subscription confirmation, renewal notices)</li>
+                    <li>To detect abuse and enforce rate limits</li>
+                    <li>To monitor infrastructure health and debug errors</li>
+                </ul>
+                <p class="text-muted mt-2">We do not use your data for advertising, profiling, or any purpose beyond operating the Service.</p>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>4. Third-Party Services</h4>
+                <div class="table-responsive">
+                    <table class="table table-bordered" style="color: var(--text-muted); border-color: rgba(255,255,255,0.15);">
+                        <thead>
+                            <tr style="background: rgba(255,255,255,0.08);">
+                                <th>Service</th>
+                                <th>Purpose</th>
+                                <th>Data shared</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Railway</td><td>Cloud hosting & file storage</td><td>All user data at rest</td></tr>
+                            <tr><td>Lemon Squeezy</td><td>Payment processing (Pro plan)</td><td>Email, subscription status</td></tr>
+                            <tr><td>Groq API</td><td>AI answer generation</td><td>Query text + relevant doc excerpts only (not stored by Groq)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-muted mt-2">We do not sell your data to any third party.</p>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>5. Data Retention</h4>
+                <p class="text-muted">Data is retained as long as your account is active. Deleting a file removes it from disk and the FAISS index immediately. When you cancel Pro, your account reverts to Free limits; documents beyond Free limits are deleted after 30 days. Full account deletion removes all data permanently. Billing records are kept up to 7 years for legal compliance.</p>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>6. Security</h4>
+                <ul class="text-muted">
+                    <li>HTTPS encryption for all data in transit</li>
+                    <li>Passwords hashed with Werkzeug (bcrypt) — never stored in plain text</li>
+                    <li>CSRF protection on all forms via Flask-WTF</li>
+                    <li>IP-based rate limiting on login (5 attempts/minute) and queries (2/minute)</li>
+                    <li>Per-user isolated file storage and FAISS indexes</li>
+                    <li>Railway provides physical and network security for all hosted infrastructure</li>
+                </ul>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>7. Your Rights</h4>
+                <ul class="text-muted">
+                    <li><strong class="text-white">Access</strong> — request a copy of your personal data</li>
+                    <li><strong class="text-white">Rectification</strong> — correct inaccurate account data</li>
+                    <li><strong class="text-white">Erasure</strong> — request full deletion of your account and all data</li>
+                    <li><strong class="text-white">Portability</strong> — download your original uploaded files from the dashboard at any time</li>
+                </ul>
+                <p class="text-muted mt-2">Email <strong>support@doxium.app</strong> to exercise these rights. We respond within 30 days.</p>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>8. Cookies</h4>
+                <p class="text-muted">Doxium uses only one essential session cookie for authentication. We do not use advertising or tracking cookies.</p>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>9. Children's Privacy</h4>
+                <p class="text-muted">Doxium is not directed at children under 16. Contact us immediately if you believe a minor has registered.</p>
+            </div>
+
+            <div class="legal-section">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>10. Contact</h4>
+                <p class="text-muted"><strong>support@doxium.app</strong></p>
+            </div>
+        </div>
+    </div>
+    <div class="text-center">
+        <a href="{{ url_for('main.home') }}" class="btn btn-outline-primary me-2"><i class="fas fa-home me-2"></i>Home</a>
+        <a href="{{ url_for('main.terms') }}" class="btn btn-outline-primary me-2"><i class="fas fa-file-contract me-2"></i>Terms of Service</a>
+        <a href="{{ url_for('main.refund') }}" class="btn btn-outline-primary"><i class="fas fa-undo me-2"></i>Refund Policy</a>
+    </div>
+</div>
+{% endblock %}
