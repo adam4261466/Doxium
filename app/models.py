@@ -10,24 +10,16 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
-    
-    # Query tracking for monthly limit enforcement
-    query_count = db.Column(db.Integer, default=0, nullable=False)
-    query_reset_date = db.Column(db.DateTime, nullable=True)
 
-    # OLD (keep for now)
     is_pilot = db.Column(db.Boolean, default=False, nullable=True)
     pilot_purchased_at = db.Column(db.DateTime, nullable=True)
 
-    # Admin
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
 
-    # ✅ NEW — Lemon Squeezy subscription fields
     subscription_status = db.Column(db.String(20), default="inactive")
     subscription_expires_at = db.Column(db.DateTime, nullable=True)
     lemonsqueezy_subscription_id = db.Column(db.String(100), nullable=True)
 
-    # Relationship to files
     files = db.relationship('File', backref='user', lazy=True)
 
     def set_password(self, password):
@@ -35,6 +27,7 @@ class User(db.Model, UserMixin):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
 
 class File(db.Model):
     __tablename__ = 'files'
@@ -49,6 +42,7 @@ class File(db.Model):
 
     chunks = db.relationship('Chunk', backref='file', lazy=True)
 
+
 class Chunk(db.Model):
     __tablename__ = 'chunks'
     id = db.Column(db.Integer, primary_key=True)
@@ -59,6 +53,7 @@ class Chunk(db.Model):
     end_char = db.Column(db.Integer, default=0)
     chunk_metadata = db.Column(db.JSON, default=dict)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+
 
 class IndexMeta(db.Model):
     __tablename__ = 'index_meta'
