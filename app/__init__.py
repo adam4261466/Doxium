@@ -20,8 +20,6 @@ login_manager = LoginManager()
 csrf = CSRFProtect()
 mail = Mail()
 
-# Rate limiting per IP
-# Rate limiting per IP with Redis storage
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 limiter = Limiter(
@@ -30,8 +28,6 @@ limiter = Limiter(
     storage_uri=os.getenv("REDIS_URL", "redis://localhost:6379/1")
 )
 
-
-# Import after db initialization
 from .models import User
 
 # ---------------------------------------
@@ -53,19 +49,42 @@ def unauthorized():
 # Application Factory
 # ---------------------------------------
 import logging
+from sqlalchemy import text
 
 def get_database_uri():
     database_url = os.getenv("DATABASE_URL")
     public_url = os.getenv("DATABASE_PUBLIC_URL")
-
     chosen = public_url if database_url and "postgres.railway.internal" in database_url and public_url else database_url or public_url
-
     logging.warning("DATABASE_URL=%s PUBLIC_URL=%s chosen=%s", database_url, public_url, chosen)
     return chosen
+
+
+def _run_safe_migrations(app):
+    """
+    Add any missing columns to existing tables without needing Alembic migrations.
+    Safe to run on every startup — uses IF NOT EXISTS so it never fails twice.
+    """
+    with app.app_context():
+        with db.engine.connect() as conn:
+            migrations = [
+                # query tracking columns added in April 2026
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS query_count INTEGER NOT NULL DEFAULT 0",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS query_reset_date TIMESTAMP WITHOUT TIME ZONE",
+            ]
+            for sql in migrations:
+                try:
+                    conn.execute(text(sql))
+                    conn.commit()
+                    logging.info("Migration OK: %s", sql[:60])
+                except Exception as e:
+                    conn.rollback()
+                    logging.warning("Migration skipped (%s): %s", sql[:60], e)
+
 
 def create_app():
     app = Flask(__name__, template_folder="templates", static_folder="static")
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+
     database_uri = get_database_uri()
     if not database_uri:
         raise RuntimeError("DATABASE_URL or DATABASE_PUBLIC_URL is required")
@@ -98,6 +117,10 @@ def create_app():
     db.init_app(app)
     with app.app_context():
         db.create_all()
+
+    # Run safe column migrations AFTER db.create_all()
+    _run_safe_migrations(app)
+
     migrate.init_app(app, db)
     login_manager.init_app(app)
     csrf.init_app(app)
