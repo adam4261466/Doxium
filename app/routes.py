@@ -383,7 +383,7 @@ def _parse_ls_datetime(value):
         return None
 
 
-def _set_user_pilot(user, is_pilot, status=None, subscription_id=None, expires_at=None, purchased_at=None):
+def _set_user_pilot(user, is_pilot, status=None, subscription_id=None, expires_at=None, purchased_at=None, portal_url=None):
     user.is_pilot = bool(is_pilot)
     if status:
         user.subscription_status = status
@@ -393,8 +393,9 @@ def _set_user_pilot(user, is_pilot, status=None, subscription_id=None, expires_a
         user.subscription_expires_at = expires_at
     if purchased_at:
         user.pilot_purchased_at = purchased_at
+    if portal_url:
+        user.ls_customer_portal_url = portal_url
     db.session.commit()
-
 
 # -----------------------
 # Dashboard + File Management
