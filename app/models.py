@@ -11,7 +11,7 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     ls_customer_portal_url = db.Column(db.String(500), nullable=True)
-
+    subscription_cancelled_at = db.Column(db.DateTime, nullable=True)
     is_pilot = db.Column(db.Boolean, default=False, nullable=True)
     pilot_purchased_at = db.Column(db.DateTime, nullable=True)
 
