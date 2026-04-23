@@ -1,7 +1,14 @@
 from celery import Celery
 from . import create_app
 
+from celery.schedules import crontab
 
+celery.conf.beat_schedule = {
+    "cleanup-expired-files-daily": {
+        "task": "tasks.cleanup_expired_files",
+        "schedule": crontab(hour=3, minute=0),  # runs every day at 3am
+    },
+}
 def make_celery(app):
     """Create and configure a Celery instance bound to the Flask app."""
     
