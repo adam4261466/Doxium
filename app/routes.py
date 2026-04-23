@@ -14,7 +14,7 @@ from flask_limiter.util import get_remote_address
 from .document_processor import extract_text
 from .faiss_index import FaissIndex
 from .embeddings import EmbeddingGenerator
-
+from .models import User, File, Chunk, BillingEvent
 
 main = Blueprint("main", __name__)
 
@@ -304,7 +304,18 @@ def lemonsqueezy_webhook():
 
     if not user:
         return jsonify(success=True)
-
+    try:
+        billing_event = BillingEvent(
+            user_id=user.id if user else None,
+            event_type=event_name,
+            ls_order_id=str(data.get("id", "")),
+            ls_subscription_id=attrs.get("id"),
+            raw_payload=event,
+        )
+        db.session.add(billing_event)
+        db.session.commit()
+    except Exception:
+        pass
     if event_name == "order_created":
         _set_user_pilot(user, is_pilot=True, status="active", purchased_at=datetime.utcnow())
     elif event_name == "order_refunded":
