@@ -18,7 +18,31 @@ def rebuild_index_task(user_id: int) -> int:
     index = FaissIndex(dim=embedder.get_dimension(), user_id=user_id)
     index.rebuild_index_from_chunks()
     return index.get_index_size()
+from datetime import datetime, timedelta
 
+@celery.task(name="tasks.cleanup_expired_files")
+def cleanup_expired_files():
+    """Delete files beyond Free limits for users cancelled 30+ days ago."""
+    cutoff = datetime.utcnow() - timedelta(days=30)
+    
+    expired_users = User.query.filter(
+        User.is_pilot == False,
+        User.subscription_cancelled_at != None,
+        User.subscription_cancelled_at <= cutoff
+    ).all()
+
+    for user in expired_users:
+        files = File.query.filter_by(user_id=user.id)\
+                          .order_by(File.created_at.asc()).all()
+        # Free limit is 3 files — delete everything beyond that
+        files_to_delete = files[FREE_LIMITS["max_files"]:]
+        for file in files_to_delete:
+            for chunk in file.chunks:
+                db.session.delete(chunk)
+            if os.path.exists(file.path):
+                os.remove(file.path)
+            db.session.delete(file)
+        db.session.commit()
 
 @celery.task(name="tasks.generate_query_answer")
 def generate_query_answer(user_id, query_text):
