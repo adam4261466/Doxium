@@ -212,6 +212,30 @@ def create_checkout():
         current_app.logger.exception("Failed to create Lemon Squeezy checkout")
         return jsonify({"error": "failed_to_create_checkout"}), 400
 
+import zipfile
+import io
+
+@main.route("/download-all-files")
+@login_required
+def download_all_files():
+    files = File.query.filter_by(user_id=current_user.id).all()
+    if not files:
+        flash("No files to download.", "info")
+        return redirect(url_for("main.dashboard"))
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        for file in files:
+            if os.path.exists(file.path):
+                zf.write(file.path, arcname=file.filename)
+
+    zip_buffer.seek(0)
+    return send_file(
+        zip_buffer,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name=f"doxium_files_{current_user.username}.zip"
+    )
 
 @main.route("/payment-success")
 @login_required
