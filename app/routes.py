@@ -381,7 +381,7 @@ def _parse_ls_datetime(value):
         return datetime.fromisoformat(value)
     except Exception:
         return None
-
+from datetime import datetime
 
 def _set_user_pilot(user, is_pilot, status=None, subscription_id=None, expires_at=None, purchased_at=None, portal_url=None):
     user.is_pilot = bool(is_pilot)
@@ -395,6 +395,10 @@ def _set_user_pilot(user, is_pilot, status=None, subscription_id=None, expires_a
         user.pilot_purchased_at = purchased_at
     if portal_url:
         user.ls_customer_portal_url = portal_url
+    if status in ("cancelled", "expired", "refunded") and not user.subscription_cancelled_at:
+        user.subscription_cancelled_at = datetime.utcnow()
+    if is_pilot:  # re-subscribing clears it
+        user.subscription_cancelled_at = None
     db.session.commit()
 
 # -----------------------
