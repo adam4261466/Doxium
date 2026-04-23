@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Terms of Service - Doxium{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 860px;">
+    <div class="card mb-4">
+        <div class="card-body p-5">
+            <div class="text-center mb-5">
+                <i class="fas fa-file-contract fa-3x text-primary mb-3"></i>
+                <h1 class="fw-bold">Terms of Service</h1>
+                <p class="text-muted">Last updated: April 2026</p>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>1. Acceptance of Terms</h4>
+                <p class="text-muted">By accessing or using Doxium ("Service", "we", "our", "us"), you agree to be bound by these Terms of Service. If you do not agree, please do not use the Service. These terms apply to all visitors, registered users, and paying subscribers.</p>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>2. Description of Service</h4>
+                <p class="text-muted">Doxium is an AI-powered document management and retrieval-augmented generation (RAG) SaaS platform. Users can upload documents, process them with AI embeddings, and perform natural-language queries across their document library.</p>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>3. Plans, Features & Limits</h4>
+                <p class="text-muted mb-3">Doxium offers two plans. Limits are enforced at the platform level and query counts reset on your monthly billing date.</p>
+                <div class="table-responsive">
+                    <table class="table table-bordered" style="color: var(--text-muted); border-color: rgba(255,255,255,0.15);">
+                        <thead>
+                            <tr style="background: rgba(255,255,255,0.08);">
+                                <th>Feature</th>
+                                <th class="text-center">Free</th>
+                                <th class="text-center text-primary">Pro — $7/month</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Document uploads</td><td class="text-center">3 total</td><td class="text-center">50 total</td></tr>
+                            <tr><td>AI queries / month</td><td class="text-center">10</td><td class="text-center">100</td></tr>
+                            <tr><td>Storage</td><td class="text-center">50 MB</td><td class="text-center">500 MB</td></tr>
+                            <tr><td>Supported file types</td><td class="text-center">PDF only</td><td class="text-center">All types</td></tr>
+                            <tr><td>Max file size</td><td class="text-center">5 MB</td><td class="text-center">50 MB</td></tr>
+                            <tr><td>Support</td><td class="text-center">Community</td><td class="text-center">Email</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-muted mt-2 small"><i class="fas fa-info-circle me-1"></i>"All types" = .pdf, .docx, .pptx, .xlsx, .csv, .txt, .md, .html, .json. Document limits are lifetime totals. AI queries reset monthly on your billing date and are subject to a fair-use rate limit of 2 per minute.</p>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>4. Subscription & Payment</h4>
+                <p class="text-muted">The Pro plan is billed at <strong>$7 USD per month</strong> via <strong>Lemon Squeezy</strong>. Your subscription renews automatically each month unless cancelled before the renewal date. Doxium does not store credit card details — all payment data is handled exclusively by Lemon Squeezy.</p>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>5. Free Plan</h4>
+                <p class="text-muted">The Free plan is provided as-is with no payment required. Doxium may enforce stricter rate limits on Free users during high server load and reserves the right to modify the Free plan with 30 days' notice.</p>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>6. User Accounts</h4>
+                <p class="text-muted">You are responsible for your account credentials and all activity under your account. You must be at least 16 years old to register. Notify us at <strong>support@doxium.app</strong> of any unauthorised access.</p>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>7. Acceptable Use</h4>
+                <ul class="text-muted">
+                    <li>Do not upload illegal, harmful, or IP-infringing content</li>
+                    <li>Do not use automated tools to exceed query rate limits</li>
+                </ul>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>8. Data & Privacy</h4>
+                <p class="text-muted">Your documents are stored securely and accessible only to your account. See our <a href="{{ url_for('main.privacy') }}" class="text-primary">Privacy Policy</a>.</p>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>9. Service Availability</h4>
+                <p class="text-muted">We aim for high availability but do not guarantee uninterrupted access. Doxium is not liable for losses from service downtime.</p>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>10. Intellectual Property</h4>
+                <p class="text-muted">You retain full ownership of uploaded documents. You grant Doxium a limited licence to process and store content solely to provide the Service. The Doxium platform and codebase remain the exclusive property of Doxium.</p>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>11. Limitation of Liability</h4>
+                <p class="text-muted">To the maximum extent permitted by law, Doxium shall not be liable for any indirect, incidental, or consequential damages arising from use of the Service.</p>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>12. Termination</h4>
+                <p class="text-muted">We may suspend accounts violating these Terms. You may cancel Pro at any time; access continues until the billing period ends. After cancellation your account reverts to Free limits. Documents exceeding Free limits are kept for 30 days before deletion.</p>
+            </div>
+
+            <div class="legal-section mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>13. Changes to Terms</h4>
+                <p class="text-muted">We may update these Terms at any time. Pro subscribers will be notified by email.</p>
+            </div>
+
+            <div class="legal-section">
+                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>14. Contact</h4>
+                <p class="text-muted"><strong>support@doxium.app</strong></p>
+            </div>
+        </div>
+    </div>
+    <div class="text-center">
+        <a href="{{ url_for('main.home') }}" class="btn btn-outline-primary me-2"><i class="fas fa-home me-2"></i>Home</a>
+        <a href="{{ url_for('main.privacy') }}" class="btn btn-outline-primary me-2"><i class="fas fa-shield-alt me-2"></i>Privacy Policy</a>
+        <a href="{{ url_for('main.refund') }}" class="btn btn-outline-primary"><i class="fas fa-undo me-2"></i>Refund Policy</a>
+    </div>
+</div>
+{% endblock %}
