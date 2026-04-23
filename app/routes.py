@@ -378,8 +378,6 @@ def _set_user_pilot(user, is_pilot, status=None, subscription_id=None, expires_a
 @main.route("/dashboard")
 @login_required
 def dashboard():
-    if not current_user.is_pilot:
-        return redirect(url_for("main.pricing"))
     files_with_content = []
     for file in current_user.files:
         content = extract_text(file.path) if os.path.exists(file.path) else "No content available"
@@ -390,8 +388,14 @@ def dashboard():
             "id": file.id,
             "processed": file.processed,
         })
-    return render_template("dashboard.html", user=current_user, files=files_with_content, is_pilot=current_user.is_pilot)
-
+    limits = get_limits(current_user)
+    return render_template(
+        "dashboard.html",
+        user=current_user,
+        files=files_with_content,
+        is_pilot=current_user.is_pilot,
+        limits=limits
+    )
 
 @main.route("/upload", methods=["POST"])
 @login_required
