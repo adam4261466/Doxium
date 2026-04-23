@@ -31,6 +31,12 @@
 <a href="{{ url_for('main.download_all_files') }}" class="btn btn-outline-info w-100 mt-2">
     <i class="fas fa-download me-2"></i>Download All My Files
 </a>
+{% if current_user.is_pilot and current_user.ls_customer_portal_url %}
+<a href="{{ current_user.ls_customer_portal_url }}" 
+   target="_blank" class="btn btn-outline-warning w-100 mt-2">
+    <i class="fas fa-cog me-2"></i>Manage / Cancel Subscription
+</a>
+{% endif %}
     <div class="row g-4">
         <!-- Main Content Area -->
         <div class="col-lg-8">
