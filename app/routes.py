@@ -320,19 +320,31 @@ def lemonsqueezy_webhook():
         _set_user_pilot(user, is_pilot=True, status="active", purchased_at=datetime.utcnow())
     elif event_name == "order_refunded":
         _set_user_pilot(user, is_pilot=False, status="refunded")
-    elif event_name.startswith("subscription_"):
+    elif event_name.startswith("subscription_"):        # ← THIS WHOLE BLOCK IS REPLACED
         sub_id = attrs.get("id") or data.get("id")
         status = attrs.get("status") or event_name
         ends_at = attrs.get("ends_at") or attrs.get("renews_at")
+        portal_url = (attrs.get("urls") or {}).get("customer_portal")  # ← NEW
 
-        if event_name in ("subscription_created", "subscription_updated", "subscription_resumed", "subscription_payment_success"):
-            _set_user_pilot(user, is_pilot=True, status=status, subscription_id=sub_id, expires_at=_parse_ls_datetime(ends_at))
+        if event_name in ("subscription_created", "subscription_updated",
+                          "subscription_resumed", "subscription_payment_success"):
+            _set_user_pilot(user, is_pilot=True, status=status,
+                            subscription_id=sub_id,
+                            expires_at=_parse_ls_datetime(ends_at),
+                            portal_url=portal_url)                      # ← NEW
+
         elif event_name in ("subscription_cancelled", "subscription_canceled"):
-            _set_user_pilot(user, is_pilot=True, status="cancelled", subscription_id=sub_id, expires_at=_parse_ls_datetime(ends_at))
-        elif event_name == "subscription_expired":
-            _set_user_pilot(user, is_pilot=False, status="expired", subscription_id=sub_id, expires_at=_parse_ls_datetime(ends_at))
+            _set_user_pilot(user, is_pilot=True, status="cancelled",
+                            subscription_id=sub_id,
+                            expires_at=_parse_ls_datetime(ends_at),
+                            portal_url=portal_url)                      # ← NEW
 
-    return jsonify(success=True)
+        elif event_name == "subscription_expired":
+            _set_user_pilot(user, is_pilot=False, status="expired",
+                            subscription_id=sub_id,
+                            expires_at=_parse_ls_datetime(ends_at))
+
+    return jsonify(success=True)   # ← this line stays at the end, unchanged
 
 
 def _ls_headers():
