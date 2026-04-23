@@ -29,6 +29,18 @@ class User(db.Model, UserMixin):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+class BillingEvent(db.Model):
+    __tablename__ = 'billing_events'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    event_type = db.Column(db.String(100), nullable=False)  # e.g. order_created
+    amount = db.Column(db.Float, nullable=True)
+    currency = db.Column(db.String(10), nullable=True)
+    ls_order_id = db.Column(db.String(100), nullable=True)
+    ls_subscription_id = db.Column(db.String(100), nullable=True)
+    raw_payload = db.Column(db.JSON, nullable=True)  # full webhook payload
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+
 
 class File(db.Model):
     __tablename__ = 'files'
