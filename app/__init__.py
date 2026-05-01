@@ -82,6 +82,16 @@ def create_app():
         try:
             db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS query_count INTEGER DEFAULT 0'))
             db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS query_reset_date TIMESTAMP'))
+            db.session.execute(text('ALTER TABLE files ADD COLUMN IF NOT EXISTS content BYTEA'))
+            db.session.execute(text('''
+                CREATE TABLE IF NOT EXISTS faiss_index_store (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL UNIQUE,
+                    index_data BYTEA,
+                    metadata_json JSONB,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            '''))
             db.session.commit()
         except Exception as e:
             db.session.rollback()
