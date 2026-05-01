@@ -264,87 +264,143 @@ def pricing():
 @main.route("/webhook/lemonsqueezy", methods=["POST"])
 @csrf.exempt
 def lemonsqueezy_webhook():
+    import hmac as hmac_module
+
     webhook_secret = os.getenv("LEMON_SQUEEZY_WEBHOOK_SECRET")
     if not webhook_secret:
+        current_app.logger.error("WEBHOOK ERROR: secret not configured")
         return jsonify(error="Webhook secret not configured"), 500
 
     payload = request.get_data()
+    current_app.logger.info("WEBHOOK RECEIVED: %s bytes", len(payload))
+
+    # Get signature from any possible header
     sig_header = (
         request.headers.get("X-Signature")
         or request.headers.get("X-Signature-256")
         or request.headers.get("X-Lemon-Signature")
     )
+
     if not sig_header:
+        current_app.logger.error("WEBHOOK ERROR: no signature header found")
         return jsonify(error="Missing signature"), 400
 
-    computed = hmac.new(webhook_secret.encode(), payload, hashlib.sha256).hexdigest()
+    # Verify HMAC
+    computed = hmac_module.new(
+        webhook_secret.encode("utf-8"),
+        payload,
+        hashlib.sha256
+    ).hexdigest()
+
     sig_value = sig_header.split("=", 1)[-1] if "=" in sig_header else sig_header
-    if not hmac.compare_digest(computed, sig_value):
+
+    if not hmac_module.compare_digest(computed, sig_value):
+        current_app.logger.error("WEBHOOK ERROR: invalid signature")
         return jsonify(error="Invalid signature"), 400
 
+    # Parse event
     event_name = request.headers.get("X-Event-Name", "")
     event = request.get_json(silent=True) or {}
     data = event.get("data") or {}
     attrs = data.get("attributes") or {}
     meta = event.get("meta") or {}
+
     if not event_name:
         event_name = meta.get("event_name", "")
-    if not event_name:
-        event_name = event.get("event") or event.get("type") or ""
-    event_name = event_name.lower()
-    custom = meta.get("custom_data") or attrs.get("custom_data") or {}
-    user_id = custom.get("user_id") or attrs.get("user_id")
+    event_name = event_name.lower().strip()
 
+    current_app.logger.info("WEBHOOK EVENT: '%s'", event_name)
+
+    # Get user_id from custom_data
+    custom = meta.get("custom_data") or attrs.get("custom_data") or {}
+    user_id = custom.get("user_id")
+    current_app.logger.info("WEBHOOK custom_data: %s", custom)
+
+    # Find user
     user = None
     if user_id:
-        user = User.query.get(int(user_id))
-    email = attrs.get("user_email") or attrs.get("customer_email") or attrs.get("email")
-    if not user and email:
-        user = User.query.filter_by(email=email).first()
+        try:
+            user = User.query.get(int(user_id))
+            current_app.logger.info("WEBHOOK user found by ID: %s", user_id)
+        except Exception:
+            pass
 
     if not user:
+        email = (
+            attrs.get("user_email")
+            or attrs.get("customer_email")
+            or attrs.get("email")
+        )
+        if email:
+            user = User.query.filter_by(email=email).first()
+            current_app.logger.info("WEBHOOK user found by email: %s", email)
+
+    if not user:
+        current_app.logger.warning("WEBHOOK: no user found, skipping")
         return jsonify(success=True)
+
+    current_app.logger.info("WEBHOOK processing for user ID=%s", user.id)
+
+    # Log billing event
     try:
         billing_event = BillingEvent(
-            user_id=user.id if user else None,
+            user_id=user.id,
             event_type=event_name,
             ls_order_id=str(data.get("id", "")),
-            ls_subscription_id=attrs.get("id"),
             raw_payload=event,
         )
         db.session.add(billing_event)
         db.session.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        current_app.logger.error("WEBHOOK billing log error: %s", e)
+        db.session.rollback()
+
+    # Handle events
     if event_name == "order_created":
-        _set_user_pilot(user, is_pilot=True, status="active", purchased_at=datetime.utcnow())
+        _set_user_pilot(user, is_pilot=True, status="active",
+                        purchased_at=datetime.utcnow())
+        current_app.logger.info("WEBHOOK SUCCESS: user %s activated as pilot", user.id)
+
     elif event_name == "order_refunded":
         _set_user_pilot(user, is_pilot=False, status="refunded")
-    elif event_name.startswith("subscription_"):        # ← THIS WHOLE BLOCK IS REPLACED
-        sub_id = attrs.get("id") or data.get("id")
-        status = attrs.get("status") or event_name
-        ends_at = attrs.get("ends_at") or attrs.get("renews_at")
-        portal_url = (attrs.get("urls") or {}).get("customer_portal")  # ← NEW
+        current_app.logger.info("WEBHOOK: user %s refunded", user.id)
 
-        if event_name in ("subscription_created", "subscription_updated",
-                          "subscription_resumed", "subscription_payment_success"):
-            _set_user_pilot(user, is_pilot=True, status=status,
-                            subscription_id=sub_id,
-                            expires_at=_parse_ls_datetime(ends_at),
-                            portal_url=portal_url)                      # ← NEW
+    elif event_name.startswith("subscription_"):
+        sub_id = attrs.get("id") or data.get("id")
+        ends_at = attrs.get("ends_at") or attrs.get("renews_at")
+        portal_url = (attrs.get("urls") or {}).get("customer_portal")
+
+        if event_name in (
+            "subscription_created",
+            "subscription_updated",
+            "subscription_resumed",
+            "subscription_payment_success",
+        ):
+            _set_user_pilot(
+                user, is_pilot=True, status="active",
+                subscription_id=sub_id,
+                expires_at=_parse_ls_datetime(ends_at),
+                portal_url=portal_url,
+            )
+            current_app.logger.info("WEBHOOK SUCCESS: user %s activated via %s",
+                                     user.id, event_name)
 
         elif event_name in ("subscription_cancelled", "subscription_canceled"):
-            _set_user_pilot(user, is_pilot=True, status="cancelled",
-                            subscription_id=sub_id,
-                            expires_at=_parse_ls_datetime(ends_at),
-                            portal_url=portal_url)                      # ← NEW
+            _set_user_pilot(
+                user, is_pilot=True, status="cancelled",
+                subscription_id=sub_id,
+                expires_at=_parse_ls_datetime(ends_at),
+                portal_url=portal_url,
+            )
 
         elif event_name == "subscription_expired":
-            _set_user_pilot(user, is_pilot=False, status="expired",
-                            subscription_id=sub_id,
-                            expires_at=_parse_ls_datetime(ends_at))
+            _set_user_pilot(
+                user, is_pilot=False, status="expired",
+                subscription_id=sub_id,
+                expires_at=_parse_ls_datetime(ends_at),
+            )
 
-    return jsonify(success=True)   # ← this line stays at the end, unchanged
+    return jsonify(success=True)
 
 
 def _ls_headers():
@@ -364,18 +420,19 @@ def _create_ls_checkout_url(user_id: str, redirect_url: str) -> str:
     if not store_id or not variant_id:
         raise ValueError("LEMON_SQUEEZY_STORE_ID/LEMON_SQUEEZY_VARIANT_ID not configured")
 
-    sep = "&" if "?" in redirect_url else "?"
-    redirect_url = f"{redirect_url}{sep}order_id=[order_id]&email=[email]"
-
     payload = {
         "data": {
             "type": "checkouts",
             "attributes": {
                 "product_options": {
-                    "redirect_url": redirect_url,
+                    "redirect_url": url_for("main.payment_success", _external=True),
                     "enabled_variants": [int(variant_id)],
                 },
-                "checkout_data": {"custom": {"user_id": user_id}},
+                "checkout_data": {
+                    "custom": {
+                        "user_id": str(user_id)   # ← CRITIQUE
+                    }
+                },
             },
             "relationships": {
                 "store": {"data": {"type": "stores", "id": str(store_id)}},
@@ -384,7 +441,12 @@ def _create_ls_checkout_url(user_id: str, redirect_url: str) -> str:
         }
     }
 
-    resp = requests.post(f"{LS_API_BASE}/checkouts", headers=_ls_headers(), json=payload, timeout=15)
+    resp = requests.post(
+        f"{LS_API_BASE}/checkouts",
+        headers=_ls_headers(),
+        json=payload,
+        timeout=15
+    )
     if resp.status_code not in (200, 201):
         raise RuntimeError(f"Lemon Squeezy checkout failed: {resp.text}")
 
