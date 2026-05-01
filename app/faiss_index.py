@@ -46,6 +46,10 @@ class FaissIndex:
                 self.index = self._create_hnsw_idmap(self.dim, self.m)
         else:
             self.index = self._create_hnsw_idmap(self.dim, self.m)
+            try:
+                self.load_from_db()
+            except Exception:
+                pass
 
         self._load_metadata()
         self._maybe_set_nprobe(self.nprobe)
@@ -79,7 +83,7 @@ class FaissIndex:
     def _save_metadata(self):
         with open(self.metadata_path, 'w', encoding='utf-8') as f:
             json.dump({str(k): v for k, v in self.metadata.items()}, f)
-
+    
     def _ensure_float32(self, arr: np.ndarray) -> np.ndarray:
         arr = np.asarray(arr)
         if arr.dtype != np.float32:
@@ -185,7 +189,41 @@ class FaissIndex:
             self.index = new_index
             self.metadata = new_metadata
             self.save_index_safely()
-
+    def save_to_db(self):
+        from .models import FaissIndexStore, db
+        tmp_path = f'/tmp/faiss_save_{self.user_id}.index'
+        faiss.write_index(self.index, tmp_path)
+        with open(tmp_path, 'rb') as f:
+            index_bytes = f.read()
+        os.remove(tmp_path)
+    
+        store = FaissIndexStore.query.filter_by(user_id=self.user_id).first()
+        if not store:
+            store = FaissIndexStore(user_id=self.user_id)
+        store.index_data = index_bytes
+        store.metadata_json = {str(k): v for k, v in self.metadata.items()}
+        db.session.add(store)
+        db.session.commit()
+    
+    def load_from_db(self):
+        from .models import FaissIndexStore
+        store = FaissIndexStore.query.filter_by(user_id=self.user_id).first()
+        if not store or not store.index_data:
+            return False
+        tmp_path = f'/tmp/faiss_load_{self.user_id}.index'
+        with open(tmp_path, 'wb') as f:
+            f.write(store.index_data)
+        try:
+            loaded = faiss.read_index(tmp_path)
+            if not isinstance(loaded, faiss.IndexIDMap):
+                loaded = faiss.IndexIDMap(loaded)
+            self.index = loaded
+            self.metadata = {int(k): v for k, v in (store.metadata_json or {}).items()}
+            return True
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+    
     def save_index_safely(self):
         import shutil
         tmp_index = os.path.join(os.path.dirname(self.index_path), "tmp.index")
@@ -207,11 +245,15 @@ class FaissIndex:
 
         shutil.move(tmp_index, self.index_path)
         shutil.move(tmp_meta, self.metadata_path)
-
-
-# Simple helper API
-DIMENSION = 768
-DEFAULT_M = FaissIndex.DEFAULT_M
+        try:
+            self.save_to_db()
+        except Exception as e:
+            import logging
+            logging.warning("Failed to save index to DB: %s", e)
+        
+        # Simple helper API
+        DIMENSION = 768
+        DEFAULT_M = FaissIndex.DEFAULT_M
 
 
 def create_index_hnsw():
