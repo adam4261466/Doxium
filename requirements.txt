@@ -16,6 +16,7 @@ python-pptx
 openpyxl
 pandas
 beautifulsoup4
+einops
 lxml
 numpy<2.0.0
 torch==2.2.2+cpu
