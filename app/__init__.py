@@ -78,7 +78,6 @@ def create_app():
 
     with app.app_context():
         db.create_all()
-        # This part ensures your new columns are added even if you didn't use migrations
         try:
             db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS query_count INTEGER DEFAULT 0'))
             db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS query_reset_date TIMESTAMP'))
