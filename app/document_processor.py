@@ -79,58 +79,74 @@ def process_file(file_id, user_id, upload_folder=None):
 
     file = File.query.get(file_id)
     file_path = file.path
+    created_temp = False
 
     if not os.path.exists(file_path):
-        raise FileNotFoundError(f"{file_path} does not exist.")
+        if file.content:
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            with open(file_path, 'wb') as f:
+                f.write(file.content)
+            created_temp = True
+        else:
+            raise FileNotFoundError(f"{file_path} does not exist and no content in DB.")
 
-    raw_text = extract_text(file_path)
-    chunked = chunk_text(raw_text)
-    chunk_texts = [c[0] for c in chunked]
+    try:
+        raw_text = extract_text(file_path)
+        chunked = chunk_text(raw_text)
+        chunk_texts = [c[0] for c in chunked]
 
-    from .embeddings import EmbeddingGenerator
-    from .faiss_index import FaissIndex
+        from .embeddings import EmbeddingGenerator
+        from .faiss_index import FaissIndex
 
-    embedder = EmbeddingGenerator()
-    faiss_index = FaissIndex(dim=embedder.get_dimension(), user_id=user_id)
-    embeddings = embedder.embed_chunks(chunk_texts)
+        embedder = EmbeddingGenerator()
+        faiss_index = FaissIndex(dim=embedder.get_dimension(), user_id=user_id)
+        embeddings = embedder.embed_chunks(chunk_texts)
 
-    db_chunks = []
-    for text, start, end in chunked:
-        chunk = Chunk(
-            file_id=file.id,
-            user_id=user_id,
-            text=text,
-            start_char=start,
-            end_char=end,
-            chunk_metadata={
-                "length": len(text),
-                "file_id": file.id,
+        db_chunks = []
+        for text, start, end in chunked:
+            chunk = Chunk(
+                file_id=file.id,
+                user_id=user_id,
+                text=text,
+                start_char=start,
+                end_char=end,
+                chunk_metadata={
+                    "length": len(text),
+                    "file_id": file.id,
+                    "file_name": file.filename,
+                },
+            )
+            db.session.add(chunk)
+            db_chunks.append(chunk)
+
+        db.session.commit()
+
+        meta_list = []
+        ids = []
+        for c in db_chunks:
+            meta_list.append({
+                "chunk_id": c.id,
+                "file_id": c.file_id,
                 "file_name": file.filename,
-            },
+                "start_char": c.start_char,
+                "end_char": c.end_char,
+                "length": len(c.text),
+            })
+            ids.append(c.id)
+
+        faiss_index.add_embeddings(
+            embeddings=embeddings,
+            chunk_ids=ids,
+            chunk_metadata=meta_list
         )
-        db.session.add(chunk)
-        db_chunks.append(chunk)
 
-    db.session.commit()
+        file.processed = True
+        db.session.add(file)
+        db.session.commit()
 
-    meta_list = []
-    ids = []
-    for c in db_chunks:
-        meta_list.append({
-            "chunk_id": c.id,
-            "file_id": c.file_id,
-            "file_name": file.filename,
-            "start_char": c.start_char,
-            "end_char": c.end_char,
-            "length": len(c.text),
-        })
-        ids.append(c.id)
-
-    faiss_index.add_embeddings(embeddings=embeddings, chunk_ids=ids, chunk_metadata=meta_list)
-
-    file.processed = True
-    db.session.add(file)
-    db.session.commit()
+    finally:
+        if created_temp and os.path.exists(file_path):
+            os.remove(file_path)
 
     return len(chunked)
 
