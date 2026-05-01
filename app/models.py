@@ -28,7 +28,16 @@ class User(db.Model, UserMixin):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-
+        
+class FaissIndexStore(db.Model):
+    __tablename__ = 'faiss_index_store'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False, unique=True)
+    index_data = db.Column(db.LargeBinary, nullable=True)
+    metadata_json = db.Column(db.JSON, nullable=True)
+    updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(),
+                           onupdate=db.func.current_timestamp())
+    
 class BillingEvent(db.Model):
     __tablename__ = 'billing_events'
     id = db.Column(db.Integer, primary_key=True)
@@ -52,7 +61,7 @@ class File(db.Model):
     processed = db.Column(db.Boolean, default=False)
     file_metadata = db.Column(db.JSON, default=dict)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
-
+    content = db.Column(db.LargeBinary, nullable=True)
     chunks = db.relationship('Chunk', backref='file', lazy=True)
 
 
