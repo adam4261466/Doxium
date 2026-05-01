@@ -7,10 +7,16 @@
   healthcheckPath = "/health"
   restartPolicyType = "on-failure"
 
+  [[services.volumes]]
+    mountPath = "/data"
+
 [[services]]
   name = "worker"
   startCommand = "celery -A app.celery_app.celery worker --loglevel=info --concurrency=2 -P prefork"
   restartPolicyType = "on-failure"
+
+  [[services.volumes]]
+    mountPath = "/data"
 
 [[services]]
   name = "beat"
