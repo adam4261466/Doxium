@@ -17,8 +17,10 @@ openpyxl
 pandas
 beautifulsoup4
 lxml
-sentence-transformers
-numpy
+numpy<2.0.0
+torch==2.2.2+cpu
+sentence-transformers==2.7.0
+transformers==4.40.0
 faiss-cpu
 huggingface-hub
 psycopg2-binary
