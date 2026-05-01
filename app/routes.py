@@ -571,8 +571,17 @@ def upload():
         f.save(filepath)
         if not os.path.exists(filepath):
             raise Exception("Failed to save file to disk.")
-
-        new_file = File(filename=f.filename, path=filepath, size=size, user_id=current_user.id)
+        
+        with open(filepath, 'rb') as file_obj:
+            file_content = file_obj.read()
+        
+        new_file = File(
+            filename=f.filename,
+            path=filepath,
+            size=size,
+            user_id=current_user.id,
+            content=file_content
+        )
         db.session.add(new_file)
         db.session.commit()
 
