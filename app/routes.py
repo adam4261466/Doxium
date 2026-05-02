@@ -146,6 +146,11 @@ def register():
     return render_template("register.html")
 
 
+from flask_limiter.errors import RateLimitExceeded
+
+failed_login_limit = limiter.limit("5 per minute", key_func=get_remote_address)
+
+
 @main.route("/login", methods=["GET", "POST"])
 @failed_login_limit
 def login():
