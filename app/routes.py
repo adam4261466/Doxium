@@ -120,28 +120,30 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        msg = Message(subject="Welcome to Doxium 🚀", recipients=[new_user.email])
-        msg.body = f"""Hi {new_user.username},
-
-Welcome to Doxium! 🎉
-
-Best,
-The Doxium Team
-"""
+        # Email optionnel — ne bloque pas l'inscription
         try:
-            mail.send(msg)
-            flash("Registration successful! Please check your email.", "success")
-        except Exception as e:
-            flash(f"Registration successful, but email failed to send: {e}", "warning")
+            mail_server = os.getenv("MAIL_SERVER")
+            if mail_server:
+                msg = Message(
+                    subject="Welcome to Doxium 🚀",
+                    recipients=[new_user.email]
+                )
+                msg.body = f"Hi {new_user.username},\n\nWelcome to Doxium!\n\nBest,\nThe Doxium Team"
+                from threading import Thread
+                def send_async(app, message):
+                    with app.app_context():
+                        try:
+                            mail.send(message)
+                        except Exception:
+                            pass
+                Thread(target=send_async, args=(current_app._get_current_object(), msg)).start()
+        except Exception:
+            pass
 
+        flash("Registration successful! Please log in.", "success")
         return redirect(url_for("main.login"))
 
     return render_template("register.html")
-
-
-from flask_limiter.errors import RateLimitExceeded
-
-failed_login_limit = limiter.limit("5 per minute", key_func=get_remote_address)
 
 
 @main.route("/login", methods=["GET", "POST"])
