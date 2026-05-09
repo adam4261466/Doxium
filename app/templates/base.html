@@ -10,12 +10,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dark.css') }}">
-    <!-- Privacy-friendly analytics by Plausible -->
-    <script async src="https://plausible.io/js/pa-OhgkF4eKGBgJadsi40Ztx.js"></script>
-    <script>
-      window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
-      plausible.init()
-    </script>
+    <!-- Cloudflare Web Analytics -->
+    <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d0967694cf384473992a36cbc0d401af"}'></script>
+    <!-- End Cloudflare Web Analytics -->
 </head>
 <body style="--bg-image: url('{{ url_for('static', filename='images/c62df928-4d0e-46c4-8183-fa89d8bf9d40.png') }}');">
     <!-- Navbar -->
