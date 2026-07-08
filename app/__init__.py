@@ -24,10 +24,7 @@ mail = Mail()
 
 # Rate limiting per IP
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-<<<<<<< HEAD
-=======
 
->>>>>>> 7aad387 (i#)
 # Rate limiting per IP with Redis storage
 limiter = Limiter(
     key_func=get_remote_address,
