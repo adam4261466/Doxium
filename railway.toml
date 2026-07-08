@@ -2,5 +2,4 @@
 dockerfile = "Dockerfile"
 
 [deploy]
-healthcheckPath = "/health"
-restartPolicyType = "on-failure"
+restartPolicyType = "ON_FAILURE"
