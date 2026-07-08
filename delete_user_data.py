@@ -2,7 +2,7 @@ import os
 import shutil
 from sqlalchemy import text
 from app import create_app, db
-from app.models import User, File, Chunk, IndexMeta
+from app.models import User, File, Chunk, IndexMeta, BillingEvent
 
 app = create_app()
 
@@ -22,6 +22,11 @@ with app.app_context():
         db.session.query(IndexMeta).delete()
         db.session.commit()
         print("✅ Deleted all index metadata")
+
+        # Delete billing events
+        db.session.query(BillingEvent).delete()
+        db.session.commit()
+        print("✅ Deleted all billing events")
 
         # Delete users
         db.session.query(User).delete()

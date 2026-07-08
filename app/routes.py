@@ -4,10 +4,12 @@ import re
 import requests
 import hmac
 import hashlib
+import zipfile
+import io
 from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify, send_file
 from werkzeug.utils import secure_filename, safe_join
-from .models import User, File, Chunk
+from .models import User, File, Chunk, BillingEvent
 from . import db, limiter
 from flask_login import login_user, login_required, logout_user, current_user
 from flask_limiter.util import get_remote_address
@@ -109,9 +111,17 @@ def check_system_load():
     except Exception as e:
         # If we can't check load, assume not overloaded
         return False, 0.0
+<<<<<<< HEAD
 @main.route("/")
 def home():
     return render_template("index.html", user=current_user)
+=======
+
+@main.route("/")
+def home():
+    return render_template("index.html", user=current_user)
+
+>>>>>>> 7aad387 (i#)
 @main.route("/health")
 def health():
     return {"status": "ok"}, 200
@@ -249,6 +259,29 @@ def create_checkout():
         return jsonify({"error": "failed_to_create_checkout"}), 400
 
 
+@main.route("/download-all-files")
+@login_required
+def download_all_files():
+    files = File.query.filter_by(user_id=current_user.id).all()
+    if not files:
+        flash("No files to download.", "info")
+        return redirect(url_for("main.dashboard"))
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        for file in files:
+            if os.path.exists(file.path):
+                zf.write(file.path, arcname=file.filename)
+
+    zip_buffer.seek(0)
+    return send_file(
+        zip_buffer,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name=f"doxium_files_{current_user.username}.zip"
+    )
+
+
 @main.route("/payment-success")
 @login_required
 def payment_success():
@@ -328,6 +361,20 @@ def lemonsqueezy_webhook():
             email,
         )
         return jsonify(success=True)
+
+    # Log billing event
+    try:
+        billing_event = BillingEvent(
+            user_id=user.id,
+            event_type=event_name,
+            ls_order_id=str(data.get("id", "")),
+            raw_payload=event,
+        )
+        db.session.add(billing_event)
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error("WEBHOOK billing log error: %s", e)
+        db.session.rollback()
 
     if event_name == "order_created":
         _set_user_pilot(
@@ -458,7 +505,7 @@ def _parse_ls_datetime(value):
         return None
 
 
-def _set_user_pilot(user, is_pilot, status=None, subscription_id=None, expires_at=None, purchased_at=None):
+def _set_user_pilot(user, is_pilot, status=None, subscription_id=None, expires_at=None, purchased_at=None, portal_url=None):
     user.is_pilot = bool(is_pilot)
     if status:
         user.subscription_status = status
@@ -468,6 +515,12 @@ def _set_user_pilot(user, is_pilot, status=None, subscription_id=None, expires_a
         user.subscription_expires_at = expires_at
     if purchased_at:
         user.pilot_purchased_at = purchased_at
+    if portal_url:
+        user.ls_customer_portal_url = portal_url
+    if status in ("cancelled", "expired", "refunded") and not user.subscription_cancelled_at:
+        user.subscription_cancelled_at = datetime.utcnow()
+    if is_pilot:
+        user.subscription_cancelled_at = None
     db.session.commit()
 
 
@@ -729,12 +782,6 @@ def query_documents():
     flash("Generating answer… This may take 10–30 seconds.", "info")
     return redirect(url_for("main.query_status", task_id=task.id))
 
-    from .tasks import generate_query_answer  # Add this import at top
-    # INSTANT RESPONSE - Fire Celery task
-    task = generate_query_answer.delay(current_user.id, query_text)
-    flash("Generating answer... This may take 10-30 seconds.", "info")
-    
-    return redirect(url_for('main.query_status', task_id=task.id))
 
 @main.route("/query/status/<task_id>")
 @login_required
@@ -764,6 +811,22 @@ def query_status(task_id):
             return redirect(url_for("main.dashboard"))
     
     return render_template("query_processing.html", task_id=task_id)
+
+
+# -----------------------
+# Legal Routes
+# -----------------------
+@main.route("/terms")
+def terms():
+    return render_template("terms.html")
+
+@main.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
+
+@main.route("/refund")
+def refund():
+    return render_template("refund.html")
 
 
 # -----------------------

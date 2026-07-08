@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.schedules import crontab
 from . import create_app
 
 
@@ -26,6 +27,13 @@ def make_celery(app):
         task_time_limit=300,          # Protection for heavy tasks
         task_soft_time_limit=240,
     )
+
+    celery.conf.beat_schedule = {
+        "cleanup-expired-files-daily": {
+            "task": "tasks.cleanup_expired_files",
+            "schedule": crontab(hour=3, minute=0),
+        },
+    }
 
     # Flask context inside Celery tasks
     class ContextTask(celery.Task):

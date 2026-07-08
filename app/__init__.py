@@ -24,6 +24,10 @@ mail = Mail()
 
 # Rate limiting per IP
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+<<<<<<< HEAD
+=======
+
+>>>>>>> 7aad387 (i#)
 # Rate limiting per IP with Redis storage
 limiter = Limiter(
     key_func=get_remote_address,
@@ -53,12 +57,19 @@ def unauthorized():
 # ---------------------------------------
 # Application Factory
 # ---------------------------------------
+def get_database_uri():
+    database_url = os.getenv("DATABASE_URL")
+    public_url = os.getenv("DATABASE_PUBLIC_URL")
+    chosen = public_url if database_url and "postgres.railway.internal" in database_url and public_url else database_url or public_url
+    logging.warning("DATABASE_URL Connection Attempted")
+    return chosen
+
 def create_app():
     app = Flask(__name__, template_folder="templates")
 
     # Basic Config
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
+    app.config["SQLALCHEMY_DATABASE_URI"] = get_database_uri()
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # Uploads

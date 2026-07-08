@@ -17,6 +17,8 @@ class User(db.Model, UserMixin):
 
     # Admin
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
+    ls_customer_portal_url = db.Column(db.String(500), nullable=True)
+    subscription_cancelled_at = db.Column(db.DateTime, nullable=True)
 
     # ✅ NEW — Lemon Squeezy subscription fields
     subscription_status = db.Column(db.String(20), default="inactive")

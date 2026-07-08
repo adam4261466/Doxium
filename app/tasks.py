@@ -1,8 +1,11 @@
 from app.celery_app import celery
 from .models import File, Chunk, db, User
-from .document_processor import process_file,search_similar_chunks
+from .document_processor import process_file, search_similar_chunks
 from .faiss_index import FaissIndex
 from .embeddings import EmbeddingGenerator
+from app.routes import FREE_LIMITS
+import os
+from datetime import datetime, timedelta
 
 
 @celery.task(name="tasks.process_file")
@@ -25,9 +28,30 @@ def rebuild_index_task(user_id: int) -> int:
     return index.get_index_size()
 
 
-from transformers import pipeline
 
-# Your existing tasks remain unchanged...
+@celery.task(name="tasks.cleanup_expired_files")
+def cleanup_expired_files():
+    """Delete files beyond Free limits for users cancelled 30+ days ago."""
+    cutoff = datetime.utcnow() - timedelta(days=30)
+    
+    expired_users = User.query.filter(
+        User.is_pilot == False,
+        User.subscription_cancelled_at != None,
+        User.subscription_cancelled_at <= cutoff
+    ).all()
+
+    for user in expired_users:
+        files = File.query.filter_by(user_id=user.id)\
+                          .order_by(File.created_at.asc()).all()
+        files_to_delete = files[FREE_LIMITS["max_files"]:]
+        for file in files_to_delete:
+            for chunk in file.chunks:
+                db.session.delete(chunk)
+            if os.path.exists(file.path):
+                os.remove(file.path)
+            db.session.delete(file)
+        db.session.commit()
+
 
 @celery.task(name="tasks.generate_query_answer")
 def generate_query_answer(user_id, query_text, file_ids=None):
@@ -87,21 +111,16 @@ def generate_query_answer(user_id, query_text, file_ids=None):
             serializable_chunk = {
                 'id': chunk_data['chunk'].id,
                 'text': chunk_data['chunk'].text,
-                'filename': getattr(chunk_data['chunk'], 'filename', 'Unknown'),
-                'score': chunk_data.get('score', 0.0)
+                'filename': getattr(chunk_data['chunk'].file, 'filename', 'Unknown'),
+                'score': chunk_data.get('distance', 0.0)
             }
             serializable_chunks.append(serializable_chunk)
-        
-        context = similar_chunks[0]['chunk'].text
-        prompt = f"Read the following document and answer the question naturally.\n\nDocument:\n{context}\n\nQuestion: {query_text}\nAnswer:"
-        
-        result = gen_pipeline(prompt)
-        answer = result[0]['generated_text'].strip()
-        
+
         return {
             'query': query_text,
             'answer': answer,
+            'chunks': serializable_chunks,
         }
-        
+
     except Exception as exc:
         return {'error': f'Query failed: {str(exc)}'}
