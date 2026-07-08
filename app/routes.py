@@ -116,7 +116,6 @@ def check_system_load():
 def home():
     return render_template("index.html", user=current_user)
 
->>>>>>> 7aad387 (i#)
 @main.route("/health")
 def health():
     return {"status": "ok"}, 200

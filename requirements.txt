@@ -32,4 +32,3 @@ celery[redis]
 filelock
 redis
 groq
-

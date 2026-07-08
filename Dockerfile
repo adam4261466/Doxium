@@ -9,4 +9,5 @@ RUN pip install --no-cache-dir -r requirements.txt && \
     pip cache purge
 
 COPY . .
+
 RUN mkdir -p /data/faiss /data/uploads
