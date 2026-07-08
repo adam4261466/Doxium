@@ -1,5 +1,21 @@
 [build]
-dockerfile = "Dockerfile"
+  dockerfile = "Dockerfile"
 
-[deploy]
-restartPolicyType = "ON_FAILURE"
+[[services]]
+  name = "web"
+  startCommand = "sh start.sh"
+  healthcheckPath = "/health"
+  restartPolicyType = "on-failure"
+
+  [[services.volumes]]
+    mountPath = "/data"
+
+[[services]]
+  name = "worker"
+  startCommand = "celery -A app.celery_app.celery worker --loglevel=info --concurrency=2 -P prefork"
+  restartPolicyType = "on-failure"
+
+[[services]]
+  name = "beat"
+  startCommand = "celery -A app.celery_app.celery beat --loglevel=info"
+  restartPolicyType = "on-failure"
