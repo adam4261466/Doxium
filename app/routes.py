@@ -111,11 +111,6 @@ def check_system_load():
     except Exception as e:
         # If we can't check load, assume not overloaded
         return False, 0.0
-<<<<<<< HEAD
-@main.route("/")
-def home():
-    return render_template("index.html", user=current_user)
-=======
 
 @main.route("/")
 def home():
