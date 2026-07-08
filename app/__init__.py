@@ -8,6 +8,8 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_mail import Mail
 import os
+import logging
+from sqlalchemy import text
 
 load_dotenv()
 
@@ -21,11 +23,12 @@ csrf = CSRFProtect()
 mail = Mail()
 
 # Rate limiting per IP
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 # Rate limiting per IP with Redis storage
 limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["60 per minute"],
-    storage_uri="redis://localhost:6379/1"  # Different DB from Celery (0)
+    storage_uri=os.getenv("REDIS_URL", "redis://localhost:6379/1")
 )
 
 
@@ -78,7 +81,7 @@ def create_app():
     # Celery Defaults
     app.config.setdefault(
         "CELERY_BROKER_URL",
-        os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+        os.getenv("CELERY_BROKER_URL", REDIS_URL)
     )
     app.config.setdefault(
         "CELERY_RESULT_BACKEND",
