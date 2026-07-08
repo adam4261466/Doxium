@@ -14,7 +14,7 @@
 
                 <h1 class="display-4 fw-bold mb-3">Doxium</h1>
                 <p class="lead text-muted mb-4">
-                    The smartest way to search, analyze, and understand your documents with AI.
+                    Chat with PDFs, Word docs, spreadsheets, and slides — all in one place. No metered billing, no surprises.
                 </p>
 
                 {% if user.is_authenticated %}
@@ -34,6 +34,32 @@
                 {% endif %}
             </div>
 
+        </div>
+    </div>
+
+    <!-- Trust Bar -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-10">
+            <div class="card border-0 shadow-sm p-4">
+                <div class="row text-center g-3">
+                    <div class="col-md-3 col-6">
+                        <i class="fas fa-shield-alt fa-2x text-primary mb-2"></i>
+                        <small class="d-block text-muted">AES-256 Encryption at Rest</small>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <i class="fas fa-database fa-2x text-primary mb-2"></i>
+                        <small class="d-block text-muted">TLS 1.3 in Transit</small>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <i class="fas fa-robot fa-2x text-primary mb-2"></i>
+                        <small class="d-block text-muted">No AI Training on Your Data</small>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <i class="fas fa-trash-alt fa-2x text-primary mb-2"></i>
+                        <small class="d-block text-muted">Auto File Deletion</small>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -97,7 +123,7 @@
                     <i class="fas fa-shield-alt fa-3x text-warning mb-3"></i>
                     <h4 class="fw-bold mb-2">Private & Secure</h4>
                     <p class="text-muted">
-                        Enterprise-grade encryption protects your data end-to-end.
+                        Your documents are encrypted in transit and at rest, and never used to train AI models.
                     </p>
                 </div>
             </div>

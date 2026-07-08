@@ -87,6 +87,27 @@ def create_app():
 
     # Init Extensions
     db.init_app(app)
+
+    with app.app_context():
+        db.create_all()
+        try:
+            db.session.execute(text('ALTER TABLE users ADD COLUMN IF NOT EXISTS query_count INTEGER DEFAULT 0'))
+            db.session.execute(text('ALTER TABLE users ADD COLUMN IF NOT EXISTS query_count_reset_at TIMESTAMP'))
+            db.session.execute(text('ALTER TABLE files ADD COLUMN IF NOT EXISTS content BYTEA'))
+            db.session.execute(text('''
+                CREATE TABLE IF NOT EXISTS faiss_index_store (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL UNIQUE,
+                    index_data BYTEA,
+                    metadata_json JSONB,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            '''))
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            logging.info("Column check skipped: %s", e)
+
     migrate.init_app(app, db)
     login_manager.init_app(app)
     csrf.init_app(app)

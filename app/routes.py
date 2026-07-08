@@ -21,24 +21,45 @@ main = Blueprint("main", __name__)
 # Lemon Squeezy setup
 LS_API_BASE = "https://api.lemonsqueezy.com/v1"
 
-# -----------------------
-# Home Route
-# -----------------------
-@main.route("/")
-def home():
-    return render_template("index.html", user=current_user)
-
-
-# -----------------------
-# Helpers
-# -----------------------
-ALLOWED_EXTENSIONS = {
-    ".txt", ".md", ".pdf", ".docx", ".pptx", ".xlsx", ".csv", ".html", ".json"
+# -------------------------------------------------------
+# Plan limits
+# -------------------------------------------------------
+FREE_LIMITS = {
+    "max_files": 10,
+    "max_queries_per_month": 100,
+    "storage_mb": 100,
+    "max_file_size_bytes": 5 * 1024 * 1024,
+    "allowed_extensions": {".pdf"},
+    "limits_reset": "monthly",
 }
 #ALLOWED_MIME_TYPES = {"text/plain", "text/markdown", "application/pdf"}
 
-def allowed_file(filename):
-    return os.path.splitext(filename)[1].lower() in ALLOWED_EXTENSIONS
+PRO_LIMITS = {
+    "max_files": 50,
+    "max_queries_per_month": 100,
+    "storage_mb": 500,
+    "max_file_size_bytes": 50 * 1024 * 1024,
+    "allowed_extensions": {".txt", ".md", ".pdf", ".docx", ".pptx",
+                           ".xlsx", ".csv", ".html", ".json"},
+}
+
+def get_limits(user):
+    return PRO_LIMITS if user.is_pilot else FREE_LIMITS
+
+def reset_query_count_if_needed(user):
+    from datetime import datetime
+    now = datetime.utcnow()
+    if user.query_count_reset_at is None or user.query_count_reset_at.month != now.month or user.query_count_reset_at.year != now.year:
+        user.query_count = 0
+        user.query_count_reset_at = now
+        db.session.commit()
+
+ALLOWED_EXTENSIONS = {".txt", ".md", ".pdf", ".docx", ".pptx",
+                      ".xlsx", ".csv", ".html", ".json"}
+
+def allowed_file(filename, user):
+    ext = os.path.splitext(filename)[1].lower()
+    return ext in get_limits(user)["allowed_extensions"]
 
 def check_storage_space(user_id, required_space=0):
     """Check if user has enough storage space. Returns (has_space, available_space_mb, used_space_mb)"""
@@ -167,11 +188,10 @@ def login():
         if user and user.check_password(password):
             login_user(user)
             if user.is_pilot:
-                flash("Welcome back, Pilot user!", "success")
-                return redirect(url_for("main.dashboard"))
+                flash("Welcome back!", "success")
             else:
-                flash("Logged in successfully. Upgrade to Pilot for access to all features.", "info")
-                return redirect(url_for("main.pricing"))
+                flash("Logged in. Start by uploading a document.", "info")
+            return redirect(url_for("main.dashboard"))
 
         flash("Invalid email or password.", "danger")
 
@@ -467,17 +487,29 @@ def dashboard():
             "id": file.id,
             "processed": file.processed
         })
-    return render_template("dashboard.html", user=current_user, files=files_with_content, is_pilot=current_user.is_pilot)
-
+    limits = get_limits(current_user)
+    monthly_file_count = current_user.get_monthly_file_count()
+    return render_template(
+        "dashboard.html",
+        user=current_user,
+        files=files_with_content,
+        is_pilot=current_user.is_pilot,
+        limits=limits,
+        monthly_file_count=monthly_file_count
+    )
 
 @main.route("/upload", methods=["POST"])
 @login_required
 def upload():
-    if not current_user.is_pilot:
-        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-        return jsonify(success=False, error="Upgrade to Pilot to upload files.") if is_ajax else (flash("Upgrade to Pilot to upload files.", "warning"), redirect(url_for("main.pricing")))[1]
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
-    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    def fail(msg):
+        if is_ajax:
+            return jsonify(success=False, error=msg)
+        flash(msg, "danger")
+        return redirect(url_for("main.dashboard"))
+
+    limits = get_limits(current_user)
 
     try:
         # Check system load first
@@ -499,13 +531,24 @@ def upload():
             msg = "Invalid file type. Only .txt, .md, .pdf, .docx, .pptx, .xlsx, .csv, .html, .json allowed."
             return jsonify(success=False, error=msg) if is_ajax else (flash(msg, "danger"), redirect(url_for("main.dashboard")))[1]
 
-        """if not allowed_mime_type(f):
-            msg = "File content does not match the allowed type."
-            return jsonify(success=False, error=msg) if is_ajax else (flash(msg, "danger"), redirect(url_for("main.dashboard")))[1]
-"""
-        # Check for special characters in filename
-        if re.search(r'[^a-zA-Z0-9._\- ]', f.filename):
-            flash("Filename contains special characters. It will be displayed as is, but ensure compatibility.", "warning")
+        f.seek(0, os.SEEK_END)
+        size = f.tell()
+        f.seek(0)
+
+        if size == 0:
+            return fail("File is empty.")
+
+        if size > limits["max_file_size_bytes"]:
+            max_mb = limits["max_file_size_bytes"] // (1024 * 1024)
+            return fail(f"File too large. Max size on your plan is {max_mb} MB.")
+
+        user_file_count = current_user.get_monthly_file_count() if not current_user.is_pilot else File.query.filter_by(user_id=current_user.id).count()
+        if user_file_count >= limits["max_files"]:
+            return fail(f"You have reached the {limits['max_files']}-file limit on your plan.")
+
+        has_space, available_mb, used_mb = check_storage_space(current_user.id, size)
+        if not has_space:
+            return fail(f"Storage limit reached. Used {used_mb:.1f} MB of {limits['storage_mb']} MB.")
 
         original_filename = f.filename  # Preserve Unicode and original filename
         ext = os.path.splitext(original_filename)[1].lower()
@@ -588,9 +631,6 @@ def upload():
 @login_required
 def process_file_route(file_id):
     from .tasks import process_file_task
-    if not current_user.is_pilot:
-        flash("Upgrade to Pilot to process files.", "warning")
-        return redirect(url_for("main.pricing"))
 
     file = File.query.filter_by(id=file_id, user_id=current_user.id).first_or_404()
 
@@ -611,9 +651,6 @@ def process_file_route(file_id):
 @login_required
 def delete_file(file_id):
     from .tasks import rebuild_index_task
-    if not current_user.is_pilot:
-        flash("Upgrade to Pilot to delete files.", "warning")
-        return redirect(url_for("main.pricing"))
     file = File.query.filter_by(id=file_id, user_id=current_user.id).first_or_404()
     was_processed = file.processed
     for chunk in file.chunks:
@@ -659,11 +696,7 @@ def view_file(filepath: str):
 @limiter.limit("2 per minute")
 @login_required
 def query_documents():
-    if not current_user.is_pilot:
-        flash("Upgrade to Pilot to query documents.", "warning")
-        return redirect(url_for("main.pricing"))
-
-    query_text = request.form.get("query")
+    query_text = request.form.get("query", "").strip()
     if not query_text:
         flash("Please enter a query.", "danger")
         return redirect(url_for("main.dashboard"))
@@ -673,8 +706,26 @@ def query_documents():
         flash(f"Your query is too long ({len(query_text)} characters). Please shorten it to {max_query_length} characters or less.", "warning")
         return redirect(url_for("main.dashboard"))
 
-    if len(query_text.strip()) > 500:
-        flash("Your query is quite long. Consider breaking it into smaller questions.", "info")
+    limits = get_limits(current_user)
+    if not current_user.is_pilot:
+        reset_query_count_if_needed(current_user)
+        if current_user.query_count >= limits["max_queries_per_month"]:
+            flash(f"You've used all {limits['max_queries_per_month']} queries this month. Upgrade to Pro for more.", "warning")
+            return redirect(url_for("main.pricing"))
+
+    current_user.query_count = (current_user.query_count or 0) + 1
+    db.session.commit()
+
+    file_ids = request.form.getlist("file_ids")
+    file_ids = [int(fid) for fid in file_ids if fid.isdigit()]
+    file_scope = request.form.get("file_scope", "all")
+    if file_scope == "all" or not file_ids:
+        file_ids = None
+
+    from .tasks import generate_query_answer
+    task = generate_query_answer.delay(current_user.id, query_text, file_ids)
+    flash("Generating answer… This may take 10–30 seconds.", "info")
+    return redirect(url_for("main.query_status", task_id=task.id))
 
     from .tasks import generate_query_answer  # Add this import at top
     # INSTANT RESPONSE - Fire Celery task

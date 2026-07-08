@@ -70,11 +70,14 @@
                             <div class="d-flex align-items-start mb-2">
                                 <i class="fas fa-file text-primary me-2 mt-1"></i>
                                 <div class="flex-grow-1">
-                                    <strong class="text-primary">{{ chunk.filename|default('Unknown file') }}</strong>
+                                    <a href="{{ url_for('main.dashboard') }}" class="text-primary text-decoration-none" title="View source file">
+                                        <strong>{{ chunk.filename|default('Unknown file') }}</strong>
+                                        <i class="fas fa-external-link-alt ms-1" style="font-size:0.7em;"></i>
+                                    </a>
                                     <br>
                                     <small class="text-muted">
                                         <i class="fas fa-chart-line me-1"></i>
-                                        Similarity: {{ "%.3f"|format(chunk.score|default(0.0)) }}
+                                        Relevance: {{ "%.0f"|format((1 - chunk.score|default(0)) * 100) }}%
                                     </small>
                                 </div>
                             </div>

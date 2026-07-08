@@ -25,12 +25,44 @@ class User(db.Model, UserMixin):
 
     # Relationship to files
     files = db.relationship('File', backref='user', lazy=True)
+    query_count = db.Column(db.Integer, default=0)
+    query_count_reset_at = db.Column(db.DateTime, nullable=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def get_monthly_file_count(self):
+        from datetime import datetime, timezone
+        start_of_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        return File.query.filter(
+            File.user_id == self.id,
+            File.created_at >= start_of_month
+        ).count()
+        
+class FaissIndexStore(db.Model):
+    __tablename__ = 'faiss_index_store'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False, unique=True)
+    index_data = db.Column(db.LargeBinary, nullable=True)
+    metadata_json = db.Column(db.JSON, nullable=True)
+    updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(),
+                           onupdate=db.func.current_timestamp())
+    
+class BillingEvent(db.Model):
+    __tablename__ = 'billing_events'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    event_type = db.Column(db.String(100), nullable=False)  # e.g. order_created
+    amount = db.Column(db.Float, nullable=True)
+    currency = db.Column(db.String(10), nullable=True)
+    ls_order_id = db.Column(db.String(100), nullable=True)
+    ls_subscription_id = db.Column(db.String(100), nullable=True)
+    raw_payload = db.Column(db.JSON, nullable=True)  # full webhook payload
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+
 
 class File(db.Model):
     __tablename__ = 'files'

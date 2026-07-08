@@ -35,7 +35,7 @@
             <!-- Quick Actions Row -->
             <div class="row g-3 mb-4">
                 <!-- AI Query Card -->
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="card h-100">
                         <div class="card-body text-center">
                             <div class="mb-3">
@@ -50,8 +50,25 @@
                     </div>
                 </div>
 
+                <!-- Compare Documents Card -->
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-not-equal fa-3x text-info"></i>
+                            </div>
+                            <h5 class="card-title">Compare Documents</h5>
+                            <p class="card-text text-muted">Find differences and similarities across files</p>
+                            <button class="btn btn-info w-100" data-bs-toggle="collapse" data-bs-target="#querySection"
+                                    onclick="document.querySelector('input[name=query]').value='Compare the key points in all my documents. List similarities and differences.'">
+                                <i class="fas fa-balance-scale me-2"></i>Compare All
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Upload Card -->
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="card h-100">
                         <div class="card-body text-center">
                             <div class="mb-3">
@@ -76,6 +93,21 @@
                     <div class="card-body">
                         <form id="queryForm" action="{{ url_for('main.query_documents') }}" method="post">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="mb-3">
+                                <label class="text-muted small mb-1"><i class="fas fa-file me-1"></i> Search in:</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" name="file_scope" id="scopeAll" value="all" checked>
+                                        <label class="form-check-label small" for="scopeAll">All documents</label>
+                                    </div>
+                                    {% for file in files %}
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" name="file_ids" value="{{ file.id }}" id="file{{ file.id }}">
+                                        <label class="form-check-label small" for="file{{ file.id }}">{{ file.filename|truncate(30) }}</label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
                             <div class="input-group input-group-lg">
                                 <input type="text" name="query" class="form-control"
                                        placeholder="Example: What are the main topics discussed in my documents?" required>
@@ -85,7 +117,7 @@
                                     Search
                                 </button>
                             </div>
-                            <small class="text-muted mt-2 d-block">💡 Try questions like "Summarize the key points" or "What are the main conclusions?"</small>
+                            <small class="text-muted mt-2 d-block">💡 Try "Compare the key points in my documents" or "Which document mentions Company X?"</small>
                         </form>
                     </div>
                 </div>
@@ -106,19 +138,19 @@
                                 <div class="row text-start">
                                     <div class="col-md-6">
                                         <small class="text-muted">
-                                            <i class="fas fa-check text-success me-1"></i>Supports .txt and .md files<br>
-                                            <i class="fas fa-check text-success me-1"></i>Up to 10MB per file
+                                            <i class="fas fa-check text-success me-1"></i>Supports {{ limits.allowed_extensions|join(', ') }}<br>
+                                            <i class="fas fa-check text-success me-1"></i>Up to {{ limits.max_file_size_bytes // (1024*1024) }}MB per file
                                         </small>
                                     </div>
                                     <div class="col-md-6">
                                         <small class="text-muted">
                                             <i class="fas fa-info-circle text-info me-1"></i>Files are processed securely<br>
-                                            <i class="fas fa-lock text-warning me-1"></i>Enterprise-grade encryption
+                                            <i class="fas fa-lock text-warning me-1"></i>Encrypted at rest and in transit
                                         </small>
                                     </div>
                                 </div>
                             </div>
-                            <input type="file" id="fileInput" name="file" class="d-none" accept=".txt,.md">
+                            <input type="file" id="fileInput" name="file" class="d-none" accept="{{ limits.allowed_extensions|join(',') }}">
                         </div>
                         <div id="uploadProgress" class="progress mt-3 d-none">
                             <div class="progress-bar" role="progressbar" style="width: 0%"></div>
@@ -169,8 +201,47 @@
 
         <!-- Sidebar -->
         <div class="col-lg-4">
-            <!-- Account Status -->
-            
+            <!-- Usage Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Monthly Usage</h5>
+                </div>
+                <div class="card-body">
+                    {% if not user.is_pilot %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="text-muted">Queries</small>
+                            <small class="text-muted">{{ user.query_count|default(0) }} / {{ limits.max_queries_per_month }}</small>
+                        </div>
+                        <div class="progress" style="height:6px;">
+                            <div class="progress-bar" role="progressbar" style="width: {{ ((user.query_count|default(0)) / limits.max_queries_per_month * 100)|round }}%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="text-muted">Uploads (this month)</small>
+                            <small class="text-muted">{{ monthly_file_count }} / {{ limits.max_files }}</small>
+                        </div>
+                        <div class="progress" style="height:6px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ (monthly_file_count / limits.max_files * 100)|round }}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="text-muted">Storage</small>
+                            <small class="text-muted">{{ limits.storage_mb }} MB</small>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-2">
+                        <span class="badge bg-success fs-6 px-3 py-2 mb-2">
+                            <i class="fas fa-star me-1"></i>Pro Plan Active
+                        </span>
+                        <p class="text-muted small mb-0">50 uploads &middot; 100 queries/mo &middot; 500MB storage</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
 
             <!-- Document Library -->
             <div class="card">
@@ -426,6 +497,20 @@ const loadingSpinner = document.getElementById('loadingSpinner');
 queryForm.addEventListener('submit', () => {
     searchIcon.classList.add('d-none');
     loadingSpinner.classList.remove('d-none');
+});
+
+// File scope toggle: "All documents" unchecks individual selections
+document.querySelector('input[name="file_scope"]').addEventListener('change', function() {
+    if (this.checked) {
+        document.querySelectorAll('input[name="file_ids"]').forEach(cb => cb.checked = false);
+    }
+});
+document.querySelectorAll('input[name="file_ids"]').forEach(cb => {
+    cb.addEventListener('change', function() {
+        if (this.checked) {
+            document.querySelector('input[name="file_scope"]').checked = false;
+        }
+    });
 });
 
 // File preview functionality

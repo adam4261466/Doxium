@@ -115,6 +115,128 @@
                     </div>
                 </div>
             {% endif %}
+ 
+            <div class="row g-4 justify-content-center">
+ 
+                <!-- FREE -->
+                <div class="col-lg-5 col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header text-center py-4">
+                            <h5 class="text-muted mb-1">FREE</h5>
+                            <div class="display-5 fw-bold">$0</div>
+                            <small class="text-muted">No credit card needed</small>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>10</strong> document uploads / month</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>100</strong> AI queries / month</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>100 MB</strong> storage</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>PDF files only</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>5 MB max file size</li>
+                                <li class="mb-2 text-muted"><i class="fas fa-times text-danger me-2"></i>No DOCX / PPTX / CSV / JSON</li>
+                                <li class="mb-2 text-muted"><i class="fas fa-times text-danger me-2"></i>Community support only</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer text-center pb-4">
+                            {% if current_user.is_authenticated %}
+                                <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-primary w-100">Go to Dashboard</a>
+                            {% else %}
+                                <a href="{{ url_for('main.register') }}" class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-user-plus me-2"></i>Get Started Free
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+ 
+                <!-- PRO -->
+                <div class="col-lg-5 col-md-6">
+                    <div class="card h-100" style="border-color: var(--accent) !important; box-shadow: 0 0 30px rgba(99,102,241,0.3);">
+                        <div class="card-header text-center py-4" style="background: var(--accent-gradient);">
+                            <span class="badge bg-warning mb-2">RECOMMENDED</span>
+                            <h5 class="text-white mb-1">PRO</h5>
+                            <div class="display-5 fw-bold text-white">$7<small class="fs-6 fw-normal">/month</small></div>
+                            <small class="text-white-50">Billed monthly · Cancel anytime</small>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>50</strong> document uploads (lifetime)</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>100</strong> AI queries / month</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>500 MB</strong> storage</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>All file types (PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, HTML, JSON)</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>50 MB</strong> max file size</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Email support</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>7-day money-back guarantee</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer text-center pb-4">
+                            {% if current_user.is_authenticated and not current_user.is_pilot %}
+                                <form action="{{ url_for('main.create_checkout_session') }}" method="POST">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-primary w-100 btn-lg">
+                                        <i class="fas fa-bolt me-2"></i>Upgrade to Pro — $7/mo
+                                    </button>
+                                </form>
+                            {% elif not current_user.is_authenticated %}
+                                <a href="{{ url_for('main.register') }}" class="btn btn-primary w-100 btn-lg">
+                                    <i class="fas fa-bolt me-2"></i>Get Pro — $7/mo
+                                </a>
+                            {% else %}
+                                <button class="btn btn-primary w-100 btn-lg" disabled>
+                                    <i class="fas fa-check me-2"></i>Current Plan
+                                </button>
+                            {% endif %}
+                            <small class="text-muted d-block mt-2">
+                                <i class="fas fa-lock me-1"></i>Secure payment by Lemon Squeezy
+                            </small>
+                        </div>
+                    </div>
+                </div>
+ 
+            </div>
+ 
+            <!-- FAQ -->
+            <div class="row justify-content-center mt-5">
+                <div class="col-lg-9">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>Frequently Asked Questions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <strong>What file types does Pro support?</strong>
+                                <p class="text-muted mb-0 mt-1">PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, HTML, and JSON. Free plan is PDF only.</p>
+                            </div>
+                            <div class="mb-4">
+                                <strong>Do limits reset monthly?</strong>
+                                <p class="text-muted mb-0 mt-1">Yes — uploads and AI queries reset at the start of each month on both plans. Pro uploads and queries reset on your billing date.</p>
+                            </div>
+                            <div class="mb-4">
+                                <strong>What happens when I cancel?</strong>
+                                <p class="text-muted mb-0 mt-1">Your Pro access continues until the billing period ends, then your account reverts to Free limits. Files beyond the Free limit are kept for 30 days for you to download.</p>
+                            </div>
+                            <div class="mb-4">
+                                <strong>Is there a free trial?</strong>
+                                <p class="text-muted mb-0 mt-1">We offer a 7-day money-back guarantee instead — you get full Pro access immediately and can request a full refund within 7 days if you're not satisfied.</p>
+                            </div>
+                            <div>
+                                <strong>How are queries counted?</strong>
+                                <p class="text-muted mb-0 mt-1">Each question submitted in the dashboard counts as 1 query, regardless of how long your documents are. Queries reset on your monthly billing date.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+ 
+            <div class="text-center mt-4">
+                <small class="text-muted">
+                    By subscribing you agree to our
+                    <a href="{{ url_for('main.terms') }}" class="text-primary">Terms of Service</a>,
+                    <a href="{{ url_for('main.privacy') }}" class="text-primary">Privacy Policy</a>, and
+                    <a href="{{ url_for('main.refund') }}" class="text-primary">Refund Policy</a>.
+                </small>
+            </div>
+ 
         </div>
     </div>
 </div>
