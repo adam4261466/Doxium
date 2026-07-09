@@ -58,6 +58,8 @@ def get_database_uri():
     database_url = os.getenv("DATABASE_URL")
     public_url = os.getenv("DATABASE_PUBLIC_URL")
     chosen = public_url if database_url and "postgres.railway.internal" in database_url and public_url else database_url or public_url
+    if chosen and "sslmode" not in chosen:
+        chosen += "?sslmode=require" if "?" not in chosen else "&sslmode=require"
     logging.warning("DATABASE_URL Connection Attempted")
     return chosen
 
