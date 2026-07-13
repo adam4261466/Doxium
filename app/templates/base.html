@@ -32,13 +32,12 @@
                                 <a class="nav-link btn btn-warning btn-sm me-2" href="{{ url_for('main.return_to_admin') }}">Return to Admin</a>
                             </li>
                         {% endif %}
-                        {% if current_user.is_pilot %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a>
+                        </li>
+                        {% if not current_user.is_pilot %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a>
-                            </li>
-                        {% else %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('main.pricing') }}">Pricing</a>
+                                <a class="nav-link" href="{{ url_for('main.pricing') }}">Upgrade</a>
                             </li>
                         {% endif %}
                         <li class="nav-item">

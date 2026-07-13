@@ -23,6 +23,7 @@ from datetime import datetime, timedelta
 @celery.task(name="tasks.cleanup_expired_files")
 def cleanup_expired_files():
     """Delete files beyond Free limits for users cancelled 30+ days ago."""
+    from app.routes import FREE_LIMITS
     cutoff = datetime.utcnow() - timedelta(days=30)
     
     expired_users = User.query.filter(
@@ -34,8 +35,8 @@ def cleanup_expired_files():
     for user in expired_users:
         files = File.query.filter_by(user_id=user.id)\
                           .order_by(File.created_at.asc()).all()
-        # Free limit is 3 files — delete everything beyond that
-        files_to_delete = files[FREE_LIMITS["max_files"]:]
+        free_limit = FREE_LIMITS["max_uploads_per_month"]
+        files_to_delete = files[free_limit:]
         for file in files_to_delete:
             for chunk in file.chunks:
                 db.session.delete(chunk)
@@ -45,17 +46,17 @@ def cleanup_expired_files():
         db.session.commit()
 
 @celery.task(name="tasks.generate_query_answer")
-def generate_query_answer(user_id, query_text):
+def generate_query_answer(user_id, query_text, file_ids=None):
     try:
         user = User.query.get(user_id)
-        if not user or not user.is_pilot:
-            return {"error": "User not authorized or not Pilot"}
+        if not user:
+            return {"error": "User not found."}
 
         groq_api_key = os.getenv("GROQ_API_KEY")
         if not groq_api_key:
             return {"error": "GROQ_API_KEY is not configured."}
 
-        similar_chunks = search_similar_chunks(user_id, query_text, top_k=5)
+        similar_chunks = search_similar_chunks(user_id, query_text, top_k=5, file_ids=file_ids)
         if not similar_chunks:
             return {
                 "query": query_text,
@@ -79,8 +80,10 @@ def generate_query_answer(user_id, query_text):
                     "role": "system",
                     "content": (
                         "You are a helpful assistant that answers questions based strictly "
-                        "on the provided document context. If the answer is not in the context, "
-                        "say so clearly. Be concise and accurate."
+                        "on the provided document context. Always cite your sources inline "
+                        "using [1], [2], etc. corresponding to the provided sources. "
+                        "If the answer is not in the context, say so clearly. "
+                        "Be concise and accurate."
                     ),
                 },
                 {
@@ -95,12 +98,13 @@ def generate_query_answer(user_id, query_text):
         answer = response.choices[0].message.content.strip()
 
         serializable_chunks = []
-        for chunk_data in similar_chunks:
+        for i, chunk_data in enumerate(similar_chunks, 1):
             serializable_chunks.append({
                 "id": chunk_data["chunk"].id,
                 "text": chunk_data["chunk"].text,
                 "filename": getattr(chunk_data["chunk"].file, "filename", "Unknown"),
                 "score": chunk_data.get("distance", 0.0),
+                "source_num": i,
             })
 
         return {
@@ -111,3 +115,173 @@ def generate_query_answer(user_id, query_text):
 
     except Exception as exc:
         return {"error": f"Query failed: {str(exc)}"}
+
+
+@celery.task(name="tasks.generate_summary")
+def generate_summary(user_id, file_id):
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return {"error": "User not found."}
+
+        groq_api_key = os.getenv("GROQ_API_KEY")
+        if not groq_api_key:
+            return {"error": "GROQ_API_KEY is not configured."}
+
+        chunks = Chunk.query.filter_by(file_id=file_id, user_id=user_id).all()
+        if not chunks:
+            return {"error": "No content found for this document."}
+
+        file = File.query.get(file_id)
+        full_text = "\n".join(c.text for c in chunks)
+        if len(full_text) > 12000:
+            full_text = full_text[:12000]
+
+        from groq import Groq
+        client = Groq(api_key=groq_api_key)
+
+        response = client.chat.completions.create(
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a helpful assistant that creates structured summaries of documents. "
+                        "Include: main topics, key points, important details, and conclusions. "
+                        "Use markdown formatting with headers and bullet points."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": f"Summarize this document:\n\n{full_text}",
+                },
+            ],
+            temperature=0.3,
+            max_tokens=1024,
+        )
+
+        return {
+            "type": "summary",
+            "filename": file.filename if file else "Unknown",
+            "content": response.choices[0].message.content.strip(),
+        }
+
+    except Exception as exc:
+        return {"error": f"Summary failed: {str(exc)}"}
+
+
+@celery.task(name="tasks.generate_flashcards")
+def generate_flashcards(user_id, file_id):
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return {"error": "User not found."}
+
+        groq_api_key = os.getenv("GROQ_API_KEY")
+        if not groq_api_key:
+            return {"error": "GROQ_API_KEY is not configured."}
+
+        chunks = Chunk.query.filter_by(file_id=file_id, user_id=user_id).all()
+        if not chunks:
+            return {"error": "No content found for this document."}
+
+        file = File.query.get(file_id)
+        full_text = "\n".join(c.text for c in chunks)
+        if len(full_text) > 12000:
+            full_text = full_text[:12000]
+
+        from groq import Groq
+        client = Groq(api_key=groq_api_key)
+
+        response = client.chat.completions.create(
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "Generate study flashcards from the document. "
+                        "Return a JSON array of objects with 'front' (question) and 'back' (answer) keys. "
+                        "Generate 8-12 flashcards. Only return the JSON array, no other text."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": f"Document content:\n\n{full_text}",
+                },
+            ],
+            temperature=0.3,
+            max_tokens=2048,
+        )
+
+        import json
+        raw = response.choices[0].message.content.strip()
+        raw = raw.removeprefix("```json").removesuffix("```").strip()
+        cards = json.loads(raw)
+
+        return {
+            "type": "flashcards",
+            "filename": file.filename if file else "Unknown",
+            "cards": cards,
+        }
+
+    except Exception as exc:
+        return {"error": f"Flashcard generation failed: {str(exc)}"}
+
+
+@celery.task(name="tasks.generate_quiz")
+def generate_quiz(user_id, file_id):
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return {"error": "User not found."}
+
+        groq_api_key = os.getenv("GROQ_API_KEY")
+        if not groq_api_key:
+            return {"error": "GROQ_API_KEY is not configured."}
+
+        chunks = Chunk.query.filter_by(file_id=file_id, user_id=user_id).all()
+        if not chunks:
+            return {"error": "No content found for this document."}
+
+        file = File.query.get(file_id)
+        full_text = "\n".join(c.text for c in chunks)
+        if len(full_text) > 12000:
+            full_text = full_text[:12000]
+
+        from groq import Groq
+        client = Groq(api_key=groq_api_key)
+
+        response = client.chat.completions.create(
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "Generate a 5-question multiple choice quiz from the document. "
+                        "Return a JSON array of objects with: 'question' (string), "
+                        "'options' (array of 4 strings labeled A-D), 'correct' (the correct letter A-D), "
+                        "and 'explanation' (why the answer is correct). Only return the JSON array."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": f"Document content:\n\n{full_text}",
+                },
+            ],
+            temperature=0.3,
+            max_tokens=2048,
+        )
+
+        import json
+        raw = response.choices[0].message.content.strip()
+        raw = raw.removeprefix("```json").removesuffix("```").strip()
+        questions = json.loads(raw)
+
+        return {
+            "type": "quiz",
+            "filename": file.filename if file else "Unknown",
+            "questions": questions,
+        }
+
+    except Exception as exc:
+        return {"error": f"Quiz generation failed: {str(exc)}"}

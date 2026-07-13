@@ -15,11 +15,12 @@
                         <div class="col-md-4 text-end">
                             {% if user.is_pilot %}
                                 <span class="badge bg-success fs-6 px-3 py-2">
-                                    <i class="fas fa-star me-2"></i>Premium Member
+                                    <i class="fas fa-star me-2"></i>Pro Plan
                                 </span>
                             {% else %}
                                 <span class="badge bg-outline-primary fs-6 px-3 py-2">
                                     <i class="fas fa-user me-2"></i>Free Plan
+                                    <a href="{{ url_for('main.pricing') }}" class="ms-2 text-primary">Upgrade</a>
                                 </span>
                             {% endif %}
                         </div>
@@ -28,6 +29,42 @@
             </div>
         </div>
     </div>
+
+    <!-- Usage Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <small class="text-muted d-block mb-1">Documents</small>
+                    <h4 class="mb-0">{{ files|length }}</h4>
+                    {% if limits.max_uploads_per_month is not none %}
+                        <small class="text-muted">/ {{ limits.max_uploads_per_month }} uploads this month ({{ monthly_uploads }} used)</small>
+                    {% else %}
+                        <small class="text-muted">Unlimited uploads</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <small class="text-muted d-block mb-1">Storage</small>
+                    <h4 class="mb-0">{{ "%.1f"|format(storage_used_mb) }} MB</h4>
+                    <small class="text-muted">/ {{ limits.storage_mb }} MB</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <small class="text-muted d-block mb-1">Queries</small>
+                    <h4 class="mb-0">{{ limits.max_queries_per_month }}</h4>
+                    <small class="text-muted">/ month</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
 <a href="{{ url_for('main.download_all_files') }}" class="btn btn-outline-info w-100 mt-2">
     <i class="fas fa-download me-2"></i>Download All My Files
 </a>
@@ -84,6 +121,32 @@
                     <div class="card-body">
                         <form id="queryForm" action="{{ url_for('main.query_documents') }}" method="post">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                            {% set processed_files = [] %}
+                            {% for file in files %}
+                                {% if file.processed %}
+                                    {% if processed_files.append(file) %}{% endif %}
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if processed_files|length > 1 %}
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">
+                                    <i class="fas fa-filter me-1"></i>Search specific documents (leave unchecked to search all)
+                                </label>
+                                <div class="doc-selector p-2 rounded border">
+                                    {% for file in processed_files %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="file_ids" value="{{ file.id }}" id="doc-{{ file.id }}">
+                                            <label class="form-check-label text-muted small" for="doc-{{ file.id }}">
+                                                {{ file.filename }}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+
                             <div class="input-group input-group-lg">
                                 <input type="text" name="query" class="form-control"
                                        placeholder="Example: What are the main topics discussed in my documents?" required>
@@ -93,7 +156,7 @@
                                     Search
                                 </button>
                             </div>
-                            <small class="text-muted mt-2 d-block">💡 Try questions like "Summarize the key points" or "What are the main conclusions?"</small>
+                            <small class="text-muted mt-2 d-block">Try questions like "Summarize the key points" or "What are the main conclusions?"</small>
                         </form>
                     </div>
                 </div>
@@ -114,19 +177,25 @@
                                 <div class="row text-start">
                                     <div class="col-md-6">
                                         <small class="text-muted">
-                                            <i class="fas fa-check text-success me-1"></i>Supports .txt and .md files<br>
-                                            <i class="fas fa-check text-success me-1"></i>Up to 10MB per file
+                                            {% if user.is_pilot %}
+                                                <i class="fas fa-check text-success me-1"></i>PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, HTML, JSON<br>
+                                                <i class="fas fa-check text-success me-1"></i>Up to 100 MB per file
+                                            {% else %}
+                                                <i class="fas fa-check text-success me-1"></i>PDF files only<br>
+                                                <i class="fas fa-check text-success me-1"></i>Up to 5 MB per file
+                                            {% endif %}
                                         </small>
                                     </div>
                                     <div class="col-md-6">
                                         <small class="text-muted">
                                             <i class="fas fa-info-circle text-info me-1"></i>Files are processed securely<br>
-                                            <i class="fas fa-lock text-warning me-1"></i>Enterprise-grade encryption
+                                            <i class="fas fa-lock text-warning me-1"></i>We never train on your documents
                                         </small>
                                     </div>
                                 </div>
                             </div>
-                            <input type="file" id="fileInput" name="file" class="d-none" accept=".txt,.md">
+                            <input type="file" id="fileInput" name="file" class="d-none"
+                                   accept="{% if user.is_pilot %}.pdf,.docx,.pptx,.xlsx,.csv,.txt,.md,.html,.json{% else %}.pdf{% endif %}">
                         </div>
                         <div id="uploadProgress" class="progress mt-3 d-none">
                             <div class="progress-bar" role="progressbar" style="width: 0%"></div>
@@ -177,13 +246,79 @@
 
         <!-- Sidebar -->
         <div class="col-lg-4">
-            <!-- Account Status -->
-            
+            <!-- Folders -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-folder me-2"></i>Folders</h5>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#newFolderForm">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="collapse mb-2" id="newFolderForm">
+                        <form action="{{ url_for('main.create_folder') }}" method="post" class="input-group input-group-sm mb-2">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="text" name="name" class="form-control" placeholder="Folder name" required>
+                            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-check"></i></button>
+                        </form>
+                    </div>
+                    {% if folders %}
+                        {% for folder in folders %}
+                            <div class="folder-item d-flex justify-content-between align-items-center mb-1">
+                                <span><i class="fas fa-folder me-2 text-warning"></i>{{ folder.name }}</span>
+                                <form action="{{ url_for('main.delete_folder', folder_id=folder.id) }}" method="post" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-link text-danger p-0" onclick="return confirm('Delete folder? Files will be moved to root.')">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <small class="text-muted">No folders yet</small>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-tags me-2"></i>Tags</h5>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#newTagForm">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="collapse mb-2" id="newTagForm">
+                        <form action="{{ url_for('main.create_tag') }}" method="post" class="input-group input-group-sm mb-2">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="text" name="name" class="form-control" placeholder="Tag name" required>
+                            <input type="color" name="color" value="#6366f1" class="form-control form-control-color" style="max-width: 40px;">
+                            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-check"></i></button>
+                        </form>
+                    </div>
+                    {% if tags %}
+                        {% for tag in tags %}
+                            <span class="tag-chip me-1 mb-1" style="background: {{ tag.color }}22; color: {{ tag.color }};">
+                                {{ tag.name }}
+                                <form action="{{ url_for('main.delete_tag', tag_id=tag.id) }}" method="post" class="d-inline ms-1">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm p-0 border-0 bg-transparent" style="color: {{ tag.color }};">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                            </span>
+                        {% endfor %}
+                    {% else %}
+                        <small class="text-muted">No tags yet</small>
+                    {% endif %}
+                </div>
+            </div>
 
             <!-- Document Library -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-folder me-2"></i>Your Documents</h5>
+                    <h5 class="mb-0"><i class="fas fa-file me-2"></i>Your Documents</h5>
                     <small class="text-muted">({{ files|length }} files)</small>
                 </div>
                 <div class="card-body scroll-panel">
@@ -205,6 +340,13 @@
                                                     <span class="badge bg-warning ms-1">Processing</span>
                                                 {% endif %}
                                             </small>
+                                            {% if file.tags %}
+                                                <div class="mt-1">
+                                                    {% for tag in file.tags %}
+                                                        <span class="tag-chip" style="background: {{ tag.color }}22; color: {{ tag.color }}; font-size: 0.7rem; padding: 0.15rem 0.4rem;">{{ tag.name }}</span>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
                                         </div>
                                         <div class="btn-group-vertical btn-group-sm">
                                             <button class="btn btn-outline-info btn-sm preview-btn mb-1"
@@ -225,6 +367,33 @@
                                                 <i class="fas fa-check"></i>
                                             </button>
                                             {% endif %}
+                                            {% if file.processed %}
+                                            <div class="dropdown mb-1">
+                                                <button class="btn btn-outline-info btn-sm dropdown-toggle" data-bs-toggle="dropdown" title="Study Tools">
+                                                    <i class="fas fa-brain"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li>
+                                                        <form action="{{ url_for('main.summarize_document', file_id=file.id) }}" method="post">
+                                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                            <button type="submit" class="dropdown-item"><i class="fas fa-align-left me-2"></i>Summarize</button>
+                                                        </form>
+                                                    </li>
+                                                    <li>
+                                                        <form action="{{ url_for('main.flashcards_document', file_id=file.id) }}" method="post">
+                                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                            <button type="submit" class="dropdown-item"><i class="fas fa-clone me-2"></i>Flashcards</button>
+                                                        </form>
+                                                    </li>
+                                                    <li>
+                                                        <form action="{{ url_for('main.quiz_document', file_id=file.id) }}" method="post">
+                                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                            <button type="submit" class="dropdown-item"><i class="fas fa-question-circle me-2"></i>Quiz</button>
+                                                        </form>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            {% endif %}
                                             <form action="{{ url_for('main.delete_file', file_id=file.id) }}" method="post" class="d-inline">
                                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                 <button type="submit" class="btn btn-outline-danger btn-sm"
@@ -239,10 +408,9 @@
                         </div>
                     {% else %}
                         <div class="text-center py-4">
-                            <span class="display-4 mb-3"></span>
                             <i class="fas fa-file-alt fa-2x text-muted mb-3"></i>
                             <h6 class="text-muted">No documents yet</h6>
-                            <p class="text-muted mb-0 small">Upload your first document to get started with AI queries!</p>
+                            <p class="text-muted mb-0 small">Upload your first document to get started!</p>
                         </div>
                     {% endif %}
                 </div>
@@ -332,11 +500,12 @@ function handleFileUpload(retry = false) {
             alert('Filename contains special characters. It will be uploaded as is, but ensure compatibility.');
         }
 
-        // File size validation (10MB limit)
-        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+        // File size validation
+        const maxSize = {{ limits.max_file_size_bytes }};
         if (file.size > maxSize) {
-            showUploadError('File too large. Maximum file size is 10MB.');
-            fileInput.value = ''; // Clear the input
+            const maxMB = Math.round(maxSize / (1024 * 1024));
+            showUploadError(`File too large. Maximum file size on your plan is ${maxMB} MB.`);
+            fileInput.value = '';
             return;
         }
 

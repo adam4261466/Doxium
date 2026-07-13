@@ -2,6 +2,11 @@ from . import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 
+file_tags = db.Table('file_tags',
+    db.Column('file_id', db.Integer, db.ForeignKey('files.id'), primary_key=True),
+    db.Column('tag_id', db.Integer, db.ForeignKey('tags.id'), primary_key=True)
+)
+
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
 
@@ -22,6 +27,8 @@ class User(db.Model, UserMixin):
     lemonsqueezy_subscription_id = db.Column(db.String(100), nullable=True)
 
     files = db.relationship('File', backref='user', lazy=True)
+    folders = db.relationship('Folder', backref='user', lazy=True)
+    tags = db.relationship('Tag', backref='user', lazy=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -37,18 +44,47 @@ class FaissIndexStore(db.Model):
     metadata_json = db.Column(db.JSON, nullable=True)
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(),
                            onupdate=db.func.current_timestamp())
-    
+
 class BillingEvent(db.Model):
     __tablename__ = 'billing_events'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    event_type = db.Column(db.String(100), nullable=False)  # e.g. order_created
+    event_type = db.Column(db.String(100), nullable=False)
     amount = db.Column(db.Float, nullable=True)
     currency = db.Column(db.String(10), nullable=True)
     ls_order_id = db.Column(db.String(100), nullable=True)
     ls_subscription_id = db.Column(db.String(100), nullable=True)
-    raw_payload = db.Column(db.JSON, nullable=True)  # full webhook payload
+    raw_payload = db.Column(db.JSON, nullable=True)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+
+class UploadUsage(db.Model):
+    __tablename__ = 'upload_usage'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    month_key = db.Column(db.String(7), nullable=False)
+    upload_count = db.Column(db.Integer, default=0)
+    __table_args__ = (db.UniqueConstraint('user_id', 'month_key'),)
+
+
+class Folder(db.Model):
+    __tablename__ = 'folders'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    parent_id = db.Column(db.Integer, db.ForeignKey('folders.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    files = db.relationship('File', backref='folder', lazy=True)
+    children = db.relationship('Folder', backref=db.backref('parent', remote_side=[id]), lazy=True)
+
+
+class Tag(db.Model):
+    __tablename__ = 'tags'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    color = db.Column(db.String(7), default='#6366f1')
+    __table_args__ = (db.UniqueConstraint('name', 'user_id'),)
 
 
 class File(db.Model):
@@ -62,6 +98,8 @@ class File(db.Model):
     file_metadata = db.Column(db.JSON, default=dict)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     content = db.Column(db.LargeBinary, nullable=True)
+    folder_id = db.Column(db.Integer, db.ForeignKey('folders.id'), nullable=True)
+    tags = db.relationship('Tag', secondary=file_tags, backref='files')
     chunks = db.relationship('Chunk', backref='file', lazy=True)
 
 

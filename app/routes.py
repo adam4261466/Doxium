@@ -4,17 +4,17 @@ import re
 import requests
 import hmac
 import hashlib
-from datetime import datetime, timezone
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify, send_file
+import io
+from datetime import datetime, timezone, timedelta
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify, send_file, Response
 from werkzeug.utils import secure_filename, safe_join
-from .models import User, File, Chunk
+from .models import User, File, Chunk, UploadUsage, Folder, Tag, file_tags, BillingEvent
 from . import db, limiter
 from flask_login import login_user, login_required, logout_user, current_user
 from flask_limiter.util import get_remote_address
 from .document_processor import extract_text
 from .faiss_index import FaissIndex
 from .embeddings import EmbeddingGenerator
-from .models import User, File, Chunk, BillingEvent
 
 main = Blueprint("main", __name__)
 
@@ -24,24 +24,41 @@ LS_API_BASE = "https://api.lemonsqueezy.com/v1"
 # Plan limits
 # -------------------------------------------------------
 FREE_LIMITS = {
-    "max_files": 3,
-    "max_queries_per_month": 10,
-    "storage_mb": 50,
+    "max_uploads_per_month": 10,
+    "max_queries_per_month": 100,
+    "storage_mb": 100,
     "max_file_size_bytes": 5 * 1024 * 1024,
     "allowed_extensions": {".pdf"},
 }
 
 PRO_LIMITS = {
-    "max_files": 50,
-    "max_queries_per_month": 100,
-    "storage_mb": 500,
-    "max_file_size_bytes": 50 * 1024 * 1024,
+    "max_uploads_per_month": None,  # unlimited (fair-use)
+    "max_queries_per_month": 500,
+    "storage_mb": 2048,
+    "max_file_size_bytes": 100 * 1024 * 1024,
     "allowed_extensions": {".txt", ".md", ".pdf", ".docx", ".pptx",
                            ".xlsx", ".csv", ".html", ".json"},
 }
 
 def get_limits(user):
     return PRO_LIMITS if user.is_pilot else FREE_LIMITS
+
+def get_current_month_key():
+    return datetime.utcnow().strftime("%Y-%m")
+
+def get_monthly_upload_count(user_id):
+    month_key = get_current_month_key()
+    usage = UploadUsage.query.filter_by(user_id=user_id, month_key=month_key).first()
+    return usage.upload_count if usage else 0
+
+def increment_monthly_uploads(user_id):
+    month_key = get_current_month_key()
+    usage = UploadUsage.query.filter_by(user_id=user_id, month_key=month_key).first()
+    if not usage:
+        usage = UploadUsage(user_id=user_id, month_key=month_key, upload_count=0)
+        db.session.add(usage)
+    usage.upload_count += 1
+    db.session.commit()
 
 ALLOWED_EXTENSIONS = {".txt", ".md", ".pdf", ".docx", ".pptx",
                       ".xlsx", ".csv", ".html", ".json"}
@@ -163,10 +180,9 @@ def login():
             login_user(user)
             if user.is_pilot:
                 flash("Welcome back!", "success")
-                return redirect(url_for("main.dashboard"))
             else:
-                flash("Logged in. Upgrade to Pro for full access.", "info")
-                return redirect(url_for("main.pricing"))
+                flash("Welcome back! You're on the Free plan.", "info")
+            return redirect(url_for("main.dashboard"))
 
         flash("Invalid email or password.", "danger")
 
@@ -508,14 +524,25 @@ def dashboard():
             "content": content,
             "id": file.id,
             "processed": file.processed,
+            "folder_id": file.folder_id,
+            "tags": [{"id": t.id, "name": t.name, "color": t.color} for t in file.tags],
         })
     limits = get_limits(current_user)
+    monthly_uploads = get_monthly_upload_count(current_user.id) if limits["max_uploads_per_month"] is not None else None
+    has_space, available_mb, used_mb = check_storage_space(current_user.id)
+    folders = Folder.query.filter_by(user_id=current_user.id).all()
+    tags = Tag.query.filter_by(user_id=current_user.id).all()
     return render_template(
         "dashboard.html",
         user=current_user,
         files=files_with_content,
         is_pilot=current_user.is_pilot,
-        limits=limits
+        limits=limits,
+        monthly_uploads=monthly_uploads,
+        storage_used_mb=used_mb,
+        storage_available_mb=available_mb,
+        folders=folders,
+        tags=tags,
     )
 
 @main.route("/upload", methods=["POST"])
@@ -528,9 +555,6 @@ def upload():
             return jsonify(success=False, error=msg)
         flash(msg, "danger")
         return redirect(url_for("main.dashboard"))
-
-    if not current_user.is_pilot:
-        return fail("Upgrade to Pro to upload files.")
 
     limits = get_limits(current_user)
 
@@ -562,9 +586,10 @@ def upload():
             max_mb = limits["max_file_size_bytes"] // (1024 * 1024)
             return fail(f"File too large. Max size on your plan is {max_mb} MB.")
 
-        user_file_count = File.query.filter_by(user_id=current_user.id).count()
-        if user_file_count >= limits["max_files"]:
-            return fail(f"You have reached the {limits['max_files']}-file limit on your plan.")
+        if limits["max_uploads_per_month"] is not None:
+            monthly_count = get_monthly_upload_count(current_user.id)
+            if monthly_count >= limits["max_uploads_per_month"]:
+                return fail(f"You have reached the {limits['max_uploads_per_month']}-upload monthly limit on your plan.")
 
         has_space, available_mb, used_mb = check_storage_space(current_user.id, size)
         if not has_space:
@@ -592,6 +617,9 @@ def upload():
         db.session.add(new_file)
         db.session.commit()
 
+        if limits["max_uploads_per_month"] is not None:
+            increment_monthly_uploads(current_user.id)
+
         if is_ajax:
             return jsonify(success=True, message="File uploaded successfully.")
         flash("File uploaded successfully.", "success")
@@ -613,9 +641,6 @@ def upload():
 @login_required
 def process_file_route(file_id):
     from .tasks import process_file_task
-    if not current_user.is_pilot:
-        flash("Upgrade to Pro to process files.", "warning")
-        return redirect(url_for("main.pricing"))
 
     file = File.query.filter_by(id=file_id, user_id=current_user.id).first_or_404()
 
@@ -632,9 +657,6 @@ def process_file_route(file_id):
 @login_required
 def delete_file(file_id):
     from .tasks import rebuild_index_task
-    if not current_user.is_pilot:
-        flash("Upgrade to Pro to delete files.", "warning")
-        return redirect(url_for("main.pricing"))
 
     file = File.query.filter_by(id=file_id, user_id=current_user.id).first_or_404()
     was_processed = file.processed
@@ -679,9 +701,7 @@ def view_file(filepath: str):
 @limiter.limit("2 per minute")
 @login_required
 def query_documents():
-    if not current_user.is_pilot:
-        flash("Upgrade to Pro to query documents.", "warning")
-        return redirect(url_for("main.pricing"))
+    limits = get_limits(current_user)
 
     query_text = request.form.get("query", "").strip()
     if not query_text:
@@ -692,8 +712,11 @@ def query_documents():
         flash("Query too long. Max 1000 characters.", "warning")
         return redirect(url_for("main.dashboard"))
 
+    file_ids_raw = request.form.getlist("file_ids")
+    file_ids = [int(fid) for fid in file_ids_raw if fid.isdigit()] or None
+
     from .tasks import generate_query_answer
-    task = generate_query_answer.delay(current_user.id, query_text)
+    task = generate_query_answer.delay(current_user.id, query_text, file_ids)
     flash("Generating answer… This may take 10–30 seconds.", "info")
     return redirect(url_for("main.query_status", task_id=task.id))
 
@@ -718,12 +741,267 @@ def query_status(task_id):
                 query=data["query"],
                 answer=data["answer"],
                 supporting_chunks=data["chunks"],
+                task_id=task_id,
             )
         else:
             flash("Query generation failed. Please try again.", "danger")
             return redirect(url_for("main.dashboard"))
 
     return render_template("query_processing.html", task_id=task_id)
+
+
+# -----------------------
+# Folder & Tag Routes
+# -----------------------
+@main.route("/folders/create", methods=["POST"])
+@login_required
+def create_folder():
+    name = request.form.get("name", "").strip()
+    if not name:
+        flash("Folder name is required.", "danger")
+        return redirect(url_for("main.dashboard"))
+    parent_id = request.form.get("parent_id")
+    folder = Folder(name=name, user_id=current_user.id, parent_id=int(parent_id) if parent_id else None)
+    db.session.add(folder)
+    db.session.commit()
+    flash(f"Folder '{name}' created.", "success")
+    return redirect(url_for("main.dashboard"))
+
+
+@main.route("/folders/<int:folder_id>/rename", methods=["POST"])
+@login_required
+def rename_folder(folder_id):
+    folder = Folder.query.filter_by(id=folder_id, user_id=current_user.id).first_or_404()
+    name = request.form.get("name", "").strip()
+    if not name:
+        flash("Folder name is required.", "danger")
+        return redirect(url_for("main.dashboard"))
+    folder.name = name
+    db.session.commit()
+    flash("Folder renamed.", "success")
+    return redirect(url_for("main.dashboard"))
+
+
+@main.route("/folders/<int:folder_id>/delete", methods=["POST"])
+@login_required
+def delete_folder(folder_id):
+    folder = Folder.query.filter_by(id=folder_id, user_id=current_user.id).first_or_404()
+    for f in folder.files:
+        f.folder_id = None
+    for child in folder.children:
+        child.parent_id = folder.parent_id
+    db.session.delete(folder)
+    db.session.commit()
+    flash("Folder deleted. Files moved to root.", "info")
+    return redirect(url_for("main.dashboard"))
+
+
+@main.route("/files/<int:file_id>/move", methods=["POST"])
+@login_required
+def move_file(file_id):
+    file = File.query.filter_by(id=file_id, user_id=current_user.id).first_or_404()
+    folder_id = request.form.get("folder_id")
+    file.folder_id = int(folder_id) if folder_id else None
+    db.session.commit()
+    flash("File moved.", "success")
+    return redirect(url_for("main.dashboard"))
+
+
+@main.route("/tags/create", methods=["POST"])
+@login_required
+def create_tag():
+    name = request.form.get("name", "").strip()
+    color = request.form.get("color", "#6366f1")
+    if not name:
+        flash("Tag name is required.", "danger")
+        return redirect(url_for("main.dashboard"))
+    existing = Tag.query.filter_by(name=name, user_id=current_user.id).first()
+    if existing:
+        flash("Tag already exists.", "warning")
+        return redirect(url_for("main.dashboard"))
+    tag = Tag(name=name, user_id=current_user.id, color=color)
+    db.session.add(tag)
+    db.session.commit()
+    flash(f"Tag '{name}' created.", "success")
+    return redirect(url_for("main.dashboard"))
+
+
+@main.route("/tags/<int:tag_id>/delete", methods=["POST"])
+@login_required
+def delete_tag(tag_id):
+    tag = Tag.query.filter_by(id=tag_id, user_id=current_user.id).first_or_404()
+    db.session.delete(tag)
+    db.session.commit()
+    flash("Tag deleted.", "success")
+    return redirect(url_for("main.dashboard"))
+
+
+@main.route("/files/<int:file_id>/tag", methods=["POST"])
+@login_required
+def tag_file(file_id):
+    file = File.query.filter_by(id=file_id, user_id=current_user.id).first_or_404()
+    tag_id = request.form.get("tag_id")
+    tag = Tag.query.filter_by(id=tag_id, user_id=current_user.id).first_or_404()
+    if tag not in file.tags:
+        file.tags.append(tag)
+        db.session.commit()
+    flash("Tag added.", "success")
+    return redirect(url_for("main.dashboard"))
+
+
+@main.route("/files/<int:file_id>/untag", methods=["POST"])
+@login_required
+def untag_file(file_id):
+    file = File.query.filter_by(id=file_id, user_id=current_user.id).first_or_404()
+    tag_id = request.form.get("tag_id")
+    tag = Tag.query.filter_by(id=tag_id, user_id=current_user.id).first_or_404()
+    if tag in file.tags:
+        file.tags.remove(tag)
+        db.session.commit()
+    flash("Tag removed.", "success")
+    return redirect(url_for("main.dashboard"))
+
+
+# -----------------------
+# Study Feature Routes
+# -----------------------
+@main.route("/document/<int:file_id>/summarize", methods=["POST"])
+@login_required
+def summarize_document(file_id):
+    if not current_user.is_pilot:
+        flash("Upgrade to Pro for AI summaries.", "warning")
+        return redirect(url_for("main.pricing"))
+    file = File.query.filter_by(id=file_id, user_id=current_user.id).first_or_404()
+    from .tasks import generate_summary
+    task = generate_summary.delay(current_user.id, file_id)
+    return redirect(url_for("main.study_status", task_id=task.id, study_type="summary"))
+
+
+@main.route("/document/<int:file_id>/flashcards", methods=["POST"])
+@login_required
+def flashcards_document(file_id):
+    if not current_user.is_pilot:
+        flash("Upgrade to Pro for flashcards.", "warning")
+        return redirect(url_for("main.pricing"))
+    file = File.query.filter_by(id=file_id, user_id=current_user.id).first_or_404()
+    from .tasks import generate_flashcards
+    task = generate_flashcards.delay(current_user.id, file_id)
+    return redirect(url_for("main.study_status", task_id=task.id, study_type="flashcards"))
+
+
+@main.route("/document/<int:file_id>/quiz", methods=["POST"])
+@login_required
+def quiz_document(file_id):
+    if not current_user.is_pilot:
+        flash("Upgrade to Pro for quizzes.", "warning")
+        return redirect(url_for("main.pricing"))
+    file = File.query.filter_by(id=file_id, user_id=current_user.id).first_or_404()
+    from .tasks import generate_quiz
+    task = generate_quiz.delay(current_user.id, file_id)
+    return redirect(url_for("main.study_status", task_id=task.id, study_type="quiz"))
+
+
+@main.route("/study/status/<task_id>")
+@login_required
+def study_status(task_id):
+    from celery.result import AsyncResult
+    from app.celery_app import celery
+
+    result = AsyncResult(task_id, app=celery)
+
+    if result.ready():
+        if result.successful():
+            data = result.get()
+            if "error" in data:
+                flash(data["error"], "danger")
+                return redirect(url_for("main.dashboard"))
+            return render_template("study_results.html", user=current_user, data=data)
+        else:
+            flash("Study generation failed. Please try again.", "danger")
+            return redirect(url_for("main.dashboard"))
+
+    return render_template("query_processing.html", task_id=task_id)
+
+
+# -----------------------
+# Export Routes
+# -----------------------
+@main.route("/export/<fmt>/<task_id>")
+@login_required
+def export_query(fmt, task_id):
+    from celery.result import AsyncResult
+    from app.celery_app import celery
+
+    result = AsyncResult(task_id, app=celery)
+    if not result.ready() or not result.successful():
+        flash("Result not ready or expired.", "danger")
+        return redirect(url_for("main.dashboard"))
+
+    data = result.get()
+    answer = data.get("answer", "")
+    query = data.get("query", "")
+    chunks = data.get("chunks", [])
+
+    sources_text = "\n\n---\nSources:\n"
+    for c in chunks:
+        sources_text += f"[{c.get('source_num', '?')}] {c.get('filename', 'Unknown')} (similarity: {c.get('score', 0):.3f})\n"
+
+    if fmt == "md":
+        content = f"# Query: {query}\n\n## Answer\n\n{answer}\n{sources_text}"
+        return Response(
+            content,
+            mimetype="text/markdown",
+            headers={"Content-Disposition": f"attachment;filename=doxium-answer-{task_id[:8]}.md"}
+        )
+
+    elif fmt == "txt":
+        content = f"Query: {query}\n\nAnswer:\n{answer}\n{sources_text}"
+        return Response(
+            content,
+            mimetype="text/plain",
+            headers={"Content-Disposition": f"attachment;filename=doxium-answer-{task_id[:8]}.txt"}
+        )
+
+    elif fmt == "docx":
+        from docx import Document
+        doc = Document()
+        doc.add_heading(f"Query: {query}", level=1)
+        doc.add_heading("Answer", level=2)
+        doc.add_paragraph(answer)
+        doc.add_heading("Sources", level=2)
+        for c in chunks:
+            doc.add_paragraph(f"[{c.get('source_num', '?')}] {c.get('filename', 'Unknown')} (similarity: {c.get('score', 0):.3f})")
+        buf = io.BytesIO()
+        doc.save(buf)
+        buf.seek(0)
+        return send_file(buf, as_attachment=True,
+                         download_name=f"doxium-answer-{task_id[:8]}.docx",
+                         mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+
+    elif fmt == "pdf":
+        from reportlab.lib.pagesizes import letter
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+        from reportlab.lib.styles import getSampleStyleSheet
+        buf = io.BytesIO()
+        pdf_doc = SimpleDocTemplate(buf, pagesize=letter)
+        styles = getSampleStyleSheet()
+        story = []
+        story.append(Paragraph(f"Query: {query}", styles["Title"]))
+        story.append(Spacer(1, 12))
+        story.append(Paragraph("Answer", styles["Heading2"]))
+        story.append(Paragraph(answer.replace("\n", "<br/>"), styles["BodyText"]))
+        story.append(Spacer(1, 12))
+        story.append(Paragraph("Sources", styles["Heading2"]))
+        for c in chunks:
+            story.append(Paragraph(f"[{c.get('source_num', '?')}] {c.get('filename', 'Unknown')} (similarity: {c.get('score', 0):.3f})", styles["BodyText"]))
+        pdf_doc.build(story)
+        buf.seek(0)
+        return send_file(buf, as_attachment=True,
+                         download_name=f"doxium-answer-{task_id[:8]}.pdf",
+                         mimetype="application/pdf")
+
+    flash("Unsupported export format.", "danger")
+    return redirect(url_for("main.dashboard"))
 
 
 # -----------------------
