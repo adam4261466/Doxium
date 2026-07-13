@@ -78,58 +78,54 @@ def create_app():
 
     with app.app_context():
         db.create_all()
-        try:
-            db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS query_count INTEGER DEFAULT 0'))
-            db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS query_reset_date TIMESTAMP'))
-            db.session.execute(text('ALTER TABLE files ADD COLUMN IF NOT EXISTS content BYTEA'))
-            db.session.execute(text('ALTER TABLE files ADD COLUMN IF NOT EXISTS folder_id INTEGER'))
-            db.session.execute(text('''
-                CREATE TABLE IF NOT EXISTS faiss_index_store (
-                    id SERIAL PRIMARY KEY,
-                    user_id INTEGER NOT NULL UNIQUE,
-                    index_data BYTEA,
-                    metadata_json JSONB,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            '''))
-            db.session.execute(text('''
-                CREATE TABLE IF NOT EXISTS upload_usage (
-                    id SERIAL PRIMARY KEY,
-                    user_id INTEGER NOT NULL REFERENCES users(id),
-                    month_key VARCHAR(7) NOT NULL,
-                    upload_count INTEGER DEFAULT 0,
-                    UNIQUE(user_id, month_key)
-                )
-            '''))
-            db.session.execute(text('''
-                CREATE TABLE IF NOT EXISTS folders (
-                    id SERIAL PRIMARY KEY,
-                    name VARCHAR(255) NOT NULL,
-                    user_id INTEGER NOT NULL REFERENCES users(id),
-                    parent_id INTEGER REFERENCES folders(id),
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            '''))
-            db.session.execute(text('''
-                CREATE TABLE IF NOT EXISTS tags (
-                    id SERIAL PRIMARY KEY,
-                    name VARCHAR(50) NOT NULL,
-                    user_id INTEGER NOT NULL REFERENCES users(id),
-                    color VARCHAR(7) DEFAULT '#6366f1',
-                    UNIQUE(name, user_id)
-                )
-            '''))
-            db.session.execute(text('''
-                CREATE TABLE IF NOT EXISTS file_tags (
-                    file_id INTEGER NOT NULL REFERENCES files(id),
-                    tag_id INTEGER NOT NULL REFERENCES tags(id),
-                    PRIMARY KEY(file_id, tag_id)
-                )
-            '''))
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            logging.info("Column check skipped: %s", e)
+
+        migrations = [
+            'ALTER TABLE "users" ADD COLUMN IF NOT EXISTS query_count INTEGER DEFAULT 0',
+            'ALTER TABLE "users" ADD COLUMN IF NOT EXISTS query_reset_date TIMESTAMP',
+            'ALTER TABLE files ADD COLUMN IF NOT EXISTS content BYTEA',
+            'ALTER TABLE files ADD COLUMN IF NOT EXISTS folder_id INTEGER',
+            '''CREATE TABLE IF NOT EXISTS faiss_index_store (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL UNIQUE,
+                index_data BYTEA,
+                metadata_json JSONB,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )''',
+            '''CREATE TABLE IF NOT EXISTS upload_usage (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                month_key VARCHAR(7) NOT NULL,
+                upload_count INTEGER DEFAULT 0,
+                UNIQUE(user_id, month_key)
+            )''',
+            '''CREATE TABLE IF NOT EXISTS folders (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                parent_id INTEGER REFERENCES folders(id),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )''',
+            '''CREATE TABLE IF NOT EXISTS tags (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(50) NOT NULL,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                color VARCHAR(7) DEFAULT '#6366f1',
+                UNIQUE(name, user_id)
+            )''',
+            '''CREATE TABLE IF NOT EXISTS file_tags (
+                file_id INTEGER NOT NULL REFERENCES files(id),
+                tag_id INTEGER NOT NULL REFERENCES tags(id),
+                PRIMARY KEY(file_id, tag_id)
+            )''',
+        ]
+
+        for sql in migrations:
+            try:
+                db.session.execute(text(sql))
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                logging.info("Migration skipped: %s", e)
 
     migrate.init_app(app, db)
     login_manager.init_app(app)
