@@ -13,8 +13,6 @@ from . import db, limiter
 from flask_login import login_user, login_required, logout_user, current_user
 from flask_limiter.util import get_remote_address
 from .document_processor import extract_text
-from .faiss_index import FaissIndex
-from .embeddings import EmbeddingGenerator
 
 main = Blueprint("main", __name__)
 
@@ -143,7 +141,7 @@ def register():
             mail_server = os.getenv("MAIL_SERVER")
             if mail_server:
                 msg = Message(
-                    subject="Welcome to Doxium 🚀",
+                    subject="Welcome to Doxium",
                     recipients=[new_user.email]
                 )
                 msg.body = f"Hi {new_user.username},\n\nWelcome to Doxium!\n\nBest,\nThe Doxium Team"
@@ -670,8 +668,8 @@ def delete_file(file_id):
 
     if was_processed and chunk_ids:
         try:
-            embedder = EmbeddingGenerator()
-            index = FaissIndex(dim=embedder.get_dimension(), user_id=current_user.id)
+            from .faiss_index import FaissIndex
+            index = FaissIndex(dim=768, user_id=current_user.id)
             for cid in chunk_ids:
                 index.remove_id(cid)
         except Exception:
@@ -729,7 +727,7 @@ def query_documents():
 
     from .tasks import generate_query_answer
     task = generate_query_answer.delay(current_user.id, query_text, file_ids)
-    flash("Generating answer… This may take 10–30 seconds.", "info")
+    flash("Generating answer... This may take 10-30 seconds.", "info")
     return redirect(url_for("main.query_status", task_id=task.id))
 
 
@@ -1053,10 +1051,9 @@ def reset_index(user_id):
         flash("Access denied.", "danger")
         return redirect(url_for("main.admin"))
     try:
-        embedder = EmbeddingGenerator()
-        faiss_index = FaissIndex(dim=embedder.get_dimension(), user_id=user_id)
-        faiss_index.rebuild_index_from_chunks()
-        flash(f"Index reset for user {user_id}.", "success")
+        from .tasks import rebuild_index_task
+        rebuild_index_task.delay(user_id)
+        flash(f"Index rebuild started for user {user_id}.", "success")
     except Exception as e:
         flash(f"Error resetting index: {str(e)}", "danger")
     return redirect(url_for("main.admin"))

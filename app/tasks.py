@@ -4,6 +4,9 @@ from .document_processor import process_file, search_similar_chunks
 from .faiss_index import FaissIndex
 from .embeddings import EmbeddingGenerator
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @celery.task(name="tasks.process_file")
@@ -18,14 +21,14 @@ def rebuild_index_task(user_id: int) -> int:
     index = FaissIndex(dim=embedder.get_dimension(), user_id=user_id)
     index.rebuild_index_from_chunks()
     return index.get_index_size()
-from datetime import datetime, timedelta
+
 
 @celery.task(name="tasks.cleanup_expired_files")
 def cleanup_expired_files():
-    """Delete files beyond Free limits for users cancelled 30+ days ago."""
+    from datetime import datetime, timedelta
     from app.routes import FREE_LIMITS
     cutoff = datetime.utcnow() - timedelta(days=30)
-    
+
     expired_users = User.query.filter(
         User.is_pilot == False,
         User.subscription_cancelled_at != None,
@@ -33,7 +36,7 @@ def cleanup_expired_files():
     ).all()
 
     for user in expired_users:
-        files = File.query.filter_by(user_id=user.id)\
+        files = File.query.filter_by(user_id=user.id) \
                           .order_by(File.created_at.asc()).all()
         free_limit = FREE_LIMITS["max_total_files"]
         files_to_delete = files[free_limit:]
@@ -44,6 +47,7 @@ def cleanup_expired_files():
                 os.remove(file.path)
             db.session.delete(file)
         db.session.commit()
+
 
 @celery.task(name="tasks.generate_query_answer")
 def generate_query_answer(user_id, query_text, file_ids=None):
