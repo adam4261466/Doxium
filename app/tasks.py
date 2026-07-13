@@ -35,7 +35,7 @@ def cleanup_expired_files():
     for user in expired_users:
         files = File.query.filter_by(user_id=user.id)\
                           .order_by(File.created_at.asc()).all()
-        free_limit = FREE_LIMITS["max_uploads_per_month"]
+        free_limit = FREE_LIMITS["max_total_files"]
         files_to_delete = files[free_limit:]
         for file in files_to_delete:
             for chunk in file.chunks:

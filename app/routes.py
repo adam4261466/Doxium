@@ -26,6 +26,7 @@ LS_API_BASE = "https://api.lemonsqueezy.com/v1"
 FREE_LIMITS = {
     "max_uploads_per_month": 10,
     "max_queries_per_month": 100,
+    "max_total_files": 20,
     "storage_mb": 100,
     "max_file_size_bytes": 5 * 1024 * 1024,
     "allowed_extensions": {".pdf"},
