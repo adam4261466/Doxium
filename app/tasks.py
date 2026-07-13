@@ -2,6 +2,7 @@ from contextlib import contextmanager
 import os
 import logging
 
+import app.celery_app as celery_app_module
 from app.celery_app import celery
 from .models import File, Chunk, db, User
 from .document_processor import process_file, search_similar_chunks
@@ -11,8 +12,8 @@ logger = logging.getLogger(__name__)
 
 @contextmanager
 def _app_context():
-    """Push Flask app context stored on celery instance by celery_worker.py."""
-    app = celery.flask_app
+    """Push Flask app context stored on celery_app module by celery_worker.py."""
+    app = celery_app_module.flask_app
     with app.app_context():
         yield
 

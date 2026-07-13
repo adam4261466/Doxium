@@ -1,6 +1,8 @@
 from celery import Celery
 from celery.schedules import crontab
 
+flask_app = None
+
 celery = Celery("app", include=["app.tasks"])
 
 celery.conf.update(
