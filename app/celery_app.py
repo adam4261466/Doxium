@@ -37,4 +37,8 @@ def init_celery(app):
             with app.app_context():
                 return super().__call__(*args, **kwargs)
 
+        def __protected_call__(self, *args, **kwargs):
+            with app.app_context():
+                return super().__protected_call__(*args, **kwargs)
+
     celery.Task = ContextTask
