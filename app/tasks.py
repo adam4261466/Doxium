@@ -1,33 +1,35 @@
-from contextlib import contextmanager
 import os
 import logging
 
-import app.celery_app as celery_app_module
 from app.celery_app import celery
 from .models import File, Chunk, db, User
 from .document_processor import process_file, search_similar_chunks
 
 logger = logging.getLogger(__name__)
 
+_app_cache = {}
 
-@contextmanager
-def _app_context():
-    """Push Flask app context stored on celery_app module by celery_worker.py."""
-    app = celery_app_module.flask_app
-    with app.app_context():
-        yield
+
+def _get_app():
+    pid = os.getpid()
+    if pid not in _app_cache:
+        from app import create_app
+        _app_cache[pid] = create_app()
+    return _app_cache[pid]
 
 
 @celery.task(name="tasks.process_file")
 def process_file_task(file_id: int, user_id: int, upload_folder: str) -> int:
-    with _app_context():
+    app = _get_app()
+    with app.app_context():
         count = process_file(file_id, user_id, upload_folder)
         return count
 
 
 @celery.task(name="tasks.rebuild_index")
 def rebuild_index_task(user_id: int) -> int:
-    with _app_context():
+    app = _get_app()
+    with app.app_context():
         from .faiss_index import FaissIndex
         from .embeddings import EmbeddingGenerator
         embedder = EmbeddingGenerator()
@@ -38,7 +40,8 @@ def rebuild_index_task(user_id: int) -> int:
 
 @celery.task(name="tasks.cleanup_expired_files")
 def cleanup_expired_files():
-    with _app_context():
+    app = _get_app()
+    with app.app_context():
         from datetime import datetime, timedelta
         from app.routes import FREE_LIMITS
         cutoff = datetime.utcnow() - timedelta(days=30)
@@ -65,7 +68,8 @@ def cleanup_expired_files():
 
 @celery.task(name="tasks.generate_query_answer")
 def generate_query_answer(user_id, query_text, file_ids=None):
-    with _app_context():
+    app = _get_app()
+    with app.app_context():
         try:
             user = User.query.get(user_id)
             if not user:
@@ -138,7 +142,8 @@ def generate_query_answer(user_id, query_text, file_ids=None):
 
 @celery.task(name="tasks.generate_summary")
 def generate_summary(user_id, file_id):
-    with _app_context():
+    app = _get_app()
+    with app.app_context():
         try:
             user = User.query.get(user_id)
             if not user:
@@ -192,7 +197,8 @@ def generate_summary(user_id, file_id):
 
 @celery.task(name="tasks.generate_flashcards")
 def generate_flashcards(user_id, file_id):
-    with _app_context():
+    app = _get_app()
+    with app.app_context():
         try:
             user = User.query.get(user_id)
             if not user:
@@ -251,7 +257,8 @@ def generate_flashcards(user_id, file_id):
 
 @celery.task(name="tasks.generate_quiz")
 def generate_quiz(user_id, file_id):
-    with _app_context():
+    app = _get_app()
+    with app.app_context():
         try:
             user = User.query.get(user_id)
             if not user:
