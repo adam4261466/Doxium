@@ -133,6 +133,9 @@ def create_app():
     limiter.init_app(app)
     mail.init_app(app)
 
+    from .celery_app import init_celery
+    init_celery(app)
+
     @app.context_processor
     def inject_session():
         from flask import session

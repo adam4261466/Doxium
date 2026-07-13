@@ -1,8 +1,6 @@
 from app.celery_app import celery
 from .models import File, Chunk, db, User
 from .document_processor import process_file, search_similar_chunks
-from .faiss_index import FaissIndex
-from .embeddings import EmbeddingGenerator
 import os
 import logging
 
@@ -17,6 +15,8 @@ def process_file_task(file_id: int, user_id: int, upload_folder: str) -> int:
 
 @celery.task(name="tasks.rebuild_index")
 def rebuild_index_task(user_id: int) -> int:
+    from .faiss_index import FaissIndex
+    from .embeddings import EmbeddingGenerator
     embedder = EmbeddingGenerator()
     index = FaissIndex(dim=embedder.get_dimension(), user_id=user_id)
     index.rebuild_index_from_chunks()

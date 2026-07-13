@@ -558,10 +558,6 @@ def upload():
     limits = get_limits(current_user)
 
     try:
-        is_overloaded, load_pct = check_system_load()
-        if is_overloaded:
-            return fail(f"System overloaded ({load_pct:.1f}%). Try again in a few minutes.")
-
         if "file" not in request.files:
             return fail("No file part.")
 
@@ -603,15 +599,11 @@ def upload():
         if not os.path.exists(filepath):
             raise Exception("Failed to save file to disk.")
         
-        with open(filepath, 'rb') as file_obj:
-            file_content = file_obj.read()
-        
         new_file = File(
             filename=f.filename,
             path=filepath,
             size=size,
             user_id=current_user.id,
-            content=file_content
         )
         db.session.add(new_file)
         db.session.commit()
