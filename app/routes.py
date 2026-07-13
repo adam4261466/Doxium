@@ -657,11 +657,10 @@ def process_file_route(file_id):
 @main.route("/delete/<int:file_id>", methods=["POST"])
 @login_required
 def delete_file(file_id):
-    from .tasks import rebuild_index_task
-
     file = File.query.filter_by(id=file_id, user_id=current_user.id).first_or_404()
     was_processed = file.processed
 
+    chunk_ids = [c.id for c in file.chunks]
     for chunk in file.chunks:
         db.session.delete(chunk)
     if os.path.exists(file.path):
@@ -669,15 +668,17 @@ def delete_file(file_id):
     db.session.delete(file)
     db.session.commit()
 
-    if was_processed:
+    if was_processed and chunk_ids:
         try:
-            rebuild_index_task.delay(current_user.id)
-            flash("File deleted. FAISS index is rebuilding.", "info")
+            embedder = EmbeddingGenerator()
+            index = FaissIndex(dim=embedder.get_dimension(), user_id=current_user.id)
+            for cid in chunk_ids:
+                index.remove_id(cid)
         except Exception:
-            flash("File deleted but FAISS index rebuild failed to start.", "warning")
-    else:
-        flash("File deleted successfully.", "success")
+            flash("File deleted but FAISS index cleanup failed.", "warning")
+            return redirect(url_for("main.dashboard"))
 
+    flash("File deleted successfully.", "success")
     return redirect(url_for("main.dashboard"))
 
 
