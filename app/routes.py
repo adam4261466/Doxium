@@ -517,11 +517,9 @@ def _set_user_pilot(user, is_pilot, status=None, subscription_id=None, expires_a
 def dashboard():
     files_with_content = []
     for file in current_user.files:
-        content = extract_text(file.path) if os.path.exists(file.path) else "No content available"
         files_with_content.append({
             "filename": file.filename,
             "size": file.size,
-            "content": content,
             "id": file.id,
             "processed": file.processed,
             "folder_id": file.folder_id,
@@ -529,7 +527,9 @@ def dashboard():
         })
     limits = get_limits(current_user)
     monthly_uploads = get_monthly_upload_count(current_user.id) if limits["max_uploads_per_month"] is not None else None
-    has_space, available_mb, used_mb = check_storage_space(current_user.id)
+    total_size = sum(f.size for f in current_user.files)
+    used_mb = total_size / (1024 * 1024)
+    available_mb = limits["storage_mb"] - used_mb
     folders = Folder.query.filter_by(user_id=current_user.id).all()
     tags = Tag.query.filter_by(user_id=current_user.id).all()
     return render_template(
@@ -692,6 +692,16 @@ def view_file(filepath: str):
         return send_file(full_path, as_attachment=True, download_name=os.path.basename(filepath))
     flash("File not found.")
     return redirect(url_for("main.dashboard"))
+
+
+@main.route("/preview/<int:file_id>")
+@login_required
+def preview_file(file_id):
+    file = File.query.filter_by(id=file_id, user_id=current_user.id).first_or_404()
+    if os.path.exists(file.path):
+        content = extract_text(file.path)
+        return jsonify(success=True, content=content[:50000])
+    return jsonify(success=True, content="No content available")
 
 
 # -----------------------
