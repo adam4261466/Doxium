@@ -713,9 +713,28 @@ def view_file(filepath: str):
 @main.route("/preview/<int:file_id>")
 @login_required
 def preview_file(file_id):
+    import tempfile
     file = File.query.filter_by(id=file_id, user_id=current_user.id).first_or_404()
     if os.path.exists(file.path):
         content = extract_text(file.path)
+        return jsonify(success=True, content=content[:50000])
+    if file.content:
+        tmp = None
+        try:
+            ext = os.path.splitext(file.filename)[1].lower() or ".txt"
+            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
+            tmp.write(file.content)
+            tmp.close()
+            content = extract_text(tmp.name)
+            return jsonify(success=True, content=content[:50000])
+        except Exception:
+            pass
+        finally:
+            if tmp and os.path.exists(tmp.name):
+                os.remove(tmp.name)
+    chunks = Chunk.query.filter_by(file_id=file.id, user_id=current_user.id).order_by(Chunk.start_char).all()
+    if chunks:
+        content = "\n".join(c.text for c in chunks)
         return jsonify(success=True, content=content[:50000])
     return jsonify(success=True, content="No content available")
 
