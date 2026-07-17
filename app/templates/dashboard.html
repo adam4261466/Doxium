@@ -250,9 +250,16 @@
             <div class="card mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-folder me-2"></i>Folders</h5>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#newFolderForm">
-                        <i class="fas fa-plus"></i>
-                    </button>
+                    <div class="d-flex gap-1">
+                        {% if active_folder_id %}
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-danger" title="Clear filter">
+                            <i class="fas fa-times"></i>
+                        </a>
+                        {% endif %}
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#newFolderForm">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="collapse mb-2" id="newFolderForm">
@@ -264,15 +271,16 @@
                     </div>
                     {% if folders %}
                         {% for folder in folders %}
-                            <div class="folder-item d-flex justify-content-between align-items-center mb-1">
+                            <a href="{{ url_for('main.dashboard', folder_id=folder.id) }}"
+                               class="folder-item d-flex justify-content-between align-items-center mb-1 text-decoration-none {{ 'active' if active_folder_id == folder.id }}">
                                 <span><i class="fas fa-folder me-2 text-warning"></i>{{ folder.name }}</span>
-                                <form action="{{ url_for('main.delete_folder', folder_id=folder.id) }}" method="post" class="d-inline">
+                                <form action="{{ url_for('main.delete_folder', folder_id=folder.id) }}" method="post" class="d-inline" onclick="event.stopPropagation();">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-sm btn-link text-danger p-0" onclick="return confirm('Delete folder? Files will be moved to root.')">
                                         <i class="fas fa-times"></i>
                                     </button>
                                 </form>
-                            </div>
+                            </a>
                         {% endfor %}
                     {% else %}
                         <small class="text-muted">No folders yet</small>
@@ -284,9 +292,16 @@
             <div class="card mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-tags me-2"></i>Tags</h5>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#newTagForm">
-                        <i class="fas fa-plus"></i>
-                    </button>
+                    <div class="d-flex gap-1">
+                        {% if active_tag_id %}
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-danger" title="Clear filter">
+                            <i class="fas fa-times"></i>
+                        </a>
+                        {% endif %}
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#newTagForm">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="collapse mb-2" id="newTagForm">
@@ -299,15 +314,17 @@
                     </div>
                     {% if tags %}
                         {% for tag in tags %}
-                            <span class="tag-chip me-1 mb-1" style="background: {{ tag.color }}22; color: {{ tag.color }};">
+                            <a href="{{ url_for('main.dashboard', tag_id=tag.id) }}"
+                               class="tag-chip me-1 mb-1 text-decoration-none {{ 'active' if active_tag_id == tag.id }}"
+                               style="background: {{ tag.color }}22; color: {{ tag.color }};">
                                 {{ tag.name }}
-                                <form action="{{ url_for('main.delete_tag', tag_id=tag.id) }}" method="post" class="d-inline ms-1">
+                                <form action="{{ url_for('main.delete_tag', tag_id=tag.id) }}" method="post" class="d-inline ms-1" onclick="event.stopPropagation(); event.preventDefault(); this.submit();">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-sm p-0 border-0 bg-transparent" style="color: {{ tag.color }};">
                                         <i class="fas fa-times"></i>
                                     </button>
                                 </form>
-                            </span>
+                            </a>
                         {% endfor %}
                     {% else %}
                         <small class="text-muted">No tags yet</small>
@@ -318,7 +335,14 @@
             <!-- Document Library -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-file me-2"></i>Your Documents</h5>
+                    <h5 class="mb-0">
+                        <i class="fas fa-file me-2"></i>Your Documents
+                        {% if active_folder %}
+                            <small class="text-muted"> - {{ active_folder.name }}</small>
+                        {% elif active_tag %}
+                            <small class="text-muted"> - {{ active_tag.name }}</small>
+                        {% endif %}
+                    </h5>
                     <small class="text-muted">({{ files|length }} files)</small>
                 </div>
                 <div class="card-body scroll-panel">

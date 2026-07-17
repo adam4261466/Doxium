@@ -41,7 +41,7 @@
                     <h5 class="mb-0"><i class="fas fa-align-left me-2"></i>Summary</h5>
                 </div>
                 <div class="card-body">
-                    <div class="answer-content p-3 rounded">
+                    <div class="answer-content p-3 rounded markdown-body" id="summaryContent">
                         {{ data.content }}
                     </div>
                 </div>
@@ -55,9 +55,7 @@
                         <div class="flashcard-inner">
                             <div class="flashcard-front card">
                                 <div class="card-body">
-                                    <small class="text-muted d-block mb-2">Card {{ loop.index }} of {{ data.cards|length }}</small>
                                     <h5>{{ card.front }}</h5>
-                                    <small class="text-muted mt-3 d-block"><i class="fas fa-sync-alt me-1"></i>Click to flip</small>
                                 </div>
                             </div>
                             <div class="flashcard-back">
@@ -106,7 +104,16 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    var summaryEl = document.getElementById('summaryContent');
+    if (summaryEl) {
+        var raw = summaryEl.textContent.trim();
+        summaryEl.innerHTML = marked.parse(raw);
+    }
+});
+
 let score = 0;
 let answered = 0;
 const totalQuestions = {{ data.questions|length if data.type == 'quiz' else 0 }};

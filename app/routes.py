@@ -514,8 +514,20 @@ def _set_user_pilot(user, is_pilot, status=None, subscription_id=None, expires_a
 @main.route("/dashboard")
 @login_required
 def dashboard():
+    folder_id = request.args.get("folder_id", type=int)
+    tag_id = request.args.get("tag_id", type=int)
+
+    all_files = File.query.filter_by(user_id=current_user.id)
+
+    if folder_id:
+        all_files = all_files.filter_by(folder_id=folder_id)
+    if tag_id:
+        all_files = all_files.filter(File.tags.any(Tag.id == tag_id))
+
+    all_files = all_files.all()
+
     files_with_content = []
-    for file in current_user.files:
+    for file in all_files:
         files_with_content.append({
             "filename": file.filename,
             "size": file.size,
@@ -531,6 +543,10 @@ def dashboard():
     available_mb = limits["storage_mb"] - used_mb
     folders = Folder.query.filter_by(user_id=current_user.id).all()
     tags = Tag.query.filter_by(user_id=current_user.id).all()
+
+    active_folder = Folder.query.filter_by(id=folder_id, user_id=current_user.id).first() if folder_id else None
+    active_tag = Tag.query.filter_by(id=tag_id, user_id=current_user.id).first() if tag_id else None
+
     return render_template(
         "dashboard.html",
         user=current_user,
@@ -542,6 +558,10 @@ def dashboard():
         storage_available_mb=available_mb,
         folders=folders,
         tags=tags,
+        active_folder_id=folder_id,
+        active_tag_id=tag_id,
+        active_folder=active_folder,
+        active_tag=active_tag,
     )
 
 @main.route("/upload", methods=["POST"])

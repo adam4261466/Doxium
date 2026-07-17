@@ -106,7 +106,10 @@ def generate_query_answer(user_id, query_text, file_ids=None):
                             "on the provided document context. Always cite your sources inline "
                             "using [1], [2], etc. corresponding to the provided sources. "
                             "If the answer is not in the context, say so clearly. "
-                            "Be concise and accurate."
+                            "Use markdown formatting: bold for key terms, bullet points for lists, "
+                            "and short paragraphs for readability. "
+                            "Structure your answer clearly with a direct response first, "
+                            "followed by supporting details. Be concise and accurate."
                         ),
                     },
                     {
@@ -124,6 +127,7 @@ def generate_query_answer(user_id, query_text, file_ids=None):
             for i, chunk_data in enumerate(similar_chunks, 1):
                 serializable_chunks.append({
                     "id": chunk_data["chunk"].id,
+                    "file_id": chunk_data["chunk"].file_id,
                     "text": chunk_data["chunk"].text,
                     "filename": getattr(chunk_data["chunk"].file, "filename", "Unknown"),
                     "score": chunk_data.get("distance", 0.0),
@@ -171,9 +175,16 @@ def generate_summary(user_id, file_id):
                     {
                         "role": "system",
                         "content": (
-                            "You are a helpful assistant that creates structured summaries of documents. "
-                            "Include: main topics, key points, important details, and conclusions. "
-                            "Use markdown formatting with headers and bullet points."
+                            "You are a helpful assistant that creates clear, well-structured summaries of documents. "
+                            "Organize the summary into distinct sections with clear markdown headers (##). "
+                            "Use bullet points for key items under each section. "
+                            "Include: 1) Overview - a brief 1-2 sentence introduction, "
+                            "2) Key Topics - the main subjects covered, "
+                            "3) Important Details - critical facts, figures, or concepts, "
+                            "4) Conclusions - main takeaways or decisions. "
+                            "Keep paragraphs short (2-3 sentences max). "
+                            "Use bold for emphasis on important terms. "
+                            "Separate each section with a blank line for readability."
                         ),
                     },
                     {
