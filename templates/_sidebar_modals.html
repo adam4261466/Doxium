@@ -1,0 +1,52 @@
+{# Shared sidebar modals. Expects: current_folder_id (optional) #}
+<div class="modal fade" id="folderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content glass-modal">
+            <form method="POST" action="{{ url_for('main.create_folder') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-folder-plus me-2" style="color: var(--accent);"></i>New Folder</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="parent_id" value="{{ current_folder_id | default('') }}">
+                    <input type="text" class="form-control" name="name" required placeholder="Folder name" autofocus>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-glass" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Tag Modal -->
+<div class="modal fade" id="tagModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content glass-modal">
+            <form method="POST" action="{{ url_for('main.create_tag') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-tag me-2" style="color: var(--accent);"></i>New Tag</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" class="form-control mb-3" name="name" required placeholder="Tag name" autofocus>
+                    <div class="d-flex gap-2">
+                        {% for color in ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#f97316'] %}
+                        <label class="tag-color-option">
+                            <input type="radio" name="color" value="{{ color }}" {{ 'checked' if color == '#8b5cf6' else '' }}>
+                            <span class="tag-color-dot" style="background: {{ color }};"></span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-glass" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

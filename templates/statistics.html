@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Statistics - Doxium{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid px-4">
+        <button class="btn btn-ghost sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()" title="Toggle sidebar">
+            <i class="fas fa-bars"></i>
+        </button>
+        <a class="navbar-brand" href="{{ url_for('main.home') }}">
+            <div class="brand-icon">
+                <i class="fas fa-sparkles text-white" style="font-size: 0.9rem;"></i>
+            </div>
+            <span class="gradient-text">Doxium</span>
+        </a>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            {% if session.get('admin_id') %}
+                <a class="btn btn-ghost btn-sm" href="{{ url_for('main.return_to_admin') }}">
+                    <i class="fas fa-shield-alt me-1"></i> Admin
+                </a>
+            {% endif %}
+            {% if not current_user.is_pilot %}
+                <a class="btn btn-ghost btn-sm" href="{{ url_for('main.pricing') }}">
+                    <i class="fas fa-bolt me-1"></i> Upgrade
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="explorer-page">
+    <div class="explorer-layout">
+        {% set active_page = 'statistics' %}
+        {% include "_sidebar.html" %}
+
+        <div class="explorer-main">
+            <!-- Toolbar -->
+            <div class="explorer-toolbar" style="margin: 14px 24px 0;">
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost btn-sm" title="Back to dashboard">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    <h5 class="mb-0 fw-bold text-white">Statistics</h5>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <button type="button" class="btn btn-sm btn-glass" onclick="openAIQuery('{{ url_for('main.dashboard') }}')">
+                        <i class="fas fa-search me-1"></i>Ask AI
+                    </button>
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-cloud-upload-alt me-1"></i>Upload
+                    </a>
+                </div>
+            </div>
+
+            <!-- Stats Content -->
+            <div class="explorer-content">
+                <div class="stats-page-grid">
+                    <!-- Storage Usage -->
+                    <div class="glass-card stat-panel">
+                        <div class="stat-panel-title">Storage Usage</div>
+                        <div class="usage-progress" style="margin-top: 14px;">
+                            <div class="usage-progress-bar" style="width: {{ storage_pct }}%;"></div>
+                        </div>
+                        <div class="stat-panel-footrow">
+                            <span>{{ "%.1f"|format(used_mb) }} MB used</span>
+                            <span>{{ limit_mb }} MB limit</span>
+                        </div>
+                    </div>
+
+                    <!-- File Types -->
+                    <div class="glass-card stat-panel">
+                        <div class="stat-panel-title">File Types</div>
+                        <div class="stat-list">
+                            {% if file_types %}
+                                {% for ft in file_types %}
+                                <div class="stat-list-row">
+                                    <div class="stat-list-left">
+                                        <i class="fas {{ ft.icon }} {{ ft.color }}"></i>
+                                        <span>{{ ft.ext }}</span>
+                                    </div>
+                                    <span class="stat-list-value">{{ ft.count }}</span>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="stat-empty">No documents uploaded yet.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Processing Status -->
+                    <div class="glass-card stat-panel">
+                        <div class="stat-panel-title">Processing Status</div>
+                        <div class="stat-list">
+                            <div class="stat-list-row">
+                                <div class="stat-list-left">
+                                    <span class="stat-status-dot" style="background: var(--success);"></span>
+                                    <span>Completed</span>
+                                </div>
+                                <span class="stat-list-value">{{ completed_count }}</span>
+                            </div>
+                            <div class="stat-list-row">
+                                <div class="stat-list-left">
+                                    <span class="stat-status-dot" style="background: var(--warning);"></span>
+                                    <span>Processing</span>
+                                </div>
+                                <span class="stat-list-value">{{ processing_count }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Organization -->
+                    <div class="glass-card stat-panel">
+                        <div class="stat-panel-title">Organization</div>
+                        <div class="stat-list">
+                            <div class="stat-list-row">
+                                <div class="stat-list-left">
+                                    <i class="fas fa-folder text-warning"></i>
+                                    <span>Folders</span>
+                                </div>
+                                <span class="stat-list-value">{{ folders_count }}</span>
+                            </div>
+                            <div class="stat-list-row">
+                                <div class="stat-list-left">
+                                    <i class="fas fa-tags text-info"></i>
+                                    <span>Tags</span>
+                                </div>
+                                <span class="stat-list-value">{{ tags_count }}</span>
+                            </div>
+                            <div class="stat-list-row">
+                                <div class="stat-list-left">
+                                    <i class="fas fa-file-alt text-secondary"></i>
+                                    <span>Documents</span>
+                                </div>
+                                <span class="stat-list-value">{{ documents_count }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include "_sidebar_modals.html" %}
+{% endblock %}
+
+{% block footer %}{% endblock %}
