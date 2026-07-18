@@ -8,56 +8,6 @@
 
 <div class="explorer-page">
 
-    <!-- Welcome Banner -->
-    <div class="dash-welcome">
-        <div class="dash-welcome-info">
-            <div class="dash-welcome-avatar"><i class="fas fa-user-circle"></i></div>
-            <div>
-                <h1 class="dash-welcome-title">Welcome back!</h1>
-                <p class="dash-welcome-sub">Manage your documents with AI-powered insights.</p>
-            </div>
-        </div>
-        <div class="dash-welcome-actions">
-            {% if user.is_pilot %}
-                <span class="plan-badge plan-badge-pro"><i class="fas fa-star me-2"></i>Pro Plan</span>
-            {% else %}
-                <a href="{{ url_for('main.pricing') }}" class="plan-badge plan-badge-free"><i class="fas fa-user me-2"></i>Free Plan &middot; Upgrade</a>
-            {% endif %}
-            <div class="dash-welcome-links">
-                <a href="{{ url_for('main.download_all_files') }}" class="btn btn-glass btn-sm"><i class="fas fa-download me-1"></i>Download All</a>
-                {% if current_user.is_pilot and current_user.ls_customer_portal_url %}
-                <a href="{{ current_user.ls_customer_portal_url }}" target="_blank" class="btn btn-glass btn-sm"><i class="fas fa-cog me-1"></i>Manage</a>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <!-- Usage Stats -->
-    <div class="usage-grid">
-        <div class="usage-card">
-            <div class="usage-icon usage-icon-indigo"><i class="fas fa-file-alt"></i></div>
-            <div class="usage-body">
-                <span class="usage-label">Documents</span>
-                <span class="usage-value">{{ documents | length }}</span>
-            </div>
-        </div>
-        <div class="usage-card">
-            <div class="usage-icon usage-icon-cyan"><i class="fas fa-database"></i></div>
-            <div class="usage-body">
-                <span class="usage-label">Storage Used</span>
-                <span class="usage-value">{{ "%.1f" | format(storage_used_mb) }} <small>MB / {{ limits.storage_mb }} MB</small></span>
-                <div class="usage-progress"><div class="usage-progress-bar" style="width: {{ storage_pct }}%;"></div></div>
-            </div>
-        </div>
-        <div class="usage-card">
-            <div class="usage-icon usage-icon-violet"><i class="fas fa-bolt"></i></div>
-            <div class="usage-body">
-                <span class="usage-label">Queries / Month</span>
-                <span class="usage-value">{{ limits.max_queries_per_month }}</span>
-            </div>
-        </div>
-    </div>
-
     <!-- Explorer Layout -->
     <div class="row g-0 explorer-layout">
         <!-- Explorer Sidebar -->
@@ -138,7 +88,56 @@
 
         <!-- Main Content Area -->
         <div class="col-lg-9 col-xl-10 explorer-main">
-            <!-- Breadcrumb Bar -->
+
+            <!-- Welcome Banner -->
+            <div class="dash-welcome">
+                <div class="dash-welcome-info">
+                    <div class="dash-welcome-avatar"><i class="fas fa-user-circle"></i></div>
+                    <div>
+                        <h1 class="dash-welcome-title">Welcome back!</h1>
+                        <p class="dash-welcome-sub">Manage your documents with AI-powered insights.</p>
+                    </div>
+                </div>
+                <div class="dash-welcome-actions">
+                    {% if user.is_pilot %}
+                        <span class="plan-badge plan-badge-pro"><i class="fas fa-star me-2"></i>Pro Plan</span>
+                    {% else %}
+                        <a href="{{ url_for('main.pricing') }}" class="plan-badge plan-badge-free"><i class="fas fa-user me-2"></i>Free Plan &middot; Upgrade</a>
+                    {% endif %}
+                    <div class="dash-welcome-links">
+                        <a href="{{ url_for('main.download_all_files') }}" class="btn btn-glass btn-sm"><i class="fas fa-download me-1"></i>Download All</a>
+                        {% if current_user.is_pilot and current_user.ls_customer_portal_url %}
+                        <a href="{{ current_user.ls_customer_portal_url }}" target="_blank" class="btn btn-glass btn-sm"><i class="fas fa-cog me-1"></i>Manage</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Usage Stats -->
+            <div class="usage-grid">
+                <div class="usage-card">
+                    <div class="usage-icon usage-icon-indigo"><i class="fas fa-file-alt"></i></div>
+                    <div class="usage-body">
+                        <span class="usage-label">Documents</span>
+                        <span class="usage-value">{{ documents | length }}</span>
+                    </div>
+                </div>
+                <div class="usage-card">
+                    <div class="usage-icon usage-icon-cyan"><i class="fas fa-database"></i></div>
+                    <div class="usage-body">
+                        <span class="usage-label">Storage Used</span>
+                        <span class="usage-value">{{ "%.1f" | format(storage_used_mb) }} <small>MB / {{ limits.storage_mb }} MB</small></span>
+                        <div class="usage-progress"><div class="usage-progress-bar" style="width: {{ storage_pct }}%;"></div></div>
+                    </div>
+                </div>
+                <div class="usage-card">
+                    <div class="usage-icon usage-icon-violet"><i class="fas fa-bolt"></i></div>
+                    <div class="usage-body">
+                        <span class="usage-label">Queries / Month</span>
+                        <span class="usage-value">{{ limits.max_queries_per_month }}</span>
+                    </div>
+                </div>
+            </div>
             <div class="explorer-breadcrumb">
                 <a href="{{ url_for('main.dashboard') }}" class="breadcrumb-link"><i class="fas fa-home me-1"></i>Home</a>
                 <span class="breadcrumb-sep"><i class="fas fa-chevron-right"></i></span>
@@ -157,9 +156,9 @@
                     <button class="btn btn-sm btn-primary" onclick="document.getElementById('file-input').click()">
                         <i class="fas fa-cloud-upload-alt me-1"></i>Upload
                     </button>
-                    <a href="{{ url_for('main.query_documents') }}" class="btn btn-sm btn-glass">
+                    <button type="button" class="btn btn-sm btn-glass" onclick="new bootstrap.Modal(document.getElementById('askAllModal')).show()">
                         <i class="fas fa-search me-1"></i>Ask AI
-                    </a>
+                    </button>
                     <div class="explorer-search">
                         <i class="fas fa-search explorer-search-icon"></i>
                         <input type="text" id="docSearch" class="explorer-search-input" placeholder="Search documents..." oninput="filterDocuments()">
@@ -439,6 +438,28 @@
                 </div>
                 <div class="modal-body">
                     <input type="text" class="form-control" name="query" placeholder="What would you like to know?" maxlength="1000" required autofocus>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-glass" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane me-1"></i> Ask</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Ask All Documents Modal -->
+<div class="modal fade" id="askAllModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content glass-modal">
+            <form method="POST" action="{{ url_for('main.query_documents') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-search me-2" style="color: var(--accent);"></i>Ask AI</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" class="form-control" name="query" placeholder="Ask anything about your documents..." maxlength="1000" required autofocus>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-glass" data-bs-dismiss="modal">Cancel</button>

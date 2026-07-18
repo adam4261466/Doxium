@@ -63,8 +63,9 @@ def create_app():
     app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,}
+        "pool_recycle": 300,
+        "pool_pre_ping": True,
+    }
     app.config["UPLOAD_FOLDER"] = os.getenv("UPLOAD_FOLDER", "data/uploads")
     app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024 * 1024
     app.config["SESSION_COOKIE_HTTPONLY"] = True
