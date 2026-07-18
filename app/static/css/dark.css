@@ -956,7 +956,7 @@ footer {
 .explorer-sidebar {
   background: rgba(255, 255, 255, 0.03);
   border-right: 1px solid var(--glass-border);
-  padding: 0;
+  padding: 8px;
   display: flex;
   flex-direction: column;
 }
@@ -965,10 +965,17 @@ footer {
   padding: 0;
   flex: 1;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .explorer-section {
-  border-bottom: 1px solid var(--glass-border-soft);
+  border-bottom: none;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--glass-border-soft);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
 }
 
 .explorer-section.collapsed .explorer-section-body {
@@ -978,8 +985,8 @@ footer {
 .explorer-section-header {
   display: flex;
   align-items: center;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.75rem;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1031,8 +1038,8 @@ footer {
 .explorer-nav-item {
   display: flex;
   align-items: center;
-  padding: 0.4rem 0.75rem 0.4rem 1.5rem;
-  font-size: 0.85rem;
+  padding: 0.4rem 0.65rem 0.4rem 1.25rem;
+  font-size: 0.8rem;
   color: var(--text-primary);
   text-decoration: none;
   transition: all 0.15s;
@@ -1042,6 +1049,7 @@ footer {
   background: none;
   border: none;
   cursor: pointer;
+  border-radius: 6px;
 }
 
 button.explorer-nav-item {
@@ -1051,7 +1059,7 @@ button.explorer-nav-item {
 }
 
 .explorer-nav-item:hover {
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(99, 102, 241, 0.12);
   color: #ffffff;
 }
 
@@ -1060,7 +1068,7 @@ button.explorer-nav-item {
   color: #ffffff;
   font-weight: 600;
   border-left: 3px solid var(--accent);
-  padding-left: calc(1.5rem - 3px);
+  padding-left: calc(1.25rem - 3px);
 }
 
 .explorer-tag-dot {
@@ -2809,18 +2817,18 @@ button.explorer-nav-item {
 .usage-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: 12px;
   margin-bottom: 20px;
 }
 
 .usage-card {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
-  padding: 18px 20px;
+  padding: 12px 14px;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   transition: transform 0.2s ease, border-color 0.2s ease;
@@ -2832,8 +2840,8 @@ button.explorer-nav-item {
 }
 
 .usage-icon {
-  width: 48px;
-  height: 48px;
+  width: 38px;
+  height: 38px;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
@@ -2863,7 +2871,7 @@ button.explorer-nav-item {
 }
 
 .usage-value {
-  font-size: 1.6rem;
+  font-size: 1.25rem;
   font-weight: 800;
   color: #ffffff;
   line-height: 1.2;
@@ -2935,7 +2943,7 @@ button.explorer-nav-item {
 .doc-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: 12px;
 }
 
 .doc-tile {
@@ -2944,11 +2952,11 @@ button.explorer-nav-item {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 12px;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   position: relative;
-  min-height: 150px;
+  min-height: 120px;
 }
 
 .doc-tile:hover {
@@ -2965,13 +2973,13 @@ button.explorer-nav-item {
 }
 
 .doc-tile-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   color: #ffffff;
   flex-shrink: 0;
 }
@@ -3010,12 +3018,12 @@ button.explorer-nav-item {
 
 .doc-tile-name {
   font-weight: 600;
-  font-size: 0.92rem;
+  font-size: 0.85rem;
   color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .doc-tile-tags {
