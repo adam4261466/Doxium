@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Settings - Doxium{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid px-4">
+        <button class="btn btn-ghost sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()" title="Toggle sidebar">
+            <i class="fas fa-bars"></i>
+        </button>
+        <a class="navbar-brand" href="{{ url_for('main.home') }}">
+            <div class="brand-icon">
+                <i class="fas fa-sparkles text-white" style="font-size: 0.9rem;"></i>
+            </div>
+            <span class="gradient-text">Doxium</span>
+        </a>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            {% if session.get('admin_id') %}
+                <a class="btn btn-ghost btn-sm" href="{{ url_for('main.return_to_admin') }}">
+                    <i class="fas fa-shield-alt me-1"></i> Admin
+                </a>
+            {% endif %}
+            {% if not current_user.is_pilot %}
+                <a class="btn btn-ghost btn-sm" href="{{ url_for('main.pricing') }}">
+                    <i class="fas fa-bolt me-1"></i> Upgrade
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="explorer-page">
+    <div class="explorer-layout">
+        {% set active_page = 'settings' %}
+        {% include "_sidebar.html" %}
+
+        <div class="explorer-main">
+            <!-- Toolbar -->
+            <div class="explorer-toolbar" style="margin: 14px 24px 0;">
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost btn-sm" title="Back to dashboard">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    <h5 class="mb-0 fw-bold text-white">Settings</h5>
+                </div>
+            </div>
+
+            <!-- Settings Content -->
+            <div class="explorer-content">
+                <div class="settings-page-grid">
+                    <!-- Account -->
+                    <div class="glass-card stat-panel">
+                        <div class="stat-panel-title">Account</div>
+                        <div class="stat-list">
+                            <div class="stat-list-row">
+                                <div class="stat-list-left">
+                                    <i class="fas fa-user text-secondary"></i>
+                                    <span>Username</span>
+                                </div>
+                                <span class="stat-list-value">{{ user.username }}</span>
+                            </div>
+                            <div class="stat-list-row">
+                                <div class="stat-list-left">
+                                    <i class="fas fa-envelope text-secondary"></i>
+                                    <span>Email</span>
+                                </div>
+                                <span class="stat-list-value">{{ user.email }}</span>
+                            </div>
+                            <div class="stat-list-row">
+                                <div class="stat-list-left">
+                                    <i class="fas fa-bolt text-warning"></i>
+                                    <span>Plan</span>
+                                </div>
+                                <span class="stat-list-value">{{ "Pro" if user.is_pilot else "Free" }}</span>
+                            </div>
+                            <div class="stat-list-row">
+                                <div class="stat-list-left">
+                                    <i class="fas fa-database text-info"></i>
+                                    <span>Storage limit</span>
+                                </div>
+                                <span class="stat-list-value">{{ limits.storage_mb }} MB</span>
+                            </div>
+                        </div>
+                        {% if not user.is_pilot %}
+                        <a href="{{ url_for('main.pricing') }}" class="btn btn-sm btn-primary mt-3 w-100">
+                            <i class="fas fa-bolt me-1"></i>Upgrade to Pro
+                        </a>
+                        {% endif %}
+                    </div>
+
+                    <!-- Change Password -->
+                    <div class="glass-card stat-panel">
+                        <div class="stat-panel-title">Change Password</div>
+                        <form method="POST" action="{{ url_for('main.settings') }}" class="settings-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <div class="mb-2">
+                                <label class="form-label small text-muted">Current password</label>
+                                <input type="password" class="form-control" name="current_password" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small text-muted">New password</label>
+                                <input type="password" class="form-control" name="new_password" minlength="8" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Confirm new password</label>
+                                <input type="password" class="form-control" name="confirm_password" minlength="8" required>
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary w-100">
+                                <i class="fas fa-key me-1"></i>Update Password
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include "_sidebar_modals.html" %}
+{% endblock %}
+
+{% block footer %}{% endblock %}
