@@ -1,4 +1,5 @@
 import os
+import time
 import logging
 from flask import Flask, request, jsonify, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
@@ -9,7 +10,8 @@ from dotenv import load_dotenv
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_mail import Mail
-from sqlalchemy import text # Needed for the column fix
+from sqlalchemy import text  # Needed for the column fix
+from sqlalchemy.exc import OperationalError
 
 load_dotenv()
 
@@ -49,6 +51,31 @@ def get_database_uri():
     logging.warning("DATABASE_URL Connection Attempted")
     return chosen
 
+
+def connect_with_retry(engine, attempts=5, base_delay=2):
+    """
+    Railway's public Postgres proxy occasionally closes the connection
+    during cold start (e.g. right after a deploy while the DB service is
+    still coming up). Retry with backoff instead of crashing the boot.
+    """
+    last_error = None
+    for attempt in range(1, attempts + 1):
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            return
+        except OperationalError as e:
+            last_error = e
+            if attempt == attempts:
+                break
+            delay = base_delay * attempt
+            logging.warning(
+                "Database connection attempt %d/%d failed (%s); retrying in %ss",
+                attempt, attempts, e.__class__.__name__, delay,
+            )
+            time.sleep(delay)
+    raise last_error
+
 def create_app():
     # Use absolute path for templates to avoid TemplateNotFound errors
     template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'templates'))
@@ -83,6 +110,7 @@ def create_app():
     db.init_app(app)
 
     with app.app_context():
+        connect_with_retry(db.engine)
         db.create_all()
 
         migrations = [
