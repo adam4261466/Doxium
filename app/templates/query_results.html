@@ -1,26 +1,21 @@
 {% extends "base.html" %}
-
 {% block title %}Query Results - Doxium{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="py-4 px-4">
     <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card glow-primary">
-                <div class="card-body py-4">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h1 class="mb-2"><i class="fas fa-search me-3 text-primary"></i>Query Results</h1>
-                            <p class="mb-0 text-muted">AI-powered insights from your documents</p>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg">
-                                <i class="fas fa-plus me-2"></i>Ask Another Question
-                            </a>
-                        </div>
-                    </div>
+    <div class="mb-4" style="animation: fadeUp 0.5s ease both;">
+        <div class="glass-card p-4">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div>
+                    <h1 class="mb-2 fw-bold" style="font-size: 1.75rem;">
+                        <i class="fas fa-search me-2" style="color: var(--accent);"></i>Query Results
+                    </h1>
+                    <p class="mb-0" style="color: var(--text-muted);">AI-powered insights from your documents</p>
                 </div>
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Ask Another Question
+                </a>
             </div>
         </div>
     </div>
@@ -29,25 +24,25 @@
         <!-- Main Content -->
         <div class="col-lg-8">
             <!-- Your Question -->
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
+            <div class="card mb-4" style="animation: fadeUp 0.5s ease 0.1s both;">
+                <div class="card-header" style="background: var(--accent-gradient); color: white;">
                     <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>Your Question</h5>
                 </div>
                 <div class="card-body">
-                    <div class="alert alert-info border-0" role="alert">
-                        <i class="fas fa-quote-left text-primary me-2"></i>
+                    <div class="alert border-0 mb-0" role="alert" style="background: rgba(34, 211, 238, 0.08); border: 1px solid rgba(34, 211, 238, 0.3) !important; color: #b6f5ff;">
+                        <i class="fas fa-quote-left me-2" style="color: var(--accent);"></i>
                         <strong>{{ query }}</strong>
-                        <i class="fas fa-quote-right text-primary ms-2"></i>
+                        <i class="fas fa-quote-right ms-2" style="color: var(--accent);"></i>
                     </div>
                 </div>
             </div>
 
             <!-- AI Answer -->
-            <div class="card mb-4 glow-success">
-                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+            <div class="card mb-4" style="animation: fadeUp 0.5s ease 0.2s both;">
+                <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white;">
                     <h5 class="mb-0"><i class="fas fa-brain me-2"></i>AI Answer</h5>
                     <div class="dropdown">
-                        <button class="btn btn-sm btn-light dropdown-toggle" data-bs-toggle="dropdown">
+                        <button class="btn btn-sm dropdown-toggle" style="background: rgba(255,255,255,0.2); color: white; border: none;" data-bs-toggle="dropdown">
                             <i class="fas fa-download me-1"></i>Export
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
@@ -68,36 +63,31 @@
 
         <!-- Sidebar -->
         <div class="col-lg-4">
-            <!-- Supporting Documents -->
-            <div class="card">
+            <div class="card" style="animation: fadeUp 0.5s ease 0.3s both;">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Supporting Documents</h5>
+                    <h5 class="mb-0"><i class="fas fa-file-alt me-2" style="color: var(--accent);"></i>Supporting Documents</h5>
                     <small class="text-muted">({{ supporting_chunks|length }} sources)</small>
                 </div>
                 <div class="card-body scroll-panel-lg">
                     {% for chunk in supporting_chunks %}
-                        <div class="document-chunk mb-3 p-3 rounded border clickable-chunk" id="source-{{ loop.index }}"
-                             onclick="openFileViewer({{ chunk.file_id }}, '{{ chunk.filename|e }}')"
-                             style="cursor: pointer;">
-                            <div class="d-flex align-items-start mb-2">
-                                <span class="citation-num badge bg-primary me-2">{{ chunk.source_num|default(loop.index) }}</span>
-                                <div class="flex-grow-1">
-                                    <strong class="text-primary">{{ chunk.filename|default('Unknown file') }}</strong>
-                                    <br>
-                                    <small class="text-muted">
-                                        <i class="fas fa-external-link-alt me-1"></i>Click to view full file
-                                    </small>
-                                </div>
-                            </div>
-                            <div class="chunk-text p-2 rounded">
-                                {{ chunk.text|truncate(300) }}
+                    <div class="document-chunk mb-3 p-3 rounded clickable-chunk" id="source-{{ loop.index }}"
+                         onclick="openFileViewer({{ chunk.file_id }}, '{{ chunk.filename|e }}')"
+                         style="cursor: pointer;">
+                        <div class="d-flex align-items-start mb-2">
+                            <span class="citation-num badge me-2" style="background: var(--accent-soft); color: #a5b4fc;">{{ chunk.source_num|default(loop.index) }}</span>
+                            <div class="flex-grow-1">
+                                <strong style="color: var(--accent);">{{ chunk.filename|default('Unknown file') }}</strong>
+                                <br>
+                                <small class="text-muted"><i class="fas fa-external-link-alt me-1"></i>Click to view full file</small>
                             </div>
                         </div>
+                        <div class="chunk-text p-2 rounded">{{ chunk.text|truncate(300) }}</div>
+                    </div>
                     {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-info-circle text-muted fs-2"></i>
-                            <p class="text-muted mt-2">No supporting documents found</p>
-                        </div>
+                    <div class="text-center py-4">
+                        <i class="fas fa-info-circle fs-2" style="color: var(--text-dim);"></i>
+                        <p class="text-muted mt-2">No supporting documents found</p>
+                    </div>
                     {% endfor %}
                 </div>
             </div>
@@ -110,80 +100,33 @@
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Animate cards on load
     const cards = document.querySelectorAll('.card');
-    cards.forEach((card, index) => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(20px)';
-        setTimeout(() => {
-            card.style.transition = 'all 0.5s ease';
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-        }, index * 100);
-    });
-
-    // Render markdown in the answer
+    cards.forEach((card, index) => { card.style.opacity = '0'; card.style.transform = 'translateY(20px)'; setTimeout(() => { card.style.transition = 'all 0.5s ease'; card.style.opacity = '1'; card.style.transform = 'translateY(0)'; }, index * 100); });
     const answerEl = document.getElementById('answerContent');
-    if (answerEl) {
-        var raw = answerEl.textContent.trim();
-        answerEl.innerHTML = marked.parse(raw);
-
-        // Make citations clickable after rendering
-        var html = answerEl.innerHTML;
-        html = html.replace(/\[(\d+)\]/g, '<a href="#source-$1" class="citation-link" onclick="highlightSource($1);return false;">[$1]</a>');
-        answerEl.innerHTML = html;
-    }
-
-    // Initialize tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
+    if (answerEl) { var raw = answerEl.textContent.trim(); answerEl.innerHTML = marked.parse(raw); var html = answerEl.innerHTML; html = html.replace(/\[(\d+)\]/g, '<a href="#source-$1" class="citation-link" onclick="highlightSource($1);return false;">[$1]</a>'); answerEl.innerHTML = html; }
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]')); tooltipTriggerList.map(function(el) { return new bootstrap.Tooltip(el); });
 });
 
 function highlightSource(num) {
-    // Remove previous highlights
-    document.querySelectorAll('.document-chunk').forEach(el => {
-        el.classList.remove('chunk-highlighted');
-    });
-
+    document.querySelectorAll('.document-chunk').forEach(el => el.classList.remove('chunk-highlighted'));
     var target = document.getElementById('source-' + num);
-    if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        target.classList.add('chunk-highlighted');
-        setTimeout(() => target.classList.remove('chunk-highlighted'), 3000);
-    }
+    if (target) { target.scrollIntoView({ behavior: 'smooth', block: 'center' }); target.classList.add('chunk-highlighted'); setTimeout(() => target.classList.remove('chunk-highlighted'), 3000); }
 }
 
 function openFileViewer(fileId, filename) {
-    var modal = document.getElementById('fileViewerModal');
-    var titleEl = document.getElementById('fileViewerLabel');
-    var bodyEl = document.getElementById('fileViewerContent');
-
-    titleEl.textContent = filename;
-    bodyEl.textContent = 'Loading file content...';
-
-    var bsModal = new bootstrap.Modal(modal);
-    bsModal.show();
-
-    fetch('/preview/' + fileId)
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            bodyEl.textContent = data.content || 'No content available';
-        })
-        .catch(function() {
-            bodyEl.textContent = 'Failed to load file content.';
-        });
+    var modal = document.getElementById('fileViewerModal'); var titleEl = document.getElementById('fileViewerLabel'); var bodyEl = document.getElementById('fileViewerContent');
+    titleEl.textContent = filename; bodyEl.textContent = 'Loading file content...';
+    var bsModal = new bootstrap.Modal(modal); bsModal.show();
+    fetch('/preview/' + fileId).then(function(r) { return r.json(); }).then(function(data) { bodyEl.textContent = data.content || 'No content available'; }).catch(function() { bodyEl.textContent = 'Failed to load file content.'; });
 }
 </script>
 
-<!-- File Viewer Modal -->
-<div class="modal fade" id="fileViewerModal" tabindex="-1" aria-labelledby="fileViewerLabel" aria-hidden="true">
+<div class="modal fade" id="fileViewerModal" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="fileViewerLabel">File Content</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <pre id="fileViewerContent" class="preview-content p-3 rounded" style="white-space: pre-wrap; max-height: 70vh; overflow-y: auto;"></pre>
@@ -194,5 +137,4 @@ function openFileViewer(fileId, filename) {
         </div>
     </div>
 </div>
-
 {% endblock %}

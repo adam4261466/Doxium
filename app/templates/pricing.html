@@ -1,50 +1,59 @@
 {% extends "base.html" %}
 {% block title %}Pricing - Doxium{% endblock %}
 {% block content %}
-<div class="container-fluid py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-9">
- 
-            <div class="text-center mb-5">
-                <h1 class="display-4 fw-bold mb-3">Simple, Honest Pricing</h1>
-                <p class="lead text-muted">Start free. Upgrade when you need more power.</p>
+<div style="background: transparent; position: relative; overflow: hidden;">
+    <section class="relative z-10 pt-20 pb-16 px-4">
+        <div class="text-center" style="max-width: 720px; margin: 0 auto; animation: fadeUp 0.5s ease both;">
+            <div class="d-inline-flex align-items-center gap-2 px-4 py-2 rounded-pill mb-8"
+                 style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); color: #a5b4fc; font-size: 0.875rem; font-weight: 500;">
+                <i class="fas fa-bolt"></i>
+                Simple, Transparent Pricing
             </div>
- 
+            <h1 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; margin-bottom: 1.5rem;">
+                Choose the <span class="gradient-text">perfect plan</span>
+            </h1>
+            <p class="text-muted" style="max-width: 480px; margin: 0 auto; font-size: 1.125rem;">
+                Start free and scale as you grow. No hidden fees, no surprises.
+            </p>
+        </div>
+    </section>
+
+    <section class="relative z-10 pb-20 px-4">
+        <div style="max-width: 1100px; margin: 0 auto;">
             {% if current_user.is_authenticated and current_user.is_pilot %}
-                <div class="row justify-content-center mb-4">
-                    <div class="col-md-8">
-                        <div class="alert alert-success text-center">
-                            <i class="fas fa-star me-2"></i><strong>You're on Doxium Pro.</strong>
-                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-success btn-sm ms-3">Dashboard</a>
-                        </div>
-                    </div>
+            <div class="text-center mb-4">
+                <div class="d-inline-flex align-items-center gap-2 px-4 py-3 rounded-xl"
+                     style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.4); color: #bbf7d0;">
+                    <i class="fas fa-star me-2"></i><strong>You are on Doxium Pro.</strong>
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-success btn-sm ms-3">Dashboard</a>
                 </div>
+            </div>
             {% endif %}
- 
+
             <div class="row g-4 justify-content-center">
- 
                 <!-- FREE -->
-                <div class="col-lg-5 col-md-6">
-                    <div class="card h-100">
-                        <div class="card-header text-center py-4">
-                            <h5 class="text-muted mb-1">FREE</h5>
-                            <div class="display-5 fw-bold">$0</div>
+                <div class="col-lg-5 col-md-6" style="animation: fadeUp 0.5s ease 0.1s both;">
+                    <div class="card-modern h-100 p-0" style="overflow: hidden;">
+                        <div class="text-center py-5 px-4" style="border-bottom: 1px solid var(--glass-border-soft);">
+                            <h5 class="text-muted mb-1 fw-semibold">FREE</h5>
+                            <div class="fw-bold" style="font-size: 3rem;">$0</div>
                             <small class="text-muted">No credit card needed</small>
                         </div>
-                        <div class="card-body">
+                        <div class="p-4">
                             <ul class="list-unstyled">
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>10 document uploads / month</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>100 AI queries / month</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>100 MB storage</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>PDF files only</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>5 MB max file size</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Clickable citations</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Folder organization</li>
-                                <li class="mb-2 text-muted"><i class="fas fa-times text-danger me-2"></i>No DOCX / PPTX / CSV / JSON</li>
-                                <li class="mb-2 text-muted"><i class="fas fa-times text-danger me-2"></i>Community support only</li>
+                                {% for feat, ok in [('10 document uploads / month', true), ('100 AI queries / month', true), ('100 MB storage', true), ('PDF files only', true), ('5 MB max file size', true), ('Clickable citations', true), ('Folder organization', true), ('No DOCX / PPTX / CSV / JSON', false), ('Community support only', false)] %}
+                                <li class="d-flex align-items-center gap-2 mb-3" style="font-size: 0.875rem; color: {% if ok %}var(--text-muted){% else %}var(--text-dim){% endif %};">
+                                    {% if ok %}
+                                    <i class="fas fa-check" style="color: var(--success);"></i>
+                                    {% else %}
+                                    <i class="fas fa-times" style="color: var(--danger);"></i>
+                                    {% endif %}
+                                    {{ feat }}
+                                </li>
+                                {% endfor %}
                             </ul>
                         </div>
-                        <div class="card-footer text-center pb-4">
+                        <div class="p-4 pt-0 text-center">
                             {% if current_user.is_authenticated %}
                                 <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-primary w-100">Go to Dashboard</a>
                             {% else %}
@@ -55,44 +64,42 @@
                         </div>
                     </div>
                 </div>
- 
+
                 <!-- PRO -->
-                <div class="col-lg-5 col-md-6">
-                    <div class="card h-100" style="border-color: var(--accent) !important; box-shadow: 0 0 30px rgba(99,102,241,0.3);">
-                        <div class="card-header text-center py-4" style="background: var(--accent-gradient);">
-                            <span class="badge bg-warning mb-2">RECOMMENDED</span>
-                            <h5 class="text-white mb-1">PRO</h5>
-                            <div class="display-5 fw-bold text-white">$7<small class="fs-6 fw-normal">/month</small></div>
-                            <small class="text-white-50">Billed monthly · Cancel anytime</small>
+                <div class="col-lg-5 col-md-6" style="animation: fadeUp 0.5s ease 0.2s both;">
+                    <div class="card-modern h-100 p-0" style="overflow: hidden; border-color: rgba(99, 102, 241, 0.3); box-shadow: 0 0 30px rgba(99,102,241,0.3); position: relative;">
+                        <div class="position-absolute" style="top: -12px; left: 50%; transform: translateX(-50%); z-index: 10;">
+                            <span class="px-3 py-1 rounded-pill fw-semibold text-white" style="font-size: 0.75rem; background: var(--accent-gradient); box-shadow: 0 4px 12px rgba(99,102,241,0.25);">RECOMMENDED</span>
                         </div>
-                        <div class="card-body">
+                        <div class="text-center py-5 px-4" style="background: var(--accent-gradient);">
+                            <h5 class="text-white mb-1 fw-semibold">PRO</h5>
+                            <div class="fw-bold text-white" style="font-size: 3rem;">$7<small class="fw-normal" style="font-size: 1.1rem;">/month</small></div>
+                            <small style="color: rgba(255,255,255,0.5);">Billed monthly &middot; Cancel anytime</small>
+                        </div>
+                        <div class="p-4">
                             <ul class="list-unstyled">
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>Unlimited</strong> document uploads (fair-use)</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>500</strong> AI queries / month</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>2 GB</strong> storage</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>All file types (PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, HTML, JSON)</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>100 MB</strong> max file size</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Multi-document chat with document selector</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>AI summaries, flashcards & quizzes</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Export to Word / PDF / Markdown</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Email support</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>7-day money-back guarantee</li>
+                                {% for feat in ['Unlimited document uploads (fair-use)', '500 AI queries / month', '2 GB storage', 'All file types (PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, HTML, JSON)', '100 MB max file size', 'Multi-document chat with document selector', 'AI summaries, flashcards & quizzes', 'Export to Word / PDF / Markdown', 'Email support', '7-day money-back guarantee'] %}
+                                <li class="d-flex align-items-center gap-2 mb-3" style="font-size: 0.875rem; color: var(--text-muted);">
+                                    <i class="fas fa-check" style="color: var(--success);"></i>
+                                    {{ feat | safe }}
+                                </li>
+                                {% endfor %}
                             </ul>
                         </div>
-                        <div class="card-footer text-center pb-4">
+                        <div class="p-4 pt-0 text-center">
                             {% if current_user.is_authenticated and not current_user.is_pilot %}
                                 <form action="{{ url_for('main.create_checkout_session') }}" method="POST">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn btn-primary w-100 btn-lg">
-                                        <i class="fas fa-bolt me-2"></i>Upgrade to Pro — $7/mo
+                                    <button type="submit" class="btn btn-primary w-100 glow-purple" style="padding: 0.875rem;">
+                                        <i class="fas fa-bolt me-2"></i>Upgrade to Pro - $7/mo
                                     </button>
                                 </form>
                             {% elif not current_user.is_authenticated %}
-                                <a href="{{ url_for('main.register') }}" class="btn btn-primary w-100 btn-lg">
-                                    <i class="fas fa-bolt me-2"></i>Get Pro — $7/mo
+                                <a href="{{ url_for('main.register') }}" class="btn btn-primary w-100 glow-purple" style="padding: 0.875rem;">
+                                    <i class="fas fa-bolt me-2"></i>Get Pro - $7/mo
                                 </a>
                             {% else %}
-                                <button class="btn btn-primary w-100 btn-lg" disabled>
+                                <button class="btn btn-primary w-100" disabled style="padding: 0.875rem;">
                                     <i class="fas fa-check me-2"></i>Current Plan
                                 </button>
                             {% endif %}
@@ -102,56 +109,42 @@
                         </div>
                     </div>
                 </div>
- 
             </div>
- 
+
             <!-- FAQ -->
-            <div class="row justify-content-center mt-5">
-                <div class="col-lg-9">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>Frequently Asked Questions</h5>
+            <div style="max-width: 720px; margin: 4rem auto 0;">
+                <div class="card-modern p-0" style="overflow: hidden;">
+                    <div class="p-4" style="border-bottom: 1px solid var(--glass-border-soft);">
+                        <h5 class="mb-0 fw-semibold"><i class="fas fa-question-circle me-2" style="color: var(--accent);"></i>Frequently Asked Questions</h5>
+                    </div>
+                    <div class="p-4">
+                        {% set faqs = [
+                            ('What file types does Pro support?', 'PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, HTML, and JSON. Free plan is PDF only.'),
+                            ('Do document upload limits reset monthly?', 'Yes - on the Free plan, you get 10 uploads per month (resets on the 1st). Pro users get unlimited uploads.'),
+                            ('What happens when I cancel?', 'Your Pro access continues until the billing period ends, then your account reverts to Free limits. Files beyond the Free limit are kept for 30 days for you to download.'),
+                            ('Is there a free trial?', 'We offer a 7-day money-back guarantee instead - you get full Pro access immediately and can request a full refund within 7 days if you are not satisfied.'),
+                            ('Do you train AI on my documents?', 'Never. Your documents are private to your account and are never used to train any AI models.'),
+                            ('How are queries counted?', 'Each question submitted in the dashboard counts as 1 query, regardless of how long your documents are. Queries reset on your monthly billing date.')
+                        ] %}
+                        {% for q, a in faqs %}
+                        <div class="{% if not loop.last %}mb-4{% endif %}">
+                            <strong style="color: var(--text-primary);">{{ q }}</strong>
+                            <p class="text-muted mb-0 mt-1" style="line-height: 1.7;">{{ a }}</p>
                         </div>
-                        <div class="card-body">
-                            <div class="mb-4">
-                                <strong>What file types does Pro support?</strong>
-                                <p class="text-muted mb-0 mt-1">PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, HTML, and JSON. Free plan is PDF only.</p>
-                            </div>
-                            <div class="mb-4">
-                                <strong>Do document upload limits reset monthly?</strong>
-                                <p class="text-muted mb-0 mt-1">Yes — on the Free plan, you get 10 uploads per month (resets on the 1st). Pro users get unlimited uploads.</p>
-                            </div>
-                            <div class="mb-4">
-                                <strong>What happens when I cancel?</strong>
-                                <p class="text-muted mb-0 mt-1">Your Pro access continues until the billing period ends, then your account reverts to Free limits. Files beyond the Free limit are kept for 30 days for you to download.</p>
-                            </div>
-                            <div class="mb-4">
-                                <strong>Is there a free trial?</strong>
-                                <p class="text-muted mb-0 mt-1">We offer a 7-day money-back guarantee instead — you get full Pro access immediately and can request a full refund within 7 days if you're not satisfied.</p>
-                            </div>
-                            <div class="mb-4">
-                                <strong>Do you train AI on my documents?</strong>
-                                <p class="text-muted mb-0 mt-1">Never. Your documents are private to your account and are never used to train any AI models.</p>
-                            </div>
-                            <div>
-                                <strong>How are queries counted?</strong>
-                                <p class="text-muted mb-0 mt-1">Each question submitted in the dashboard counts as 1 query, regardless of how long your documents are. Queries reset on your monthly billing date.</p>
-                            </div>
-                        </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
- 
+
             <div class="text-center mt-4">
                 <small class="text-muted">
                     By subscribing you agree to our
-                    <a href="{{ url_for('main.terms') }}" class="text-primary">Terms of Service</a>,
-                    <a href="{{ url_for('main.privacy') }}" class="text-primary">Privacy Policy</a>, and
-                    <a href="{{ url_for('main.refund') }}" class="text-primary">Refund Policy</a>.
+                    <a href="{{ url_for('main.terms') }}">Terms of Service</a>,
+                    <a href="{{ url_for('main.privacy') }}">Privacy Policy</a>, and
+                    <a href="{{ url_for('main.refund') }}">Refund Policy</a>.
                 </small>
             </div>
- 
         </div>
-    </div>
+    </section>
 </div>
 {% endblock %}

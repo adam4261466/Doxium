@@ -2,9 +2,8 @@
 {% block title %}Dashboard - Doxium{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="py-4 px-4">
 
-    <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
     {% for category, message in messages %}
@@ -25,7 +24,7 @@
                         <i class="fas fa-file-alt"></i>
                     </div>
                     <div>
-                        <div class="text-muted small mb-1">Total Documents</div>
+                        <div class="small mb-1" style="color: var(--text-muted);">Total Documents</div>
                         <div class="fs-3 fw-bold">{{ documents | length }}</div>
                     </div>
                 </div>
@@ -38,7 +37,7 @@
                         <i class="fas fa-check-circle"></i>
                     </div>
                     <div>
-                        <div class="text-muted small mb-1">Processed</div>
+                        <div class="small mb-1" style="color: var(--text-muted);">Processed</div>
                         <div class="fs-3 fw-bold text-success">{{ documents | selectattr('status', 'equalto', 'completed') | list | length }}</div>
                     </div>
                 </div>
@@ -51,7 +50,7 @@
                         <i class="fas fa-clock"></i>
                     </div>
                     <div>
-                        <div class="text-muted small mb-1">Pending</div>
+                        <div class="small mb-1" style="color: var(--text-muted);">Pending</div>
                         <div class="fs-3 fw-bold text-warning">{{ documents | selectattr('status', 'equalto', 'processing') | list | length + documents | selectattr('status', 'equalto', 'pending') | list | length }}</div>
                     </div>
                 </div>
@@ -64,7 +63,7 @@
                         <i class="fas fa-database"></i>
                     </div>
                     <div>
-                        <div class="text-muted small mb-1">Storage Used</div>
+                        <div class="small mb-1" style="color: var(--text-muted);">Storage Used</div>
                         <div class="fs-3 fw-bold">{{ "%.1f" | format(documents | sum(attribute='file_size') / (1024*1024)) }} MB</div>
                         <div class="storage-bar">
                             <div class="storage-bar-fill" style="width: {{ [100, (documents | sum(attribute='file_size') / (100*1024*1024) * 100) | int] | min }}%"></div>
@@ -82,7 +81,7 @@
             <!-- Sidebar -->
             <div class="col-lg-3 explorer-sidebar">
                 <div class="p-3">
-                    <h6 class="text-muted small fw-bold mb-2">Navigation</h6>
+                    <div class="small fw-bold mb-2" style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.75rem;">Navigation</div>
                     <a href="{{ url_for('main.dashboard') }}" class="explorer-nav-item mb-1 {{ 'active' if not current_folder_id and not current_tag_id else '' }}">
                         <i class="fas fa-home me-2"></i> All Documents
                     </a>
@@ -141,8 +140,8 @@
                 </div>
 
                 <!-- Upload Section -->
-                <div class="p-3 border-top" style="border-color: var(--glass-border-soft) !important;">
-                    <h6 class="text-muted small fw-bold mb-2">Quick Upload</h6>
+                <div class="p-3" style="border-top: 1px solid var(--glass-border-soft);">
+                    <div class="small fw-bold mb-2" style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.75rem;">Quick Upload</div>
                     <form method="POST" action="{{ url_for('main.upload') }}" enctype="multipart/form-data" id="upload-form">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         {% if current_folder_id %}
@@ -152,9 +151,9 @@
                             <input type="file" class="d-none" id="file-input" name="file"
                                 accept=".pdf,.txt,.docx,.md,.html,.csv,.json,.py,.js,.ts,.tsx,.jsx,.java,.cpp,.c,.h,.go,.rs,.rb,.php,.xml,.yaml,.yml,.toml,.log,.pptx,.ppt,.xlsx,.xls,.doc,.epub">
                             <div class="text-center py-3">
-                                <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
-                                <p class="mb-0 small text-muted">Drag files or <a href="#" onclick="document.getElementById('file-input').click(); return false;">browse</a></p>
-                                <p class="mb-0 text-muted" style="font-size: 0.65rem;">PDF, DOCX, TXT, MD, Code, EPUB, PPTX, XLSX</p>
+                                <i class="fas fa-cloud-upload-alt fa-2x mb-2" style="color: var(--text-dim);"></i>
+                                <p class="mb-1 small" style="color: var(--text-muted);">Drag files or <a href="#" onclick="document.getElementById('file-input').click(); return false;" style="color: var(--accent);">browse</a></p>
+                                <p class="mb-0" style="font-size: 0.65rem; color: var(--text-dim);">PDF, DOCX, TXT, MD, Code, EPUB, PPTX, XLSX</p>
                             </div>
                         </div>
                         <button type="submit" class="btn btn-primary w-100 btn-sm">
@@ -192,7 +191,7 @@
 
                 <!-- Toolbar -->
                 <div class="explorer-toolbar">
-                    <div class="text-muted small">
+                    <div class="small" style="color: var(--text-muted);">
                         {{ documents | length }} item{{ 's' if documents | length != 1 else '' }}
                     </div>
                     <div class="d-flex align-items-center gap-2">
@@ -209,12 +208,12 @@
                 </div>
 
                 <!-- Query Bar -->
-                <div class="p-3 border-bottom" style="border-color: var(--glass-border-soft) !important;">
+                <div class="p-3" style="border-bottom: 1px solid var(--glass-border-soft);">
                     <form method="POST" action="{{ url_for('main.query_documents') }}" id="queryForm">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <input type="hidden" name="file_ids" id="queryFileIds" value="">
                         <div class="input-group input-group-sm">
-                            <span class="input-group-text" style="background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.2); color: var(--text-muted);"><i class="fas fa-robot"></i></span>
+                            <span class="input-group-text"><i class="fas fa-robot"></i></span>
                             <input type="text" class="form-control" name="query" id="queryInput" placeholder="Ask about all your documents..." maxlength="1000" required>
                             <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane"></i></button>
                         </div>
@@ -248,6 +247,8 @@
                                     <i class="fas fa-file-excel"></i>
                                     {% elif doc.file_type in ['epub'] %}
                                     <i class="fas fa-book"></i>
+                                    {% elif doc.file_type in ['doc', 'docx'] %}
+                                    <i class="fas fa-file-word"></i>
                                     {% else %}
                                     <i class="fas fa-file-alt"></i>
                                     {% endif %}
@@ -264,28 +265,20 @@
                                         <div class="kebab-divider"></div>
                                         <form method="POST" action="{{ url_for('main.summarize_document', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();" style="padding: 0;">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                            <button type="submit" class="kebab-item-btn">
-                                                <i class="fas fa-file-alt"></i> Summarize
-                                            </button>
+                                            <button type="submit" class="kebab-item-btn"><i class="fas fa-file-alt"></i> Summarize</button>
                                         </form>
                                         <form method="POST" action="{{ url_for('main.flashcards_document', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();" style="padding: 0;">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                            <button type="submit" class="kebab-item-btn">
-                                                <i class="fas fa-clone"></i> Flashcards
-                                            </button>
+                                            <button type="submit" class="kebab-item-btn"><i class="fas fa-clone"></i> Flashcards</button>
                                         </form>
                                         <form method="POST" action="{{ url_for('main.quiz_document', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();" style="padding: 0;">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                            <button type="submit" class="kebab-item-btn">
-                                                <i class="fas fa-question-circle"></i> Quiz
-                                            </button>
+                                            <button type="submit" class="kebab-item-btn"><i class="fas fa-question-circle"></i> Quiz</button>
                                         </form>
                                         {% else %}
                                         <form method="POST" action="{{ url_for('main.process_file_route', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();" style="padding: 0;">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                            <button type="submit" class="kebab-item-btn">
-                                                <i class="fas fa-cog"></i> Process File
-                                            </button>
+                                            <button type="submit" class="kebab-item-btn"><i class="fas fa-cog"></i> Process File</button>
                                         </form>
                                         {% endif %}
                                         <div class="kebab-divider"></div>
@@ -293,9 +286,7 @@
                                         <form method="POST" action="{{ url_for('main.move_file', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();" style="padding: 0;">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                             <input type="hidden" name="folder_id" value="">
-                                            <button type="submit" class="kebab-item-btn">
-                                                <i class="fas fa-folder-minus"></i> Remove from folder
-                                            </button>
+                                            <button type="submit" class="kebab-item-btn"><i class="fas fa-folder-minus"></i> Remove from folder</button>
                                         </form>
                                         {% else %}
                                         <div class="kebab-item-text">
@@ -305,9 +296,7 @@
                                                 <form method="POST" action="{{ url_for('main.move_file', file_id=doc.id) }}" style="padding: 0;">
                                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                                     <input type="hidden" name="folder_id" value="{{ folder.id }}">
-                                                    <button type="submit" class="kebab-item-btn">
-                                                        <i class="fas fa-folder"></i> {{ folder.name }}
-                                                    </button>
+                                                    <button type="submit" class="kebab-item-btn"><i class="fas fa-folder"></i> {{ folder.name }}</button>
                                                 </form>
                                                 {% endfor %}
                                             </div>
@@ -336,7 +325,7 @@
                                     {% endfor %}
                                 </span>
                                 {% endif %}
-                                <span class="text-muted">{{ "%.1f MB" | format(doc.file_size / (1024 * 1024)) if doc.file_size > 1048576 else "%.1f KB" | format(doc.file_size / 1024) if doc.file_size > 0 else "—" }}</span>
+                                <span class="text-muted">{{ "%.1f MB" | format(doc.file_size / (1024 * 1024)) if doc.file_size > 1048576 else "%.1f KB" | format(doc.file_size / 1024) if doc.file_size > 0 else "---" }}</span>
                             </div>
                         </div>
                         {% endfor %}
@@ -356,62 +345,34 @@
                             <input type="checkbox" class="file-select-check d-none" value="{{ doc.id }}" onchange="updateSelection()">
                             <div class="file-list-col-name">
                                 <span class="file-icon-sm {{ 'icon-' + (doc.file_type or 'txt') }}">
-                                    {% if doc.file_type == 'pdf' %}
-                                    <i class="fas fa-file-pdf"></i>
-                                    {% elif doc.file_type in ['py', 'js', 'ts', 'tsx', 'jsx', 'java', 'cpp', 'c', 'h', 'go', 'rs', 'rb', 'php'] %}
-                                    <i class="fas fa-file-code"></i>
-                                    {% elif doc.file_type in ['json', 'xml', 'yaml', 'yml', 'toml'] %}
-                                    <i class="fas fa-file-alt"></i>
-                                    {% elif doc.file_type in ['md'] %}
-                                    <i class="fab fa-markdown"></i>
-                                    {% elif doc.file_type in ['html'] %}
-                                    <i class="fab fa-html5"></i>
-                                    {% elif doc.file_type in ['pptx', 'ppt'] %}
-                                    <i class="fas fa-file-powerpoint"></i>
-                                    {% elif doc.file_type in ['xlsx', 'xls', 'csv'] %}
-                                    <i class="fas fa-file-excel"></i>
-                                    {% elif doc.file_type in ['epub'] %}
-                                    <i class="fas fa-book"></i>
-                                    {% else %}
-                                    <i class="fas fa-file-alt"></i>
-                                    {% endif %}
+                                    {% if doc.file_type == 'pdf' %}<i class="fas fa-file-pdf"></i>
+                                    {% elif doc.file_type in ['py', 'js', 'ts', 'tsx', 'jsx', 'java', 'cpp', 'c', 'h', 'go', 'rs', 'rb', 'php'] %}<i class="fas fa-file-code"></i>
+                                    {% elif doc.file_type in ['json', 'xml', 'yaml', 'yml', 'toml'] %}<i class="fas fa-file-alt"></i>
+                                    {% elif doc.file_type == 'md' %}<i class="fab fa-markdown"></i>
+                                    {% elif doc.file_type == 'html' %}<i class="fab fa-html5"></i>
+                                    {% elif doc.file_type in ['pptx', 'ppt'] %}<i class="fas fa-file-powerpoint"></i>
+                                    {% elif doc.file_type in ['xlsx', 'xls', 'csv'] %}<i class="fas fa-file-excel"></i>
+                                    {% elif doc.file_type == 'epub' %}<i class="fas fa-book"></i>
+                                    {% else %}<i class="fas fa-file-alt"></i>{% endif %}
                                 </span>
                                 {{ doc.filename }}
                             </div>
                             <div class="file-list-col-tags">
-                                {% if doc.tags %}
-                                    {% for tag in doc.tags %}
-                                    <span class="explorer-tag-badge" style="background: {{ tag.color }}22; color: {{ tag.color }}; border: 1px solid {{ tag.color }}44;">{{ tag.name }}</span>
-                                    {% endfor %}
-                                {% else %}
-                                <span class="text-muted">—</span>
-                                {% endif %}
+                                {% if doc.tags %}{% for tag in doc.tags %}
+                                <span class="explorer-tag-badge" style="background: {{ tag.color }}22; color: {{ tag.color }}; border: 1px solid {{ tag.color }}44;">{{ tag.name }}</span>
+                                {% endfor %}{% else %}<span class="text-muted">---</span>{% endif %}
                             </div>
-                            <div class="file-list-col-size">{{ "%.1f MB" | format(doc.file_size / (1024 * 1024)) if doc.file_size > 1048576 else "%.1f KB" | format(doc.file_size / 1024) if doc.file_size > 0 else "—" }}</div>
-                            <div class="file-list-col-status">
-                                <span class="file-badge badge-{{ doc.status }}">{{ doc.status }}</span>
-                            </div>
+                            <div class="file-list-col-size">{{ "%.1f MB" | format(doc.file_size / (1024 * 1024)) if doc.file_size > 1048576 else "%.1f KB" | format(doc.file_size / 1024) if doc.file_size > 0 else "---" }}</div>
+                            <div class="file-list-col-status"><span class="file-badge badge-{{ doc.status }}">{{ doc.status }}</span></div>
                             <div class="file-list-col-actions" onclick="event.stopPropagation();">
                                 {% if doc.status == 'completed' %}
                                 <button type="button" class="file-action-btn" title="Ask about this file" onclick="askAboutFile({{ doc.id }}, '{{ doc.filename | e }}')"><i class="fas fa-comment-dots"></i></button>
-                                <form method="POST" action="{{ url_for('main.summarize_document', file_id=doc.id) }}" class="d-inline">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                    <button type="submit" class="file-action-btn" title="Summarize"><i class="fas fa-file-alt"></i></button>
-                                </form>
-                                <form method="POST" action="{{ url_for('main.flashcards_document', file_id=doc.id) }}" class="d-inline">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                    <button type="submit" class="file-action-btn" title="Flashcards"><i class="fas fa-clone"></i></button>
-                                </form>
+                                <form method="POST" action="{{ url_for('main.summarize_document', file_id=doc.id) }}" class="d-inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/><button type="submit" class="file-action-btn" title="Summarize"><i class="fas fa-file-alt"></i></button></form>
+                                <form method="POST" action="{{ url_for('main.flashcards_document', file_id=doc.id) }}" class="d-inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/><button type="submit" class="file-action-btn" title="Flashcards"><i class="fas fa-clone"></i></button></form>
                                 {% else %}
-                                <form method="POST" action="{{ url_for('main.process_file_route', file_id=doc.id) }}" class="d-inline">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                    <button type="submit" class="file-action-btn" title="Process"><i class="fas fa-cog"></i></button>
-                                </form>
+                                <form method="POST" action="{{ url_for('main.process_file_route', file_id=doc.id) }}" class="d-inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/><button type="submit" class="file-action-btn" title="Process"><i class="fas fa-cog"></i></button></form>
                                 {% endif %}
-                                <form method="POST" action="{{ url_for('main.delete_file', file_id=doc.id) }}" class="d-inline" onsubmit="return confirm('Delete {{ doc.filename }}?')">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                    <button type="submit" class="file-action-btn text-danger" title="Delete"><i class="fas fa-trash"></i></button>
-                                </form>
+                                <form method="POST" action="{{ url_for('main.delete_file', file_id=doc.id) }}" class="d-inline" onsubmit="return confirm('Delete {{ doc.filename }}?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/><button type="submit" class="file-action-btn text-danger" title="Delete"><i class="fas fa-trash"></i></button></form>
                             </div>
                         </div>
                         {% endfor %}
@@ -419,7 +380,7 @@
                 </div>
                 {% else %}
                 <div class="text-center py-5">
-                    <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+                    <i class="fas fa-folder-open fa-4x mb-3" style="color: var(--text-dim);"></i>
                     <h4 class="text-muted">No documents yet</h4>
                     <p class="text-muted">Upload files to get started with AI-powered document analysis.</p>
                     <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
@@ -439,8 +400,8 @@
             <form method="POST" action="{{ url_for('main.create_folder') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-folder-plus me-2"></i>New Folder</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title"><i class="fas fa-folder-plus me-2" style="color: var(--accent);"></i>New Folder</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" name="parent_id" value="{{ current_folder_id or '' }}">
@@ -465,8 +426,8 @@
             <form method="POST" action="{{ url_for('main.create_tag') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-tag me-2"></i>New Tag</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title"><i class="fas fa-tag me-2" style="color: var(--accent);"></i>New Tag</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
@@ -495,8 +456,8 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <input type="hidden" name="file_ids" id="askFileId" value="">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-comment-dots me-2"></i><span id="askModalTitle">Ask about file</span></h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title"><i class="fas fa-comment-dots me-2" style="color: var(--accent);"></i><span id="askModalTitle">Ask about file</span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <input type="text" class="form-control" name="query" placeholder="What would you like to know?" maxlength="1000" required autofocus>
@@ -516,7 +477,7 @@
         <form method="POST" action="{{ url_for('main.query_documents') }}" class="d-flex gap-2 align-items-center">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <input type="hidden" name="file_ids" id="selectedFileIds" value="">
-            <span class="text-muted small" id="selectedCount">0 files</span>
+            <span class="small" style="color: var(--text-muted);" id="selectedCount">0 files</span>
             <input type="text" class="form-control form-control-sm" name="query" placeholder="Ask about selected files..." maxlength="1000" required>
             <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane"></i></button>
             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearSelection()"><i class="fas fa-times"></i></button>
@@ -530,13 +491,11 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="previewModalLabel">File Preview</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div id="preview-loading" class="text-center py-5">
-                    <div class="spinner-border" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
+                    <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
                 </div>
                 <div id="preview-content" class="d-none">
                     <pre id="preview-text" class="preview-content p-3 mb-0" style="white-space: pre-wrap; word-break: break-word;"></pre>
@@ -559,17 +518,11 @@
 <script>
 let selectMode = false;
 
-// View toggle with localStorage
 document.addEventListener('DOMContentLoaded', function() {
     const savedView = localStorage.getItem('dashboard-view') || 'grid';
     const gridView = document.getElementById('grid-view');
     const listView = document.getElementById('list-view');
-
-    if (savedView === 'list') {
-        listView.checked = true;
-        toggleView('list');
-    }
-
+    if (savedView === 'list') { listView.checked = true; toggleView('list'); }
     gridView.addEventListener('change', () => { toggleView('grid'); localStorage.setItem('dashboard-view', 'grid'); });
     listView.addEventListener('change', () => { toggleView('list'); localStorage.setItem('dashboard-view', 'list'); });
 });
@@ -577,56 +530,30 @@ document.addEventListener('DOMContentLoaded', function() {
 function toggleView(mode) {
     const grid = document.getElementById('grid-container');
     const list = document.getElementById('list-container');
-    if (mode === 'grid') {
-        grid.classList.remove('d-none');
-        list.classList.add('d-none');
-    } else {
-        grid.classList.add('d-none');
-        list.classList.remove('d-none');
-    }
+    if (mode === 'grid') { grid.classList.remove('d-none'); list.classList.add('d-none'); }
+    else { grid.classList.add('d-none'); list.classList.remove('d-none'); }
 }
 
-// Select mode
 function toggleSelectMode() {
     selectMode = !selectMode;
     const btn = document.getElementById('selectModeBtn');
     const layout = document.querySelector('.explorer-layout');
-    if (selectMode) {
-        btn.classList.add('active');
-        btn.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
-        layout.classList.add('select-mode');
-    } else {
-        clearSelection();
-        btn.classList.remove('active');
-        btn.innerHTML = '<i class="fas fa-check-square me-1"></i> Select';
-        layout.classList.remove('select-mode');
-    }
+    if (selectMode) { btn.classList.add('active'); btn.innerHTML = '<i class="fas fa-times me-1"></i> Cancel'; layout.classList.add('select-mode'); }
+    else { clearSelection(); btn.classList.remove('active'); btn.innerHTML = '<i class="fas fa-check-square me-1"></i> Select'; layout.classList.remove('select-mode'); }
 }
 
 function handleCardClick(e, url, fileId) {
-    if (!selectMode) {
-        openPreview(url);
-        return;
-    }
+    if (!selectMode) { openPreview(url); return; }
     if (e.target.closest('.kebab-btn') || e.target.closest('.kebab-dropdown') || e.target.closest('form')) return;
-    const card = e.currentTarget;
-    const cb = card.querySelector('.file-select-check');
-    cb.checked = !cb.checked;
-    card.classList.toggle('selected', cb.checked);
-    updateSelection();
+    const card = e.currentTarget; const cb = card.querySelector('.file-select-check');
+    cb.checked = !cb.checked; card.classList.toggle('selected', cb.checked); updateSelection();
 }
 
 function handleRowClick(e, url, fileId) {
-    if (!selectMode) {
-        openPreview(url);
-        return;
-    }
+    if (!selectMode) { openPreview(url); return; }
     if (e.target.closest('form') || e.target.closest('.file-action-btn')) return;
-    const row = e.currentTarget;
-    const cb = row.querySelector('.file-select-check');
-    cb.checked = !cb.checked;
-    row.classList.toggle('selected', cb.checked);
-    updateSelection();
+    const row = e.currentTarget; const cb = row.querySelector('.file-select-check');
+    cb.checked = !cb.checked; row.classList.toggle('selected', cb.checked); updateSelection();
 }
 
 function updateSelection() {
@@ -638,146 +565,64 @@ function updateSelection() {
     const queryFileIds = document.getElementById('queryFileIds');
     const queryScope = document.getElementById('queryScope');
     const queryInput = document.getElementById('queryInput');
-
-    if (ids.length > 0) {
-        bar.classList.remove('d-none');
-        count.textContent = ids.length + ' file' + (ids.length > 1 ? 's' : '') + ' selected';
-        selectedIds.value = ids.join(',');
-        queryInput.placeholder = 'Ask about selected files...';
-    } else {
-        bar.classList.add('d-none');
-        queryInput.placeholder = 'Ask about all your documents...';
-    }
+    if (ids.length > 0) { bar.classList.remove('d-none'); count.textContent = ids.length + ' file' + (ids.length > 1 ? 's' : '') + ' selected'; selectedIds.value = ids.join(','); queryInput.placeholder = 'Ask about selected files...'; }
+    else { bar.classList.add('d-none'); queryInput.placeholder = 'Ask about all your documents...'; }
     queryFileIds.value = ids.length > 0 ? ids.join(',') : '';
-    if (ids.length > 0) {
-        queryScope.innerHTML = '<small class="text-muted"><i class="fas fa-filter"></i> Searching in ' + ids.length + ' selected file' + (ids.length > 1 ? 's' : '') + '</small>';
-    } else {
-        queryScope.innerHTML = '';
-    }
+    if (ids.length > 0) { queryScope.innerHTML = '<small class="text-muted"><i class="fas fa-filter"></i> Searching in ' + ids.length + ' selected file' + (ids.length > 1 ? 's' : '') + '</small>'; }
+    else { queryScope.innerHTML = ''; }
 }
 
 function clearSelection() {
-    document.querySelectorAll('.file-select-check').forEach(cb => {
-        cb.checked = false;
-        cb.closest('.file-card, .file-list-row').classList.remove('selected');
-    });
-    updateSelection();
-    if (selectMode) toggleSelectMode();
+    document.querySelectorAll('.file-select-check').forEach(cb => { cb.checked = false; cb.closest('.file-card, .file-list-row').classList.remove('selected'); });
+    updateSelection(); if (selectMode) toggleSelectMode();
 }
 
-// Ask about file modal
 function askAboutFile(fileId, filename) {
     document.getElementById('askFileId').value = fileId;
     document.getElementById('askModalTitle').textContent = 'Ask about ' + filename;
     new bootstrap.Modal(document.getElementById('askModal')).show();
 }
 
-// Kebab menu
 function toggleKebab(btn) {
-    const dropdown = btn.nextElementSibling;
-    const isOpen = dropdown.classList.contains('show');
-
+    const dropdown = btn.nextElementSibling; const isOpen = dropdown.classList.contains('show');
     document.querySelectorAll('.kebab-dropdown.show').forEach(d => d.classList.remove('show'));
-
-    if (!isOpen) {
-        dropdown.classList.add('show');
-    }
+    if (!isOpen) dropdown.classList.add('show');
 }
 
 document.addEventListener('click', function(e) {
-    if (!e.target.closest('.kebab-btn') && !e.target.closest('.kebab-dropdown')) {
-        document.querySelectorAll('.kebab-dropdown.show').forEach(d => d.classList.remove('show'));
-    }
+    if (!e.target.closest('.kebab-btn') && !e.target.closest('.kebab-dropdown')) { document.querySelectorAll('.kebab-dropdown.show').forEach(d => d.classList.remove('show')); }
 });
 
-// Sidebar section toggle
 function toggleSection(header) {
-    const section = header.closest('.explorer-section');
-    const chevron = header.querySelector('.explorer-chevron');
+    const section = header.closest('.explorer-section'); const chevron = header.querySelector('.explorer-chevron');
     const body = section.querySelector('.explorer-section-body');
-
-    if (section.classList.contains('collapsed')) {
-        section.classList.remove('collapsed');
-        chevron.style.transform = 'rotate(0deg)';
-        body.classList.remove('collapsed');
-    } else {
-        section.classList.add('collapsed');
-        chevron.style.transform = 'rotate(90deg)';
-        body.classList.add('collapsed');
-    }
+    if (section.classList.contains('collapsed')) { section.classList.remove('collapsed'); chevron.style.transform = 'rotate(0deg)'; body.classList.remove('collapsed'); }
+    else { section.classList.add('collapsed'); chevron.style.transform = 'rotate(90deg)'; body.classList.add('collapsed'); }
 }
 
-// Upload handling
 const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
 const uploadForm = document.getElementById('upload-form');
 
 if (dropZone) {
     dropZone.addEventListener('click', () => fileInput.click());
-
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('highlight');
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('highlight');
-    });
-
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('highlight');
-        fileInput.files = e.dataTransfer.files;
-        uploadForm.submit();
-    });
-
-    fileInput.addEventListener('change', () => {
-        if (fileInput.files.length > 0) {
-            uploadForm.submit();
-        }
-    });
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('highlight'); });
+    dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('highlight'); });
+    dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('highlight'); fileInput.files = e.dataTransfer.files; uploadForm.submit(); });
+    fileInput.addEventListener('change', () => { if (fileInput.files.length > 0) uploadForm.submit(); });
 }
 
-// Modals
-function showFolderModal() {
-    new bootstrap.Modal(document.getElementById('folderModal')).show();
-}
+function showFolderModal() { new bootstrap.Modal(document.getElementById('folderModal')).show(); }
+function showTagModal() { new bootstrap.Modal(document.getElementById('tagModal')).show(); }
 
-function showTagModal() {
-    new bootstrap.Modal(document.getElementById('tagModal')).show();
-}
-
-// File Preview
 function openPreview(url) {
     const modal = new bootstrap.Modal(document.getElementById('previewModal'));
-    const loading = document.getElementById('preview-loading');
-    const content = document.getElementById('preview-content');
-    const error = document.getElementById('preview-error');
-    const text = document.getElementById('preview-text');
-
-    loading.classList.remove('d-none');
-    content.classList.add('d-none');
-    error.classList.add('d-none');
-
-    fetch(url)
-        .then(r => {
-            if (!r.ok) throw new Error('Failed to load');
-            return r.json();
-        })
-        .then(data => {
-            if (data.success && data.content) {
-                text.textContent = data.content;
-                loading.classList.add('d-none');
-                content.classList.remove('d-none');
-            } else {
-                throw new Error('No content');
-            }
-        })
-        .catch(() => {
-            loading.classList.add('d-none');
-            error.classList.remove('d-none');
-        });
-
+    const loading = document.getElementById('preview-loading'); const content = document.getElementById('preview-content');
+    const error = document.getElementById('preview-error'); const text = document.getElementById('preview-text');
+    loading.classList.remove('d-none'); content.classList.add('d-none'); error.classList.add('d-none');
+    fetch(url).then(r => { if (!r.ok) throw new Error('Failed'); return r.json(); })
+        .then(data => { if (data.success && data.content) { text.textContent = data.content; loading.classList.add('d-none'); content.classList.remove('d-none'); } else throw new Error('No content'); })
+        .catch(() => { loading.classList.add('d-none'); error.classList.remove('d-none'); });
     modal.show();
 }
 </script>

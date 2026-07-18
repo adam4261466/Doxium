@@ -1,66 +1,52 @@
 {% extends "base.html" %}
-
 {% block title %}{{ data.type|title }} - {{ data.filename }} - Doxium{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card glow-primary">
-                <div class="card-body py-4">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h1 class="mb-2">
-                                {% if data.type == 'summary' %}
-                                    <i class="fas fa-align-left me-3 text-primary"></i>Document Summary
-                                {% elif data.type == 'flashcards' %}
-                                    <i class="fas fa-clone me-3 text-primary"></i>Flashcards
-                                {% elif data.type == 'quiz' %}
-                                    <i class="fas fa-question-circle me-3 text-primary"></i>Quiz
-                                {% endif %}
-                            </h1>
-                            <p class="mb-0 text-muted">{{ data.filename }}</p>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
-                                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-                            </a>
-                        </div>
-                    </div>
+<div class="py-4 px-4">
+    <div class="mb-4" style="animation: fadeUp 0.5s ease both;">
+        <div class="glass-card p-4">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div>
+                    <h1 class="mb-2 fw-bold" style="font-size: 1.75rem;">
+                        {% if data.type == 'summary' %}
+                            <i class="fas fa-align-left me-2" style="color: var(--accent);"></i>Document Summary
+                        {% elif data.type == 'flashcards' %}
+                            <i class="fas fa-clone me-2" style="color: var(--accent);"></i>Flashcards
+                        {% elif data.type == 'quiz' %}
+                            <i class="fas fa-question-circle me-2" style="color: var(--accent);"></i>Quiz
+                        {% endif %}
+                    </h1>
+                    <p class="mb-0" style="color: var(--text-muted);">{{ data.filename }}</p>
                 </div>
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
             </div>
         </div>
     </div>
 
     <div class="row justify-content-center">
         <div class="col-lg-10">
-
             {% if data.type == 'summary' %}
-            <div class="card">
-                <div class="card-header bg-success text-white">
+            <div class="card" style="animation: fadeUp 0.5s ease 0.1s both;">
+                <div class="card-header" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white;">
                     <h5 class="mb-0"><i class="fas fa-align-left me-2"></i>Summary</h5>
                 </div>
                 <div class="card-body">
-                    <div class="answer-content p-3 rounded markdown-body" id="summaryContent">
-                        {{ data.content }}
-                    </div>
+                    <div class="answer-content p-3 rounded markdown-body" id="summaryContent">{{ data.content }}</div>
                 </div>
             </div>
 
             {% elif data.type == 'flashcards' %}
             <div class="row g-4">
                 {% for card in data.cards %}
-                <div class="col-md-6">
+                <div class="col-md-6" style="animation: fadeUp 0.5s ease {{ loop.index * 0.1 }}s both;">
                     <div class="flashcard" onclick="this.classList.toggle('flipped')">
                         <div class="flashcard-inner">
                             <div class="flashcard-front card">
-                                <div class="card-body">
-                                    <h5>{{ card.front }}</h5>
-                                </div>
+                                <div class="card-body"><h5>{{ card.front }}</h5></div>
                             </div>
-                            <div class="flashcard-back">
-                                <p>{{ card.back }}</p>
-                            </div>
+                            <div class="flashcard-back"><p>{{ card.back }}</p></div>
                         </div>
                     </div>
                 </div>
@@ -70,7 +56,7 @@
             {% elif data.type == 'quiz' %}
             <div id="quizContainer">
                 {% for q in data.questions %}
-                <div class="card mb-4 quiz-question" data-correct="{{ q.correct }}">
+                <div class="card mb-4 quiz-question" data-correct="{{ q.correct }}" style="animation: fadeUp 0.5s ease {{ loop.index * 0.1 }}s both;">
                     <div class="card-header">
                         <h5 class="mb-0">Question {{ loop.index }} of {{ data.questions|length }}</h5>
                     </div>
@@ -97,7 +83,6 @@
                 </div>
             </div>
             {% endif %}
-
         </div>
     </div>
 </div>
@@ -108,37 +93,20 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var summaryEl = document.getElementById('summaryContent');
-    if (summaryEl) {
-        var raw = summaryEl.textContent.trim();
-        summaryEl.innerHTML = marked.parse(raw);
-    }
+    if (summaryEl) { var raw = summaryEl.textContent.trim(); summaryEl.innerHTML = marked.parse(raw); }
 });
 
-let score = 0;
-let answered = 0;
+let score = 0; let answered = 0;
 const totalQuestions = {{ data.questions|length if data.type == 'quiz' else 0 }};
 
 function checkAnswer(el, selected, correct, explanation) {
     if (el.closest('.quiz-question').classList.contains('answered')) return;
-    el.closest('.quiz-question').classList.add('answered');
-    answered++;
-
+    el.closest('.quiz-question').classList.add('answered'); answered++;
     const options = el.closest('.quiz-options').querySelectorAll('.quiz-option');
-    options.forEach(opt => {
-        const letter = opt.textContent.trim()[0];
-        if (letter === correct) opt.classList.add('correct');
-        else if (letter === selected && letter !== correct) opt.classList.add('incorrect');
-        opt.style.pointerEvents = 'none';
-    });
-
+    options.forEach(opt => { const letter = opt.textContent.trim()[0]; if (letter === correct) opt.classList.add('correct'); else if (letter === selected && letter !== correct) opt.classList.add('incorrect'); opt.style.pointerEvents = 'none'; });
     if (selected === correct) score++;
     document.getElementById('quizScore').textContent = score;
-
-    if (explanation) {
-        const feedback = el.closest('.quiz-question').querySelector('.quiz-feedback');
-        feedback.textContent = explanation;
-        feedback.classList.remove('d-none');
-    }
+    if (explanation) { const feedback = el.closest('.quiz-question').querySelector('.quiz-feedback'); feedback.textContent = explanation; feedback.classList.remove('d-none'); }
 }
 </script>
 {% endblock %}

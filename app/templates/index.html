@@ -1,111 +1,267 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container-fluid py-5">
+<div class="min-h-screen" style="background: transparent; overflow: hidden;">
 
-    <!-- Hero -->
-    <div class="row justify-content-center mb-5">
-        <div class="col-lg-10">
-
-            <div class="card hero-card border-0 shadow-lg text-center p-5">
-                <div class="hero-icon-wrapper mb-4">
-                    <i class="fas fa-file-alt fa-6x text-primary"></i>
+    <!-- Hero Section -->
+    <section class="relative z-10 pt-20 pb-32 px-4">
+        <div class="max-w-5xl mx-auto text-center">
+            <div style="animation: fadeUp 0.5s ease both;">
+                <div class="d-inline-flex align-items-center gap-2 px-4 py-2 rounded-pill mb-8"
+                     style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); color: #a5b4fc; font-size: 0.875rem; font-weight: 500;">
+                    <i class="fas fa-sparkles"></i>
+                    AI-Powered Document Intelligence
                 </div>
+            </div>
 
-                <h1 class="display-4 fw-bold mb-3">Doxium</h1>
-                <p class="lead text-muted mb-4">
-                    The smartest way to search, analyze, and understand your documents with AI.
-                </p>
+            <h1 style="animation: fadeUp 0.5s ease 0.1s both; font-size: clamp(2.5rem, 5vw, 4.5rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 2rem;">
+                Your documents,<br>
+                <span class="gradient-text">intelligently searchable.</span>
+            </h1>
 
+            <p style="animation: fadeUp 0.5s ease 0.2s both; font-size: 1.125rem; color: var(--text-muted); max-width: 640px; margin: 0 auto 3rem; line-height: 1.8;">
+                Upload, organize, and query your documents with AI. Get instant answers, generate study materials, and unlock insights from your knowledge base.
+            </p>
+
+            <div style="animation: fadeUp 0.5s ease 0.3s both;" class="d-flex flex-col flex-sm-row align-items-center justify-content-center gap-4">
                 {% if user.is_authenticated %}
-                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg px-4 me-3">
-                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary px-8 py-3 glow-purple-strong" style="font-size: 1rem; padding: 1rem 2rem;">
+                        Dashboard <i class="fas fa-arrow-right ms-2"></i>
                     </a>
-                    <a href="{{ url_for('main.logout') }}" class="btn btn-outline-primary btn-lg px-4">
-                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    <a href="{{ url_for('main.logout') }}" class="btn btn-secondary px-8 py-3" style="font-size: 1rem; padding: 1rem 2rem;">
+                        Sign Out
                     </a>
                 {% else %}
-                    <a href="{{ url_for('main.register') }}" class="btn btn-primary btn-lg px-4 me-3">
-                        <i class="fas fa-user-plus me-2"></i>Create Account
+                    <a href="{{ url_for('main.register') }}" class="btn btn-primary px-8 py-3 glow-purple-strong" style="font-size: 1rem; padding: 1rem 2rem;">
+                        Start Free Trial <i class="fas fa-arrow-right ms-2"></i>
                     </a>
-                    <a href="{{ url_for('main.login') }}" class="btn btn-outline-primary btn-lg px-4">
-                        <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                    <a href="{{ url_for('main.login') }}" class="btn btn-secondary px-8 py-3" style="font-size: 1rem; padding: 1rem 2rem;">
+                        Sign In to Your Account
                     </a>
                 {% endif %}
             </div>
 
+            <!-- Hero Mockup -->
+            <div style="animation: fadeUp 0.8s ease 0.5s both; margin-top: 5rem;" class="relative">
+                <div class="glass-strong rounded-2xl p-1 glow-purple">
+                    <div class="rounded-xl overflow-hidden" style="background: var(--bg-base);">
+                        <div class="d-flex align-items-center gap-2 px-4 py-3" style="border-bottom: 1px solid var(--glass-border-soft);">
+                            <div class="rounded-circle" style="width: 12px; height: 12px; background: rgba(239, 68, 68, 0.6);"></div>
+                            <div class="rounded-circle" style="width: 12px; height: 12px; background: rgba(245, 158, 11, 0.6);"></div>
+                            <div class="rounded-circle" style="width: 12px; height: 12px; background: rgba(34, 197, 94, 0.6);"></div>
+                            <span class="ms-3 text-muted" style="font-size: 0.75rem; font-family: 'JetBrains Mono', monospace;">app.doxium.ai/dashboard</span>
+                        </div>
+                        <div class="p-4">
+                            <div class="row g-3" style="min-height: 280px;">
+                                <div class="col-lg-3">
+                                    <div class="space-y-3">
+                                        <div class="rounded-lg" style="height: 32px; background: rgba(255,255,255,0.04);"></div>
+                                        <div class="rounded-lg" style="height: 32px; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.2);"></div>
+                                        <div class="rounded-lg" style="height: 32px; background: rgba(255,255,255,0.04);"></div>
+                                        <div class="rounded-lg" style="height: 32px; background: rgba(255,255,255,0.04);"></div>
+                                        <div class="rounded-lg" style="height: 32px; background: rgba(255,255,255,0.04);"></div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-9">
+                                    <div class="mb-3 rounded-xl" style="height: 48px; background: rgba(255,255,255,0.04);"></div>
+                                    <div class="row g-3 mb-3">
+                                        {% for i in range(3) %}
+                                        <div class="col-md-4">
+                                            <div class="rounded-xl p-4" style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border-soft); height: 120px;">
+                                                <div class="rounded-lg mb-3" style="width: 32px; height: 32px; background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2));"></div>
+                                                <div class="rounded-pill mb-2" style="height: 12px; width: 75%; background: rgba(255,255,255,0.06);"></div>
+                                                <div class="rounded-pill mb-1" style="height: 8px; width: 100%; background: rgba(255,255,255,0.04);"></div>
+                                                <div class="rounded-pill" style="height: 8px; width: 60%; background: rgba(255,255,255,0.04);"></div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="rounded-xl" style="height: 100px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border-soft);"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <!-- Fazier badge -->
-        <div class="text-center mt-3">
-        <a href="https://fazier.com/launches/web-production-6ddf4c.up.railway.app" target="_blank"><img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=launched&theme=dark" width=120 alt="Fazier badge" /></a>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="relative z-10 py-20" style="border-top: 1px solid var(--glass-border-soft); border-bottom: 1px solid var(--glass-border-soft);">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="row text-center">
+                {% for stat, value in [('50K+', 'Documents Processed'), ('99.9%', 'Uptime SLA'), ('< 1s', 'Avg Query Time'), ('10K+', 'Active Users')] %}
+                <div class="col-6 col-md-3 mb-4 mb-md-0">
+                    <div class="gradient-text fw-bold" style="font-size: 2rem;">{{ stat }}</div>
+                    <div class="text-muted" style="font-size: 0.875rem; font-weight: 500;">{{ value }}</div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
-    </div>
+    </section>
 
-    <!-- How It Works Video -->
-    <div class="row justify-content-center mb-5">
-        <div class="col-lg-8">
-
-            <div class="card border-0 shadow-sm p-4 text-center">
-                
-                <h3 class="fw-bold mb-3">
-                    <i class="fas fa-play-circle text-primary me-2"></i>
-                    How Doxium Works
-                </h3>
-
-                <p class="text-muted mb-4">
-                    Watch this quick 60-second guide to see how you can upload documents and ask AI questions instantly.
+    <!-- Features Section -->
+    <section id="features" class="relative z-10 py-32 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-20">
+                <div class="d-inline-flex align-items-center gap-2 px-4 py-2 rounded-pill mb-6"
+                     style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); color: #93c5fd; font-size: 0.875rem; font-weight: 500;">
+                    <i class="fas fa-bolt"></i>
+                    Powerful Features
+                </div>
+                <h2 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; margin-bottom: 1.5rem;">
+                    Everything you need to <span class="gradient-text">master your documents</span>
+                </h2>
+                <p class="text-muted mx-auto" style="max-width: 640px; font-size: 1.125rem;">
+                    From intelligent document processing to AI-powered study tools, Doxium has you covered.
                 </p>
-
-                <div class="ratio ratio-16x9">
-                    <iframe 
-                        src=""
-                        title="Doxium Tutorial"
-                        allowfullscreen>
-                    </iframe>
-                </div>
-
             </div>
 
+            <div class="row g-4">
+                {% set features = [
+                    ('fas fa-file-alt', 'Smart Document Management', 'Upload, organize, and search through your documents with AI-powered tagging and categorization.', 'from-indigo-500 to-purple-600'),
+                    ('fas fa-brain', 'AI-Powered Queries', 'Ask natural language questions about your documents and get intelligent, context-aware answers.', 'from-blue-500 to-cyan-600'),
+                    ('fas fa-book-open', 'Study Tools', 'Generate summaries, flashcards, and quizzes from your documents for effective learning.', 'from-emerald-500 to-teal-600'),
+                    ('fas fa-shield-alt', 'Secure & Private', 'Enterprise-grade security with encrypted storage and role-based access controls.', 'from-amber-500 to-orange-600'),
+                    ('fas fa-folder-tree', 'Folders & Tags', 'Organize your knowledge base with nested folders and color-coded tags for instant access.', 'from-pink-500 to-rose-600'),
+                    ('fas fa-bolt', 'Lightning Fast', 'FAISS-powered vector search delivers sub-second results even with thousands of documents.', 'from-violet-500 to-blue-600')
+                ] %}
+                {% for icon, title, desc, color in features %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card-modern h-100" style="cursor: pointer;">
+                        <div class="rounded-xl d-inline-flex align-items-center justify-content-center mb-4 shadow-lg"
+                             style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--accent), #8b5cf6); transition: transform 0.3s;"
+                             onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                            <i class="{{ icon }} text-white" style="font-size: 1.25rem;"></i>
+                        </div>
+                        <h3 class="fw-semibold mb-2" style="font-size: 1.1rem;">{{ title }}</h3>
+                        <p class="text-muted mb-0" style="font-size: 0.875rem; line-height: 1.6;">{{ desc }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Features -->
-    <div class="row g-4 mb-5">
-        <div class="col-md-4">
-            <div class="feature-card card h-100 shadow-sm border-0">
-                <div class="card-body text-center py-4">
-                    <i class="fas fa-brain fa-3x text-primary mb-3"></i>
-                    <h4 class="fw-bold mb-2">AI Search</h4>
-                    <p class="text-muted">
-                        Ask natural-language questions and get accurate answers instantly.
+    <!-- Testimonials -->
+    <section id="testimonials" class="relative z-10 py-32 px-4" style="border-top: 1px solid var(--glass-border-soft);">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; margin-bottom: 1.5rem;">
+                    Loved by <span class="gradient-text">thousands</span>
+                </h2>
+                <p class="text-muted mx-auto" style="max-width: 480px; font-size: 1.125rem;">
+                    See what our users have to say about their experience with Doxium.
+                </p>
+            </div>
+
+            <div class="row g-4">
+                {% set testimonials = [
+                    ('SC', 'Sarah Chen', 'Data Scientist', 'Doxium transformed how I interact with research papers. The AI query feature is incredibly accurate.'),
+                    ('MJ', 'Marcus Johnson', 'Product Manager', 'Being able to ask questions about our entire document library saves hours every week.'),
+                    ('ER', 'Emily Rodriguez', 'Student', 'The flashcard and quiz generation from my lecture notes is a game-changer for studying.')
+                ] %}
+                {% for avatar, name, role, text in testimonials %}
+                <div class="col-md-4">
+                    <div class="card-modern h-100">
+                        <div class="d-flex gap-1 mb-3">
+                            {% for _ in range(5) %}
+                            <i class="fas fa-star" style="color: #fbbf24;"></i>
+                            {% endfor %}
+                        </div>
+                        <p class="text-muted mb-4" style="font-size: 0.875rem; line-height: 1.6;">"{{ text }}"</p>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold"
+                                 style="width: 40px; height: 40px; background: var(--accent-gradient); font-size: 0.8rem;">
+                                {{ avatar }}
+                            </div>
+                            <div>
+                                <div class="fw-semibold" style="font-size: 0.875rem;">{{ name }}</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">{{ role }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="relative z-10 py-32 px-4" style="border-top: 1px solid var(--glass-border-soft);">
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; margin-bottom: 1.5rem;">
+                    Simple, <span class="gradient-text">transparent</span> pricing
+                </h2>
+                <p class="text-muted mx-auto" style="max-width: 480px; font-size: 1.125rem;">
+                    Start free and upgrade when you need more power.
+                </p>
+            </div>
+
+            <div class="row g-4 justify-content-center" style="max-width: 960px; margin: 0 auto;">
+                <!-- Free Plan -->
+                <div class="col-md-5">
+                    <div class="card-modern h-100">
+                        <h3 class="text-muted fw-semibold mb-2" style="font-size: 1.1rem;">Free</h3>
+                        <div class="fw-bold mb-4" style="font-size: 2.5rem;">$0<span class="text-muted fw-normal" style="font-size: 1.1rem;">/mo</span></div>
+                        <ul class="list-unstyled mb-4">
+                            {% for feature in ['10 uploads/month', '100 AI queries/month', '100 MB storage', 'PDF only', 'Basic search'] %}
+                            <li class="d-flex align-items-center gap-2 mb-2" style="font-size: 0.875rem; color: var(--text-muted);">
+                                <i class="fas fa-chevron-right" style="color: var(--accent); font-size: 0.75rem;"></i>
+                                {{ feature }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        <a href="{{ url_for('main.register') }}" class="btn btn-secondary w-100">Get Started</a>
+                    </div>
+                </div>
+
+                <!-- Pro Plan -->
+                <div class="col-md-5">
+                    <div class="card-modern h-100" style="border-color: rgba(99, 102, 241, 0.3); background: rgba(99, 102, 241, 0.04);">
+                        <div class="text-center position-absolute" style="top: -12px; left: 50%; transform: translateX(-50%);">
+                            <span class="px-3 py-1 rounded-pill text-white fw-semibold" style="font-size: 0.75rem; background: var(--accent-gradient);">
+                                Most Popular
+                            </span>
+                        </div>
+                        <h3 class="gradient-text fw-semibold mb-2" style="font-size: 1.1rem;">Pro</h3>
+                        <div class="fw-bold mb-4" style="font-size: 2.5rem;">$7<span class="text-muted fw-normal" style="font-size: 1.1rem;">/mo</span></div>
+                        <ul class="list-unstyled mb-4">
+                            {% for feature in ['Unlimited uploads', '500 AI queries/month', '2 GB storage', 'All file formats', 'AI summaries & quizzes', 'Flashcard generation', 'Priority support'] %}
+                            <li class="d-flex align-items-center gap-2 mb-2" style="font-size: 0.875rem; color: var(--text-muted);">
+                                <i class="fas fa-chevron-right" style="color: var(--accent); font-size: 0.75rem;"></i>
+                                {{ feature }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        <a href="{{ url_for('main.register') }}" class="btn btn-primary w-100 glow-purple">
+                            Upgrade to Pro <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="relative z-10 py-32 px-4">
+        <div class="max-w-3xl mx-auto text-center">
+            <div class="glass-strong rounded-3xl p-12 relative overflow-hidden">
+                <div class="position-absolute w-100 h-100" style="inset: 0; background: linear-gradient(135deg, rgba(99,102,241,0.1), transparent, rgba(139,92,246,0.1));"></div>
+                <div class="position-relative">
+                    <h2 style="font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 700; margin-bottom: 1rem;">
+                        Ready to unlock your <span class="gradient-text">document intelligence</span>?
+                    </h2>
+                    <p class="text-muted mb-8 mx-auto" style="max-width: 480px;">
+                        Join thousands of professionals who trust Doxium to manage and understand their documents.
                     </p>
+                    <a href="{{ url_for('main.register') }}" class="btn btn-primary px-8 py-3 glow-purple-strong" style="font-size: 1rem; padding: 1rem 2rem;">
+                        Start Free Today <i class="fas fa-arrow-right ms-2"></i>
+                    </a>
                 </div>
             </div>
         </div>
-
-        <div class="col-md-4">
-            <div class="feature-card card h-100 shadow-sm border-0">
-                <div class="card-body text-center py-4">
-                    <i class="fas fa-cloud-upload-alt fa-3x text-success mb-3"></i>
-                    <h4 class="fw-bold mb-2">Effortless Uploads</h4>
-                    <p class="text-muted">
-                        Drag & drop documents. Supports PDF, Word, text, slides, and more.
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="feature-card card h-100 shadow-sm border-0">
-                <div class="card-body text-center py-4">
-                    <i class="fas fa-shield-alt fa-3x text-warning mb-3"></i>
-                    <h4 class="fw-bold mb-2">Private & Secure</h4>
-                    <p class="text-muted">
-                        We never train on your documents. Your data stays yours — always.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    </section>
+</div>
 {% endblock %}

@@ -1,12 +1,43 @@
 {% extends "base.html" %}
+{% block title %}System Stats - Admin{% endblock %}
 {% block content %}
-<h2>System Stats</h2>
-<p><a href="{{ url_for('main.admin') }}" class="btn btn-secondary">Back to Admin</a></p>
-<ul>
-  <li><strong>Total Users:</strong> {{ user_count }}</li>
-  <li><strong>Pilot Users:</strong> {{ pilot_count }}</li>
-  <li><strong>Total Files:</strong> {{ file_count }}</li>
-  <li><strong>Total Chunks:</strong> {{ chunk_count }}</li>
-  <li><strong>Total Storage Used:</strong> {{ "%.2f"|format(total_used_mb) }} MB</li>
-</ul>
+<div class="py-4 px-4">
+    <div class="mb-4">
+        <h1 class="fw-bold" style="font-size: 1.75rem;"><i class="fas fa-chart-bar me-2" style="color: var(--accent);"></i>System Stats</h1>
+        <a href="{{ url_for('main.admin') }}" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i> Back to Admin</a>
+    </div>
+
+    <div class="row g-3">
+        {% set stats = [
+            ('fas fa-users', 'Total Users', user_count, 'var(--accent-gradient)'),
+            ('fas fa-star', 'Pilot Users', pilot_count, 'linear-gradient(135deg, #f59e0b, #f97316)'),
+            ('fas fa-file-alt', 'Total Files', file_count, 'linear-gradient(135deg, #22c55e, #16a34a)'),
+            ('fas fa-database', 'Total Chunks', chunk_count, 'linear-gradient(135deg, #6366f1, #a855f7)'),
+        ] %}
+        {% for icon, label, value, bg in stats %}
+        <div class="col-sm-6 col-lg-3">
+            <div class="glass-card p-3 h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background: {{ bg }};"><i class="{{ icon }}"></i></div>
+                    <div>
+                        <div class="small mb-1" style="color: var(--text-muted);">{{ label }}</div>
+                        <div class="fs-3 fw-bold">{{ value }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        <div class="col-sm-6 col-lg-3">
+            <div class="glass-card p-3 h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #ec4899, #f43f5e);"><i class="fas fa-hdd"></i></div>
+                    <div>
+                        <div class="small mb-1" style="color: var(--text-muted);">Storage Used</div>
+                        <div class="fs-3 fw-bold">{{ "%.2f"|format(total_used_mb) }} MB</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

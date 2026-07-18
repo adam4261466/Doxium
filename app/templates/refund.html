@@ -1,99 +1,40 @@
 {% extends "base.html" %}
-
 {% block title %}Refund Policy - Doxium{% endblock %}
 
 {% block content %}
-<div class="container py-5" style="max-width: 860px;">
-    <div class="card mb-4">
-        <div class="card-body p-5">
-            <div class="text-center mb-5">
-                <i class="fas fa-undo fa-3x text-primary mb-3"></i>
-                <h1 class="fw-bold">Refund Policy</h1>
-                <p class="text-muted">Last updated: April 2026</p>
+<div class="py-5 px-4" style="max-width: 860px; margin: 0 auto;">
+    <div class="card p-0" style="animation: fadeUp 0.5s ease both; overflow: hidden;">
+        <div class="p-5 text-center" style="border-bottom: 1px solid var(--glass-border-soft);">
+            <div class="d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; border-radius: 16px; background: rgba(99, 102, 241, 0.15);">
+                <i class="fas fa-undo fa-2x" style="color: var(--accent);"></i>
             </div>
-
+            <h1 class="fw-bold" style="font-size: 2rem;">Refund Policy</h1>
+            <p class="text-muted">Last updated: April 2026</p>
+        </div>
+        <div class="p-5">
             <div class="alert alert-info mb-5">
                 <i class="fas fa-info-circle me-2"></i>
                 <strong>Summary:</strong> Full refund within 7 days of your first Pro payment. Monthly renewals are non-refundable once charged. The Free plan has no charge and is not subject to this policy.
             </div>
 
-            <div class="legal-section mb-4">
-                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>1. Plans Overview</h4>
-                <div class="table-responsive">
-                    <table class="table table-bordered" style="color: var(--text-muted); border-color: rgba(255,255,255,0.15);">
-                        <thead>
-                            <tr style="background: rgba(255,255,255,0.08);">
-                                <th>Plan</th>
-                                <th>Price</th>
-                                <th>Billing</th>
-                                <th>Refundable?</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>Free</strong></td>
-                                <td>$0</td>
-                                <td>N/A</td>
-                                <td>N/A — no charge</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Pro</strong></td>
-                                <td>$7 / month</td>
-                                <td>Monthly via Lemon Squeezy</td>
-                                <td>First payment within 7 days ✓</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+            {% set sections = [
+                ('1. Plans Overview', '<div class="table-responsive"><table class="table table-bordered"><thead><tr style="background: rgba(255,255,255,0.06);"><th>Plan</th><th>Price</th><th>Billing</th><th>Refundable?</th></tr></thead><tbody><tr><td><strong>Free</strong></td><td>$0</td><td>N/A</td><td>N/A - no charge</td></tr><tr><td><strong>Pro</strong></td><td>$7 / month</td><td>Monthly via Lemon Squeezy</td><td>First payment within 7 days</td></tr></tbody></table></div>'),
+                ('2. 7-Day Money-Back Guarantee', 'If you are not satisfied after your <strong>first Pro payment</strong>, request a full refund within <strong>7 calendar days</strong> of the charge date. To request a refund, email <strong>support@doxium.app</strong> with: Subject: "Refund Request - Pro", the email address on your account, and a brief reason (optional). Approved refunds are processed within <strong>5-10 business days</strong> to your original payment method.'),
+                ('3. Renewal Charges', 'Monthly renewals are <strong>non-refundable</strong> once processed. Cancel before your renewal date to avoid the next charge. Your Pro access continues until the end of the current paid period.'),
+                ('4. How to Cancel', 'Via the Lemon Squeezy customer portal (link in your subscription confirmation email). By emailing <strong>support@doxium.app</strong> - processed within 1 business day. After cancellation your account reverts to the Free plan (3 docs, 10 queries/month, 50 MB, PDF only). Documents beyond Free limits are kept for 30 days before deletion - download them beforehand.'),
+                ('5. Exceptions', 'Violation of our Terms of Service. A refund was already issued to the same account within the past 12 months. Request received more than 7 days after the first charge.'),
+                ('6. Extended Outages', 'In the event of a continuous service outage exceeding <strong>72 hours</strong> caused by Doxium infrastructure, affected Pro subscribers may request a pro-rata credit against their next billing cycle. Email <strong>support@doxium.app</strong> to request a review.'),
+                ('7. Contact', 'Billing questions or refund requests: <strong>support@doxium.app</strong> - we respond within 2 business days.')
+            ] %}
+            {% for title, content in sections %}
+            <div class="mb-4">
+                <h4 class="fw-bold mb-3" style="font-size: 1.1rem; color: var(--accent);"><i class="fas fa-chevron-right me-2" style="font-size: 0.75rem;"></i>{{ title }}</h4>
+                <div style="color: var(--text-muted); line-height: 1.8;">{{ content | safe }}</div>
             </div>
-
-            <div class="legal-section mb-4">
-                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>2. 7-Day Money-Back Guarantee</h4>
-                <p class="text-muted">If you are not satisfied after your <strong>first Pro payment</strong>, request a full refund within <strong>7 calendar days</strong> of the charge date.</p>
-                <p class="text-muted mt-2">To request a refund, email <strong>support@doxium.app</strong> with:</p>
-                <ul class="text-muted">
-                    <li>Subject: <em>"Refund Request – Pro"</em></li>
-                    <li>The email address on your account</li>
-                    <li>A brief reason (optional)</li>
-                </ul>
-                <p class="text-muted mt-2">Approved refunds are processed within <strong>5–10 business days</strong> to your original payment method.</p>
-            </div>
-
-            <div class="legal-section mb-4">
-                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>3. Renewal Charges</h4>
-                <p class="text-muted">Monthly renewals are <strong>non-refundable</strong> once processed. Cancel before your renewal date to avoid the next charge. Your Pro access continues until the end of the current paid period.</p>
-            </div>
-
-            <div class="legal-section mb-4">
-                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>4. How to Cancel</h4>
-                <ul class="text-muted">
-                    <li>Via the Lemon Squeezy customer portal (link in your subscription confirmation email)</li>
-                    <li>By emailing <strong>support@doxium.app</strong> — processed within 1 business day</li>
-                </ul>
-                <p class="text-muted mt-2">After cancellation your account reverts to the Free plan (3 docs, 10 queries/month, 50 MB, PDF only). Documents beyond Free limits are kept for 30 days before deletion — download them beforehand.</p>
-            </div>
-
-            <div class="legal-section mb-4">
-                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>5. Exceptions — When Refunds May Be Declined</h4>
-                <ul class="text-muted">
-                    <li>Violation of our <a href="{{ url_for('main.terms') }}" class="text-primary">Terms of Service</a></li>
-                    <li>A refund was already issued to the same account within the past 12 months</li>
-                    <li>Request received more than 7 days after the first charge</li>
-                </ul>
-            </div>
-
-            <div class="legal-section mb-4">
-                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>6. Extended Outages</h4>
-                <p class="text-muted">In the event of a continuous service outage exceeding <strong>72 hours</strong> caused by Doxium infrastructure, affected Pro subscribers may request a pro-rata credit against their next billing cycle. Email <strong>support@doxium.app</strong> to request a review.</p>
-            </div>
-
-            <div class="legal-section">
-                <h4 class="text-primary mb-3"><i class="fas fa-chevron-right me-2"></i>7. Contact</h4>
-                <p class="text-muted">Billing questions or refund requests: <strong>support@doxium.app</strong> — we respond within 2 business days.</p>
-            </div>
+            {% endfor %}
         </div>
     </div>
-    <div class="text-center">
+    <div class="text-center mt-4">
         <a href="{{ url_for('main.home') }}" class="btn btn-outline-primary me-2"><i class="fas fa-home me-2"></i>Home</a>
         <a href="{{ url_for('main.terms') }}" class="btn btn-outline-primary me-2"><i class="fas fa-file-contract me-2"></i>Terms of Service</a>
         <a href="{{ url_for('main.privacy') }}" class="btn btn-outline-primary"><i class="fas fa-shield-alt me-2"></i>Privacy Policy</a>

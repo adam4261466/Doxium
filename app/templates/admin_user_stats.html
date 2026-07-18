@@ -1,16 +1,37 @@
 {% extends "base.html" %}
+{% block title %}User Stats: {{ user.username }} - Admin{% endblock %}
 {% block content %}
-<h2>User Stats: {{ user.username }}</h2>
-<p><a href="{{ url_for('main.admin') }}" class="btn btn-secondary">Back to Admin</a></p>
-<ul>
-  <li><strong>ID:</strong> {{ user.id }}</li>
-  <li><strong>Username:</strong> {{ user.username }}</li>
-  <li><strong>Email:</strong> {{ user.email }}</li>
-  <li><strong>Created At:</strong> {{ user.created_at.strftime("%Y-%m-%d %H:%M") }}</li>
-  <li><strong>Pilot Status:</strong> {{ 'Yes' if user.is_pilot else 'No' }}</li>
-  <li><strong>Pilot Purchased At:</strong> {{ user.pilot_purchased_at.strftime("%Y-%m-%d %H:%M") if user.pilot_purchased_at else "N/A" }}</li>
-  <li><strong>Files Count:</strong> {{ file_count }}</li>
-  <li><strong>Storage Used:</strong> {{ "%.2f"|format(used_mb) }} MB</li>
-  <li><strong>Storage Available:</strong> {{ "%.2f"|format(available_mb) }} MB</li>
-</ul>
+<div class="py-4 px-4">
+    <div class="mb-4">
+        <h1 class="fw-bold" style="font-size: 1.75rem;"><i class="fas fa-user me-2" style="color: var(--accent);"></i>User Stats: {{ user.username }}</h1>
+        <a href="{{ url_for('main.admin') }}" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i> Back to Admin</a>
+    </div>
+
+    <div class="row g-3">
+        {% set stats = [
+            ('fas fa-hashtag', 'ID', user.id, 'var(--accent-gradient)'),
+            ('fas fa-user', 'Username', user.username, 'linear-gradient(135deg, #22c55e, #16a34a)'),
+            ('fas fa-envelope', 'Email', user.email, 'linear-gradient(135deg, #3b82f6, #2563eb)'),
+            ('fas fa-calendar', 'Created', user.created_at.strftime("%Y-%m-%d %H:%M"), 'linear-gradient(135deg, #f59e0b, #f97316)'),
+            ('fas fa-star', 'Pilot', 'Yes' if user.is_pilot else 'No', 'linear-gradient(135deg, #a855f7, #6366f1)'),
+            ('fas fa-calendar-check', 'Pilot Since', user.pilot_purchased_at.strftime("%Y-%m-%d %H:%M") if user.pilot_purchased_at else "N/A", 'linear-gradient(135deg, #ec4899, #f43f5e)'),
+            ('fas fa-file-alt', 'Files', file_count, 'linear-gradient(135deg, #22c55e, #16a34a)'),
+            ('fas fa-database', 'Storage Used', "%.2f MB" | format(used_mb), 'linear-gradient(135deg, #6366f1, #a855f7)'),
+            ('fas fa-hdd', 'Storage Available', "%.2f MB" | format(available_mb), 'linear-gradient(135deg, #0ea5e9, #06b6d4)'),
+        ] %}
+        {% for icon, label, value, bg in stats %}
+        <div class="col-sm-6 col-lg-4">
+            <div class="glass-card p-3 h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background: {{ bg }};"><i class="{{ icon }}"></i></div>
+                    <div>
+                        <div class="small mb-1" style="color: var(--text-muted);">{{ label }}</div>
+                        <div class="fw-bold">{{ value }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}
