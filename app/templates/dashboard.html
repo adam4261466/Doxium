@@ -139,34 +139,8 @@
         <!-- Main Content Area -->
         <div class="col-lg-9 col-xl-10 explorer-main">
 
-            <!-- Usage Stats -->
-            <div class="usage-grid" style="margin: 20px 24px 0;">
-                <div class="usage-card">
-                    <div class="usage-icon usage-icon-indigo"><i class="fas fa-file-alt"></i></div>
-                    <div class="usage-body">
-                        <span class="usage-label">Documents</span>
-                        <span class="usage-value">{{ documents | length }}</span>
-                    </div>
-                </div>
-                <div class="usage-card">
-                    <div class="usage-icon usage-icon-cyan"><i class="fas fa-database"></i></div>
-                    <div class="usage-body">
-                        <span class="usage-label">Storage Used</span>
-                        <span class="usage-value">{{ "%.1f" | format(storage_used_mb) }} <small>MB / {{ limits.storage_mb }} MB</small></span>
-                        <div class="usage-progress"><div class="usage-progress-bar" style="width: {{ storage_pct }}%;"></div></div>
-                    </div>
-                </div>
-                <div class="usage-card">
-                    <div class="usage-icon usage-icon-violet"><i class="fas fa-bolt"></i></div>
-                    <div class="usage-body">
-                        <span class="usage-label">Queries / Month</span>
-                        <span class="usage-value">{{ limits.max_queries_per_month }}</span>
-                    </div>
-                </div>
-            </div>
-
             <!-- Toolbar -->
-            <div class="explorer-toolbar">
+            <div class="explorer-toolbar" style="margin: 16px 24px 0;">
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <button class="btn btn-sm btn-primary" onclick="document.getElementById('file-input').click()">
                         <i class="fas fa-cloud-upload-alt me-1"></i>Upload
@@ -189,6 +163,32 @@
                     <div class="view-toggle" role="group" aria-label="Toggle file view">
                         <button type="button" class="view-toggle-btn active" id="grid-view-btn" onclick="toggleView('grid')" title="Grid view"><i class="fas fa-grip"></i></button>
                         <button type="button" class="view-toggle-btn" id="list-view-btn" onclick="toggleView('list')" title="List view"><i class="fas fa-list"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Usage Stats -->
+            <div class="usage-grid" style="margin: 16px 24px 0;">
+                <div class="usage-card">
+                    <div class="usage-icon usage-icon-indigo"><i class="fas fa-file-alt"></i></div>
+                    <div class="usage-body">
+                        <span class="usage-label">Documents</span>
+                        <span class="usage-value">{{ documents | length }}</span>
+                    </div>
+                </div>
+                <div class="usage-card">
+                    <div class="usage-icon usage-icon-cyan"><i class="fas fa-database"></i></div>
+                    <div class="usage-body">
+                        <span class="usage-label">Storage Used</span>
+                        <span class="usage-value">{{ "%.1f" | format(storage_used_mb) }} <small>MB / {{ limits.storage_mb }} MB</small></span>
+                        <div class="usage-progress"><div class="usage-progress-bar" style="width: {{ storage_pct }}%;"></div></div>
+                    </div>
+                </div>
+                <div class="usage-card">
+                    <div class="usage-icon usage-icon-violet"><i class="fas fa-bolt"></i></div>
+                    <div class="usage-body">
+                        <span class="usage-label">Queries / Month</span>
+                        <span class="usage-value">{{ limits.max_queries_per_month }}</span>
                     </div>
                 </div>
             </div>

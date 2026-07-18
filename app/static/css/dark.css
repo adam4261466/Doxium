@@ -1147,9 +1147,7 @@ button.explorer-nav-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.35rem 0.75rem;
-  border-bottom: 1px solid var(--glass-border-soft);
-  background: rgba(255, 255, 255, 0.02);
+  padding: 0;
 }
 
 .explorer-file-list-card {
