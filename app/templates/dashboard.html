@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Dashboard - Doxium{% endblock %}
+{% block navbar %}{% endblock %}
+{% block flash_messages %}{% endblock %}
+{% block footer %}{% endblock %}
 
 {% block content %}
 <div class="dashboard-layout">
@@ -24,6 +27,12 @@
                 <i class="fas fa-comment-dots"></i>
                 <span>AI Query</span>
             </a>
+            {% if not current_user.is_pilot %}
+            <a href="{{ url_for('main.pricing') }}" class="sidebar-nav-item">
+                <i class="fas fa-bolt"></i>
+                <span>Upgrade</span>
+            </a>
+            {% endif %}
 
             <!-- Folders -->
             <div class="sidebar-section">
@@ -125,17 +134,6 @@
 
         <!-- Content -->
         <div class="dashboard-content">
-
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-            {% for category, message in messages %}
-            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            {% endfor %}
-            {% endif %}
-            {% endwith %}
 
             <!-- Stats Row -->
             {% if not current_folder_id and not current_tag_id %}
