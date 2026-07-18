@@ -9,13 +9,18 @@
 
   [[services.volumes]]
     mountPath = "/data"
+    name = "shared-data"
 
 [[services]]
   name = "worker"
-  startCommand = "celery -A app.celery_app.celery worker --loglevel=info --concurrency=2 -P prefork"
+  startCommand = "celery -A app.celery_worker.celery worker --loglevel=info --concurrency=2 -P prefork"
   restartPolicyType = "on-failure"
+
+  [[services.volumes]]
+    mountPath = "/data"
+    name = "shared-data"
 
 [[services]]
   name = "beat"
-  startCommand = "celery -A app.celery_app.celery beat --loglevel=info"
+  startCommand = "celery -A app.celery_worker.celery beat --loglevel=info"
   restartPolicyType = "on-failure"

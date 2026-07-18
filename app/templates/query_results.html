@@ -44,12 +44,22 @@
 
             <!-- AI Answer -->
             <div class="card mb-4 glow-success">
-                <div class="card-header bg-success text-white">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-brain me-2"></i>AI Answer</h5>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="fas fa-download me-1"></i>Export
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('main.export_query', fmt='md', task_id=task_id) }}"><i class="fas fa-file-alt me-2"></i>Markdown</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('main.export_query', fmt='txt', task_id=task_id) }}"><i class="fas fa-file me-2"></i>Plain Text</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('main.export_query', fmt='docx', task_id=task_id) }}"><i class="fas fa-file-word me-2"></i>Word</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('main.export_query', fmt='pdf', task_id=task_id) }}"><i class="fas fa-file-pdf me-2"></i>PDF</a></li>
+                        </ul>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <div class="answer-content p-3 rounded">
-                        <i class="fas fa-lightbulb text-success me-2"></i>
+                    <div class="answer-content p-3 rounded markdown-body" id="answerContent">
                         {{ answer }}
                     </div>
                 </div>
@@ -66,15 +76,16 @@
                 </div>
                 <div class="card-body scroll-panel-lg">
                     {% for chunk in supporting_chunks %}
-                        <div class="document-chunk mb-3 p-3 rounded border">
+                        <div class="document-chunk mb-3 p-3 rounded border clickable-chunk" id="source-{{ loop.index }}"
+                             onclick="openFileViewer({{ chunk.file_id }}, '{{ chunk.filename|e }}')"
+                             style="cursor: pointer;">
                             <div class="d-flex align-items-start mb-2">
-                                <i class="fas fa-file text-primary me-2 mt-1"></i>
+                                <span class="citation-num badge bg-primary me-2">{{ chunk.source_num|default(loop.index) }}</span>
                                 <div class="flex-grow-1">
                                     <strong class="text-primary">{{ chunk.filename|default('Unknown file') }}</strong>
                                     <br>
                                     <small class="text-muted">
-                                        <i class="fas fa-chart-line me-1"></i>
-                                        Similarity: {{ "%.3f"|format(chunk.score|default(0.0)) }}
+                                        <i class="fas fa-external-link-alt me-1"></i>Click to view full file
                                     </small>
                                 </div>
                             </div>
@@ -96,6 +107,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Animate cards on load
@@ -110,14 +122,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }, index * 100);
     });
 
-    // Add tooltips to similarity scores
-    const similarityElements = document.querySelectorAll('.text-muted');
-    similarityElements.forEach(el => {
-        if (el.textContent.includes('Similarity:')) {
-            el.setAttribute('data-bs-toggle', 'tooltip');
-            el.setAttribute('title', 'Higher similarity means more relevant content');
-        }
-    });
+    // Render markdown in the answer
+    const answerEl = document.getElementById('answerContent');
+    if (answerEl) {
+        var raw = answerEl.textContent.trim();
+        answerEl.innerHTML = marked.parse(raw);
+
+        // Make citations clickable after rendering
+        var html = answerEl.innerHTML;
+        html = html.replace(/\[(\d+)\]/g, '<a href="#source-$1" class="citation-link" onclick="highlightSource($1);return false;">[$1]</a>');
+        answerEl.innerHTML = html;
+    }
 
     // Initialize tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -125,6 +140,59 @@ document.addEventListener('DOMContentLoaded', function() {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 });
+
+function highlightSource(num) {
+    // Remove previous highlights
+    document.querySelectorAll('.document-chunk').forEach(el => {
+        el.classList.remove('chunk-highlighted');
+    });
+
+    var target = document.getElementById('source-' + num);
+    if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target.classList.add('chunk-highlighted');
+        setTimeout(() => target.classList.remove('chunk-highlighted'), 3000);
+    }
+}
+
+function openFileViewer(fileId, filename) {
+    var modal = document.getElementById('fileViewerModal');
+    var titleEl = document.getElementById('fileViewerLabel');
+    var bodyEl = document.getElementById('fileViewerContent');
+
+    titleEl.textContent = filename;
+    bodyEl.textContent = 'Loading file content...';
+
+    var bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+
+    fetch('/preview/' + fileId)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            bodyEl.textContent = data.content || 'No content available';
+        })
+        .catch(function() {
+            bodyEl.textContent = 'Failed to load file content.';
+        });
+}
 </script>
+
+<!-- File Viewer Modal -->
+<div class="modal fade" id="fileViewerModal" tabindex="-1" aria-labelledby="fileViewerLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="fileViewerLabel">File Content</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <pre id="fileViewerContent" class="preview-content p-3 rounded" style="white-space: pre-wrap; max-height: 70vh; overflow-y: auto;"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}

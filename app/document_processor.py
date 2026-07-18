@@ -153,14 +153,16 @@ def process_file(file_id, user_id, upload_folder=None):
 
 # -------- FAISS SEARCH -------- #
 
-def search_similar_chunks(user_id, query_text, top_k=5):
+def search_similar_chunks(user_id, query_text, top_k=5, file_ids=None):
     from .embeddings import EmbeddingGenerator
     from .faiss_index import FaissIndex
 
     embedder = EmbeddingGenerator()
     faiss_index = FaissIndex(dim=embedder.get_dimension(), user_id=user_id)
     query_embedding = embedder.embed_text(query_text)
-    distances, indices, metadata = faiss_index.search(query_embedding, top_k=top_k)
+
+    search_k = top_k * 3 if file_ids else top_k
+    distances, indices, metadata = faiss_index.search(query_embedding, top_k=search_k)
 
     results = []
     for dist, cid, meta in zip(distances, indices, metadata):
@@ -171,6 +173,10 @@ def search_similar_chunks(user_id, query_text, top_k=5):
         if not chunk:
             faiss_index.remove_id(cid)
             continue
+        if file_ids and chunk.file_id not in file_ids:
+            continue
         results.append({"chunk": chunk, "distance": float(dist), "metadata": meta})
+        if len(results) >= top_k:
+            break
 
     return results

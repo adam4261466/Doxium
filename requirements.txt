@@ -34,3 +34,5 @@ filelock
 redis
 groq
 psycopg2-binary
+reportlab
+markdown

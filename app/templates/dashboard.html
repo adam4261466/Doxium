@@ -1,266 +1,549 @@
 {% extends "base.html" %}
+{% block title %}Dashboard - Doxium{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- Welcome Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card glow-primary">
-                <div class="card-body py-4">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h2 class="mb-2"><i class="fas fa-user-circle me-3 text-primary"></i>Welcome back!</h2>
-                            <p class="mb-0 text-muted">Ready to explore your documents with AI-powered insights.</p>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            {% if user.is_pilot %}
-                                <span class="badge bg-success fs-6 px-3 py-2">
-                                    <i class="fas fa-star me-2"></i>Premium Member
-                                </span>
-                            {% else %}
-                                <span class="badge bg-outline-primary fs-6 px-3 py-2">
-                                    <i class="fas fa-user me-2"></i>Free Plan
-                                </span>
-                            {% endif %}
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <!-- Stat Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-lg-3">
+            <div class="glass-card p-3 h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background: var(--accent-gradient);">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small mb-1">Total Documents</div>
+                        <div class="fs-3 fw-bold">{{ documents | length }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="glass-card p-3 h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small mb-1">Processed</div>
+                        <div class="fs-3 fw-bold text-success">{{ documents | selectattr('status', 'equalto', 'completed') | list | length }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="glass-card p-3 h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #f97316);">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small mb-1">Pending</div>
+                        <div class="fs-3 fw-bold text-warning">{{ documents | selectattr('status', 'equalto', 'processing') | list | length + documents | selectattr('status', 'equalto', 'pending') | list | length }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="glass-card p-3 h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #a855f7);">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small mb-1">Storage Used</div>
+                        <div class="fs-3 fw-bold">{{ "%.1f" | format(documents | sum(attribute='file_size') / (1024*1024)) }} MB</div>
+                        <div class="storage-bar">
+                            <div class="storage-bar-fill" style="width: {{ [100, (documents | sum(attribute='file_size') / (100*1024*1024) * 100) | int] | min }}%"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-<a href="{{ url_for('main.download_all_files') }}" class="btn btn-outline-info w-100 mt-2">
-    <i class="fas fa-download me-2"></i>Download All My Files
-</a>
-{% if current_user.is_pilot and current_user.ls_customer_portal_url %}
-<a href="{{ current_user.ls_customer_portal_url }}" 
-   target="_blank" class="btn btn-outline-warning w-100 mt-2">
-    <i class="fas fa-cog me-2"></i>Manage / Cancel Subscription
-</a>
-{% endif %}
-    <div class="row g-4">
-        <!-- Main Content Area -->
-        <div class="col-lg-8">
-            <!-- Quick Actions Row -->
-            <div class="row g-3 mb-4">
-                <!-- AI Query Card -->
-                <div class="col-md-6">
-                    <div class="card h-100">
-                        <div class="card-body text-center">
-                            <div class="mb-3">
-                                <i class="fas fa-brain fa-3x text-primary"></i>
-                            </div>
-                            <h5 class="card-title">Ask AI Questions</h5>
-                            <p class="card-text text-muted">Get intelligent answers from your documents</p>
-                            <button class="btn btn-primary w-100" data-bs-toggle="collapse" data-bs-target="#querySection">
-                                <i class="fas fa-search me-2"></i>Start Querying
-                            </button>
-                        </div>
-                    </div>
+
+    <!-- Explorer Layout -->
+    <div class="explorer-layout">
+        <div class="row g-0">
+
+            <!-- Sidebar -->
+            <div class="col-lg-3 explorer-sidebar">
+                <div class="p-3">
+                    <h6 class="text-muted small fw-bold mb-2">Navigation</h6>
+                    <a href="{{ url_for('main.dashboard') }}" class="explorer-nav-item mb-1 {{ 'active' if not current_folder_id and not current_tag_id else '' }}">
+                        <i class="fas fa-home me-2"></i> All Documents
+                    </a>
                 </div>
 
-                <!-- Upload Card -->
-                <div class="col-md-6">
-                    <div class="card h-100">
-                        <div class="card-body text-center">
-                            <div class="mb-3">
-                                <i class="fas fa-cloud-upload-alt fa-3x text-success"></i>
-                            </div>
-                            <h5 class="card-title">Upload Documents</h5>
-                            <p class="card-text text-muted">Add new files to your knowledge base</p>
-                            <button class="btn btn-success w-100" data-bs-toggle="collapse" data-bs-target="#uploadSection">
-                                <i class="fas fa-plus me-2"></i>Upload File
-                            </button>
-                        </div>
+                <!-- Folders -->
+                <div class="explorer-section">
+                    <div class="explorer-section-header" onclick="toggleSection(this)">
+                        <i class="fas fa-chevron-right explorer-chevron me-2"></i>
+                        <span>Folders</span>
+                        <button class="btn btn-sm ms-auto p-0 explorer-add-btn" onclick="event.stopPropagation(); showFolderModal()" title="New Folder">
+                            <i class="fas fa-plus"></i>
+                        </button>
                     </div>
-                </div>
-            </div>
-
-            <!-- Collapsible Query Section -->
-            <div class="collapse mb-4" id="querySection">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0"><i class="fas fa-search me-2"></i>Ask Questions About Your Documents</h5>
-                    </div>
-                    <div class="card-body">
-                        <form id="queryForm" action="{{ url_for('main.query_documents') }}" method="post">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <div class="input-group input-group-lg">
-                                <input type="text" name="query" class="form-control"
-                                       placeholder="Example: What are the main topics discussed in my documents?" required>
-                                <button type="submit" class="btn btn-primary">
-                                    <span id="searchIcon"><i class="fas fa-search me-2"></i></span>
-                                    <span id="loadingSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
-                                    Search
+                    <div class="explorer-section-body">
+                        {% for folder in folders %}
+                        <div class="explorer-nav-item-wrapper">
+                            <a href="{{ url_for('main.dashboard', folder_id=folder.id) }}" class="explorer-nav-item {{ 'active' if current_folder_id == folder.id else '' }}">
+                                <i class="fas fa-folder{{ '-open' if current_folder_id == folder.id else '' }} me-2" style="color: #f59e0b;"></i>
+                                {{ folder.name }}
+                            </a>
+                            <form method="POST" action="{{ url_for('main.delete_folder', folder_id=folder.id) }}" class="explorer-delete-form" onsubmit="return confirm('Delete folder \'{{ folder.name }}\'? Documents will be moved to root.');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="explorer-delete-btn" title="Delete folder">
+                                    <i class="fas fa-times"></i>
                                 </button>
-                            </div>
-                            <small class="text-muted mt-2 d-block">💡 Try questions like "Summarize the key points" or "What are the main conclusions?"</small>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Collapsible Upload Section -->
-            <div class="collapse mb-4" id="uploadSection">
-                <div class="card">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0"><i class="fas fa-cloud-upload-alt me-2"></i>Upload New Document</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="dropZone" class="drop-zone p-4 text-center">
-                            <div class="drop-content">
-                                <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-primary"></i>
-                                <h5>Drag & drop files here</h5>
-                                <p class="text-muted mb-3">or <button class="btn btn-link p-0 text-primary" onclick="document.getElementById('fileInput').click()">browse your computer</button></p>
-                                <div class="row text-start">
-                                    <div class="col-md-6">
-                                        <small class="text-muted">
-                                            <i class="fas fa-check text-success me-1"></i>Supports .txt and .md files<br>
-                                            <i class="fas fa-check text-success me-1"></i>Up to 10MB per file
-                                        </small>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <small class="text-muted">
-                                            <i class="fas fa-info-circle text-info me-1"></i>Files are processed securely<br>
-                                            <i class="fas fa-lock text-warning me-1"></i>Enterprise-grade encryption
-                                        </small>
-                                    </div>
-                                </div>
-                            </div>
-                            <input type="file" id="fileInput" name="file" class="d-none" accept=".txt,.md">
+                            </form>
                         </div>
-                        <div id="uploadProgress" class="progress mt-3 d-none">
-                            <div class="progress-bar" role="progressbar" style="width: 0%"></div>
-                        </div>
-                        <div id="uploadError" class="alert alert-danger mt-3 d-none"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Activity</h5>
-                </div>
-                <div class="card-body">
-                    <div id="queryHistory">
-                        {% if query_history %}
-                            <div class="timeline">
-                                {% for query in query_history %}
-                                    <div class="timeline-item mb-3 pb-3 border-bottom">
-                                        <div class="d-flex">
-                                            <div class="timeline-marker bg-primary me-3">
-                                                <i class="fas fa-search text-white"></i>
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <div class="d-flex justify-content-between align-items-start mb-1">
-                                                    <strong class="text-primary">Query:</strong>
-                                                    <small class="text-muted">{{ query.timestamp.strftime('%m/%d %H:%M') }}</small>
-                                                </div>
-                                                <p class="mb-0">{{ query.query }}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <div class="text-center py-5">
-                                <span class="display-4 mb-3"></span>
-                                <i class="fas fa-inbox fa-2x text-muted mb-3"></i>
-                                <h6 class="text-muted">No activity yet</h6>
-                                <p class="text-muted mb-0">Start by uploading a document or asking a question!</p>
-                            </div>
+                        {% endfor %}
+                        {% if not folders %}
+                        <div class="px-3 py-2 text-muted small">No folders yet</div>
                         {% endif %}
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Sidebar -->
-        <div class="col-lg-4">
-            <!-- Account Status -->
-            
-
-            <!-- Document Library -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-folder me-2"></i>Your Documents</h5>
-                    <small class="text-muted">({{ files|length }} files)</small>
+                <!-- Tags -->
+                <div class="explorer-section">
+                    <div class="explorer-section-header" onclick="toggleSection(this)">
+                        <i class="fas fa-chevron-right explorer-chevron me-2"></i>
+                        <span>Tags</span>
+                        <button class="btn btn-sm ms-auto p-0 explorer-add-btn" onclick="event.stopPropagation(); showTagModal()" title="New Tag">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="explorer-section-body">
+                        {% for tag in tags %}
+                        <a href="{{ url_for('main.dashboard', tag_id=tag.id) }}" class="explorer-nav-item {{ 'active' if current_tag_id == tag.id else '' }}">
+                            <span class="explorer-tag-dot" style="background: {{ tag.color }};"></span>
+                            {{ tag.name }}
+                        </a>
+                        {% endfor %}
+                        {% if not tags %}
+                        <div class="px-3 py-2 text-muted small">No tags yet</div>
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="card-body scroll-panel">
-                    {% if files %}
-                        <div class="document-list">
-                            {% for file in files %}
-                                <div class="document-item p-3 mb-2 rounded">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div class="flex-grow-1 me-2">
-                                            <div class="d-flex align-items-center mb-1">
-                                                <i class="fas fa-file-alt text-primary me-2"></i>
-                                                <strong class="d-block text-truncate" title="{{ file.filename }}">{{ file.filename }}</strong>
-                                            </div>
-                                            <small class="text-muted d-block">
-                                                {{ (file.size / 1024)|round(2) }} KB
-                                                {% if file.processed %}
-                                                    <span class="badge bg-success ms-1">Processed</span>
-                                                {% else %}
-                                                    <span class="badge bg-warning ms-1">Processing</span>
-                                                {% endif %}
-                                            </small>
-                                        </div>
-                                        <div class="btn-group-vertical btn-group-sm">
-                                            <button class="btn btn-outline-info btn-sm preview-btn mb-1"
-                                                    data-filename="{{ file.filename }}"
-                                                    data-content="{{ file.content|default('No content available') }}"
-                                                    title="Preview">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            {% if not file.processed %}
-                                            <form action="{{ url_for('main.process_file_route', file_id=file.id) }}" method="post" class="d-inline">
-                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                                <button type="submit" class="btn btn-outline-primary btn-sm mb-1" title="Process">
-                                                    <i class="fas fa-cog"></i>
-                                                </button>
-                                            </form>
-                                            {% else %}
-                                            <button class="btn btn-outline-success btn-sm mb-1" disabled title="Processed">
-                                                <i class="fas fa-check"></i>
-                                            </button>
-                                            {% endif %}
-                                            <form action="{{ url_for('main.delete_file', file_id=file.id) }}" method="post" class="d-inline">
-                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                                <button type="submit" class="btn btn-outline-danger btn-sm"
-                                                        onclick="return confirm('Are you sure you want to delete this file?')" title="Delete">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
+
+                <!-- Upload Section -->
+                <div class="p-3 border-top" style="border-color: var(--glass-border-soft) !important;">
+                    <h6 class="text-muted small fw-bold mb-2">Quick Upload</h6>
+                    <form method="POST" action="{{ url_for('main.upload') }}" enctype="multipart/form-data" id="upload-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        {% if current_folder_id %}
+                        <input type="hidden" name="folder_id" value="{{ current_folder_id }}">
+                        {% endif %}
+                        <div class="drop-zone mb-2" id="drop-zone">
+                            <input type="file" class="d-none" id="file-input" name="file"
+                                accept=".pdf,.txt,.docx,.md,.html,.csv,.json,.py,.js,.ts,.tsx,.jsx,.java,.cpp,.c,.h,.go,.rs,.rb,.php,.xml,.yaml,.yml,.toml,.log,.pptx,.ppt,.xlsx,.xls,.doc,.epub">
+                            <div class="text-center py-3">
+                                <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                                <p class="mb-0 small text-muted">Drag files or <a href="#" onclick="document.getElementById('file-input').click(); return false;">browse</a></p>
+                                <p class="mb-0 text-muted" style="font-size: 0.65rem;">PDF, DOCX, TXT, MD, Code, EPUB, PPTX, XLSX</p>
+                            </div>
                         </div>
+                        <button type="submit" class="btn btn-primary w-100 btn-sm">
+                            <i class="fas fa-upload me-1"></i> Upload Files
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-lg-9 explorer-main">
+                <!-- Breadcrumb -->
+                <div class="explorer-breadcrumb">
+                    <a href="{{ url_for('main.dashboard') }}" class="breadcrumb-link">
+                        <i class="fas fa-home"></i>
+                    </a>
+                    <span class="breadcrumb-sep"><i class="fas fa-chevron-right"></i></span>
+                    {% if current_folder_id %}
+                        {% set current_folder = folders | selectattr('id', 'equalto', current_folder_id) | first %}
+                        {% if current_folder %}
+                        <span class="breadcrumb-current">{{ current_folder.name }}</span>
+                        {% endif %}
+                    {% elif current_tag_id %}
+                        {% set current_tag = tags | selectattr('id', 'equalto', current_tag_id) | first %}
+                        {% if current_tag %}
+                        <span class="breadcrumb-current">
+                            <span class="explorer-tag-dot" style="background: {{ current_tag.color }};"></span>
+                            {{ current_tag.name }}
+                        </span>
+                        {% endif %}
                     {% else %}
-                        <div class="text-center py-4">
-                            <span class="display-4 mb-3"></span>
-                            <i class="fas fa-file-alt fa-2x text-muted mb-3"></i>
-                            <h6 class="text-muted">No documents yet</h6>
-                            <p class="text-muted mb-0 small">Upload your first document to get started with AI queries!</p>
-                        </div>
+                    <span class="breadcrumb-current">All Documents</span>
                     {% endif %}
                 </div>
+
+                <!-- Toolbar -->
+                <div class="explorer-toolbar">
+                    <div class="text-muted small">
+                        {{ documents | length }} item{{ 's' if documents | length != 1 else '' }}
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="selectModeBtn" onclick="toggleSelectMode()" title="Select files to query">
+                            <i class="fas fa-check-square me-1"></i> Select
+                        </button>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <input type="radio" class="btn-check" name="view-mode" id="grid-view" value="grid" checked>
+                            <label class="btn btn-outline-secondary" for="grid-view"><i class="fas fa-th"></i></label>
+                            <input type="radio" class="btn-check" name="view-mode" id="list-view" value="list">
+                            <label class="btn btn-outline-secondary" for="list-view"><i class="fas fa-list"></i></label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Query Bar -->
+                <div class="p-3 border-bottom" style="border-color: var(--glass-border-soft) !important;">
+                    <form method="POST" action="{{ url_for('main.query_documents') }}" id="queryForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="file_ids" id="queryFileIds" value="">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text" style="background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.2); color: var(--text-muted);"><i class="fas fa-robot"></i></span>
+                            <input type="text" class="form-control" name="query" id="queryInput" placeholder="Ask about all your documents..." maxlength="1000" required>
+                            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane"></i></button>
+                        </div>
+                        <div class="mt-1" id="queryScope"></div>
+                    </form>
+                </div>
+
+                <!-- File Grid / List -->
+                {% if documents %}
+                <div class="p-3">
+                    <!-- Grid View -->
+                    <div id="grid-container" class="file-grid">
+                        {% for doc in documents %}
+                        <div class="file-card" data-file-id="{{ doc.id }}" onclick="handleCardClick(event, '{{ url_for('main.preview_file', file_id=doc.id) }}', {{ doc.id }})">
+                            <input type="checkbox" class="file-select-check d-none" value="{{ doc.id }}" onchange="updateSelection()">
+                            <div class="file-card-header">
+                                <div class="file-icon {{ 'icon-' + (doc.file_type or 'txt') }}">
+                                    {% if doc.file_type == 'pdf' %}
+                                    <i class="fas fa-file-pdf"></i>
+                                    {% elif doc.file_type in ['py', 'js', 'ts', 'tsx', 'jsx', 'java', 'cpp', 'c', 'h', 'go', 'rs', 'rb', 'php'] %}
+                                    <i class="fas fa-file-code"></i>
+                                    {% elif doc.file_type in ['json', 'xml', 'yaml', 'yml', 'toml'] %}
+                                    <i class="fas fa-file-alt"></i>
+                                    {% elif doc.file_type in ['md'] %}
+                                    <i class="fab fa-markdown"></i>
+                                    {% elif doc.file_type in ['html'] %}
+                                    <i class="fab fa-html5"></i>
+                                    {% elif doc.file_type in ['pptx', 'ppt'] %}
+                                    <i class="fas fa-file-powerpoint"></i>
+                                    {% elif doc.file_type in ['xlsx', 'xls', 'csv'] %}
+                                    <i class="fas fa-file-excel"></i>
+                                    {% elif doc.file_type in ['epub'] %}
+                                    <i class="fas fa-book"></i>
+                                    {% else %}
+                                    <i class="fas fa-file-alt"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="file-card-menu">
+                                    <button class="kebab-btn" onclick="event.stopPropagation(); toggleKebab(this)">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <div class="kebab-dropdown">
+                                        {% if doc.status == 'completed' %}
+                                        <button type="button" class="kebab-item-btn" onclick="event.stopPropagation(); askAboutFile({{ doc.id }}, '{{ doc.filename | e }}')">
+                                            <i class="fas fa-comment-dots"></i> Ask about this file
+                                        </button>
+                                        <div class="kebab-divider"></div>
+                                        <form method="POST" action="{{ url_for('main.summarize_document', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();" style="padding: 0;">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <button type="submit" class="kebab-item-btn">
+                                                <i class="fas fa-file-alt"></i> Summarize
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('main.flashcards_document', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();" style="padding: 0;">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <button type="submit" class="kebab-item-btn">
+                                                <i class="fas fa-clone"></i> Flashcards
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('main.quiz_document', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();" style="padding: 0;">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <button type="submit" class="kebab-item-btn">
+                                                <i class="fas fa-question-circle"></i> Quiz
+                                            </button>
+                                        </form>
+                                        {% else %}
+                                        <form method="POST" action="{{ url_for('main.process_file_route', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();" style="padding: 0;">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <button type="submit" class="kebab-item-btn">
+                                                <i class="fas fa-cog"></i> Process File
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                        <div class="kebab-divider"></div>
+                                        {% if doc.folder_id %}
+                                        <form method="POST" action="{{ url_for('main.move_file', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();" style="padding: 0;">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <input type="hidden" name="folder_id" value="">
+                                            <button type="submit" class="kebab-item-btn">
+                                                <i class="fas fa-folder-minus"></i> Remove from folder
+                                            </button>
+                                        </form>
+                                        {% else %}
+                                        <div class="kebab-item-text">
+                                            <i class="fas fa-folder-plus"></i> Move to...
+                                            <div class="kebab-submenu">
+                                                {% for folder in folders %}
+                                                <form method="POST" action="{{ url_for('main.move_file', file_id=doc.id) }}" style="padding: 0;">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                    <input type="hidden" name="folder_id" value="{{ folder.id }}">
+                                                    <button type="submit" class="kebab-item-btn">
+                                                        <i class="fas fa-folder"></i> {{ folder.name }}
+                                                    </button>
+                                                </form>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        <div class="kebab-divider"></div>
+                                        <form method="POST" action="{{ url_for('main.delete_file', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();" style="padding: 0;">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <button type="submit" class="kebab-item-btn text-danger" onclick="return confirm('Delete {{ doc.filename }}? This cannot be undone.')">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="file-card-name" title="{{ doc.filename }}">{{ doc.filename }}</div>
+                            <div class="file-card-meta">
+                                <span class="file-badge badge-{{ doc.status }}">{{ doc.status }}</span>
+                                {% if doc.folder %}
+                                <span class="text-muted"><i class="fas fa-folder"></i> {{ doc.folder.name }}</span>
+                                {% endif %}
+                                {% if doc.tags %}
+                                <span class="text-muted">
+                                    {% for tag in doc.tags %}
+                                    <span class="explorer-tag-badge" style="background: {{ tag.color }}22; color: {{ tag.color }}; border: 1px solid {{ tag.color }}44;">{{ tag.name }}</span>
+                                    {% endfor %}
+                                </span>
+                                {% endif %}
+                                <span class="text-muted">{{ "%.1f MB" | format(doc.file_size / (1024 * 1024)) if doc.file_size > 1048576 else "%.1f KB" | format(doc.file_size / 1024) if doc.file_size > 0 else "—" }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- List View -->
+                    <div id="list-container" class="d-none">
+                        <div class="file-list-header">
+                            <div class="file-list-col-name">Name</div>
+                            <div class="file-list-col-tags">Tags</div>
+                            <div class="file-list-col-size">Size</div>
+                            <div class="file-list-col-status">Status</div>
+                            <div class="file-list-col-actions">Actions</div>
+                        </div>
+                        {% for doc in documents %}
+                        <div class="file-list-row" data-file-id="{{ doc.id }}" onclick="handleRowClick(event, '{{ url_for('main.preview_file', file_id=doc.id) }}', {{ doc.id }})">
+                            <input type="checkbox" class="file-select-check d-none" value="{{ doc.id }}" onchange="updateSelection()">
+                            <div class="file-list-col-name">
+                                <span class="file-icon-sm {{ 'icon-' + (doc.file_type or 'txt') }}">
+                                    {% if doc.file_type == 'pdf' %}
+                                    <i class="fas fa-file-pdf"></i>
+                                    {% elif doc.file_type in ['py', 'js', 'ts', 'tsx', 'jsx', 'java', 'cpp', 'c', 'h', 'go', 'rs', 'rb', 'php'] %}
+                                    <i class="fas fa-file-code"></i>
+                                    {% elif doc.file_type in ['json', 'xml', 'yaml', 'yml', 'toml'] %}
+                                    <i class="fas fa-file-alt"></i>
+                                    {% elif doc.file_type in ['md'] %}
+                                    <i class="fab fa-markdown"></i>
+                                    {% elif doc.file_type in ['html'] %}
+                                    <i class="fab fa-html5"></i>
+                                    {% elif doc.file_type in ['pptx', 'ppt'] %}
+                                    <i class="fas fa-file-powerpoint"></i>
+                                    {% elif doc.file_type in ['xlsx', 'xls', 'csv'] %}
+                                    <i class="fas fa-file-excel"></i>
+                                    {% elif doc.file_type in ['epub'] %}
+                                    <i class="fas fa-book"></i>
+                                    {% else %}
+                                    <i class="fas fa-file-alt"></i>
+                                    {% endif %}
+                                </span>
+                                {{ doc.filename }}
+                            </div>
+                            <div class="file-list-col-tags">
+                                {% if doc.tags %}
+                                    {% for tag in doc.tags %}
+                                    <span class="explorer-tag-badge" style="background: {{ tag.color }}22; color: {{ tag.color }}; border: 1px solid {{ tag.color }}44;">{{ tag.name }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                <span class="text-muted">—</span>
+                                {% endif %}
+                            </div>
+                            <div class="file-list-col-size">{{ "%.1f MB" | format(doc.file_size / (1024 * 1024)) if doc.file_size > 1048576 else "%.1f KB" | format(doc.file_size / 1024) if doc.file_size > 0 else "—" }}</div>
+                            <div class="file-list-col-status">
+                                <span class="file-badge badge-{{ doc.status }}">{{ doc.status }}</span>
+                            </div>
+                            <div class="file-list-col-actions" onclick="event.stopPropagation();">
+                                {% if doc.status == 'completed' %}
+                                <button type="button" class="file-action-btn" title="Ask about this file" onclick="askAboutFile({{ doc.id }}, '{{ doc.filename | e }}')"><i class="fas fa-comment-dots"></i></button>
+                                <form method="POST" action="{{ url_for('main.summarize_document', file_id=doc.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="file-action-btn" title="Summarize"><i class="fas fa-file-alt"></i></button>
+                                </form>
+                                <form method="POST" action="{{ url_for('main.flashcards_document', file_id=doc.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="file-action-btn" title="Flashcards"><i class="fas fa-clone"></i></button>
+                                </form>
+                                {% else %}
+                                <form method="POST" action="{{ url_for('main.process_file_route', file_id=doc.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="file-action-btn" title="Process"><i class="fas fa-cog"></i></button>
+                                </form>
+                                {% endif %}
+                                <form method="POST" action="{{ url_for('main.delete_file', file_id=doc.id) }}" class="d-inline" onsubmit="return confirm('Delete {{ doc.filename }}?')">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="file-action-btn text-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No documents yet</h4>
+                    <p class="text-muted">Upload files to get started with AI-powered document analysis.</p>
+                    <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+                        <i class="fas fa-upload me-1"></i> Upload Files
+                    </button>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
+<!-- Folder Modal -->
+<div class="modal fade" id="folderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('main.create_folder') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-folder-plus me-2"></i>New Folder</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="parent_id" value="{{ current_folder_id or '' }}">
+                    <div class="mb-3">
+                        <label class="form-label">Folder Name</label>
+                        <input type="text" class="form-control" name="name" required placeholder="e.g., Research Papers" autofocus>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-1"></i> Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Tag Modal -->
+<div class="modal fade" id="tagModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('main.create_tag') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-tag me-2"></i>New Tag</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tag Name</label>
+                        <input type="text" class="form-control" name="name" required placeholder="e.g., Important" autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Color</label>
+                        <input type="color" class="form-control form-control-color" name="color" value="#6366f1">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-1"></i> Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Ask About File Modal -->
+<div class="modal fade" id="askModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('main.query_documents') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" name="file_ids" id="askFileId" value="">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-comment-dots me-2"></i><span id="askModalTitle">Ask about file</span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" class="form-control" name="query" placeholder="What would you like to know?" maxlength="1000" required autofocus>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane me-1"></i> Ask</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Query Selected Bar -->
+<div id="querySelectedBar" class="d-none" style="position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1050; min-width: 420px; max-width: 90vw;">
+    <div class="glass-card p-3" style="border: 1px solid var(--accent); box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);">
+        <form method="POST" action="{{ url_for('main.query_documents') }}" class="d-flex gap-2 align-items-center">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="hidden" name="file_ids" id="selectedFileIds" value="">
+            <span class="text-muted small" id="selectedCount">0 files</span>
+            <input type="text" class="form-control form-control-sm" name="query" placeholder="Ask about selected files..." maxlength="1000" required>
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane"></i></button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearSelection()"><i class="fas fa-times"></i></button>
+        </form>
+    </div>
+</div>
+
 <!-- File Preview Modal -->
-<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="previewModalLabel">File Preview</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <pre id="previewContent" class="preview-content p-3 rounded"></pre>
+                <div id="preview-loading" class="text-center py-5">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div id="preview-content" class="d-none">
+                    <pre id="preview-text" class="preview-content p-3 mb-0" style="white-space: pre-wrap; word-break: break-word;"></pre>
+                </div>
+                <div id="preview-error" class="d-none">
+                    <div class="alert alert-danger">Failed to load file preview.</div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -268,187 +551,234 @@
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block scripts %}
+{{ super() }}
 <script>
-// Enhanced Drag and drop functionality
-const dropZone = document.getElementById('dropZone');
-const fileInput = document.getElementById('fileInput');
-const uploadProgress = document.getElementById('uploadProgress');
-const progressBar = uploadProgress.querySelector('.progress-bar');
+let selectMode = false;
 
-// Click to select file
-dropZone.addEventListener('click', () => fileInput.click());
+// View toggle with localStorage
+document.addEventListener('DOMContentLoaded', function() {
+    const savedView = localStorage.getItem('dashboard-view') || 'grid';
+    const gridView = document.getElementById('grid-view');
+    const listView = document.getElementById('list-view');
 
-// Drag events for visual feedback
-dropZone.addEventListener('dragenter', (e) => {
-    e.preventDefault();
-    dropZone.classList.add('highlight');
+    if (savedView === 'list') {
+        listView.checked = true;
+        toggleView('list');
+    }
+
+    gridView.addEventListener('change', () => { toggleView('grid'); localStorage.setItem('dashboard-view', 'grid'); });
+    listView.addEventListener('change', () => { toggleView('list'); localStorage.setItem('dashboard-view', 'list'); });
 });
 
-dropZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropZone.classList.add('highlight');
+function toggleView(mode) {
+    const grid = document.getElementById('grid-container');
+    const list = document.getElementById('list-container');
+    if (mode === 'grid') {
+        grid.classList.remove('d-none');
+        list.classList.add('d-none');
+    } else {
+        grid.classList.add('d-none');
+        list.classList.remove('d-none');
+    }
+}
+
+// Select mode
+function toggleSelectMode() {
+    selectMode = !selectMode;
+    const btn = document.getElementById('selectModeBtn');
+    const layout = document.querySelector('.explorer-layout');
+    if (selectMode) {
+        btn.classList.add('active');
+        btn.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
+        layout.classList.add('select-mode');
+    } else {
+        clearSelection();
+        btn.classList.remove('active');
+        btn.innerHTML = '<i class="fas fa-check-square me-1"></i> Select';
+        layout.classList.remove('select-mode');
+    }
+}
+
+function handleCardClick(e, url, fileId) {
+    if (!selectMode) {
+        openPreview(url);
+        return;
+    }
+    if (e.target.closest('.kebab-btn') || e.target.closest('.kebab-dropdown') || e.target.closest('form')) return;
+    const card = e.currentTarget;
+    const cb = card.querySelector('.file-select-check');
+    cb.checked = !cb.checked;
+    card.classList.toggle('selected', cb.checked);
+    updateSelection();
+}
+
+function handleRowClick(e, url, fileId) {
+    if (!selectMode) {
+        openPreview(url);
+        return;
+    }
+    if (e.target.closest('form') || e.target.closest('.file-action-btn')) return;
+    const row = e.currentTarget;
+    const cb = row.querySelector('.file-select-check');
+    cb.checked = !cb.checked;
+    row.classList.toggle('selected', cb.checked);
+    updateSelection();
+}
+
+function updateSelection() {
+    const checks = document.querySelectorAll('.file-select-check:checked');
+    const ids = Array.from(checks).map(c => c.value);
+    const bar = document.getElementById('querySelectedBar');
+    const count = document.getElementById('selectedCount');
+    const selectedIds = document.getElementById('selectedFileIds');
+    const queryFileIds = document.getElementById('queryFileIds');
+    const queryScope = document.getElementById('queryScope');
+    const queryInput = document.getElementById('queryInput');
+
+    if (ids.length > 0) {
+        bar.classList.remove('d-none');
+        count.textContent = ids.length + ' file' + (ids.length > 1 ? 's' : '') + ' selected';
+        selectedIds.value = ids.join(',');
+        queryInput.placeholder = 'Ask about selected files...';
+    } else {
+        bar.classList.add('d-none');
+        queryInput.placeholder = 'Ask about all your documents...';
+    }
+    queryFileIds.value = ids.length > 0 ? ids.join(',') : '';
+    if (ids.length > 0) {
+        queryScope.innerHTML = '<small class="text-muted"><i class="fas fa-filter"></i> Searching in ' + ids.length + ' selected file' + (ids.length > 1 ? 's' : '') + '</small>';
+    } else {
+        queryScope.innerHTML = '';
+    }
+}
+
+function clearSelection() {
+    document.querySelectorAll('.file-select-check').forEach(cb => {
+        cb.checked = false;
+        cb.closest('.file-card, .file-list-row').classList.remove('selected');
+    });
+    updateSelection();
+    if (selectMode) toggleSelectMode();
+}
+
+// Ask about file modal
+function askAboutFile(fileId, filename) {
+    document.getElementById('askFileId').value = fileId;
+    document.getElementById('askModalTitle').textContent = 'Ask about ' + filename;
+    new bootstrap.Modal(document.getElementById('askModal')).show();
+}
+
+// Kebab menu
+function toggleKebab(btn) {
+    const dropdown = btn.nextElementSibling;
+    const isOpen = dropdown.classList.contains('show');
+
+    document.querySelectorAll('.kebab-dropdown.show').forEach(d => d.classList.remove('show'));
+
+    if (!isOpen) {
+        dropdown.classList.add('show');
+    }
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.kebab-btn') && !e.target.closest('.kebab-dropdown')) {
+        document.querySelectorAll('.kebab-dropdown.show').forEach(d => d.classList.remove('show'));
+    }
 });
 
-dropZone.addEventListener('dragleave', (e) => {
-    e.preventDefault();
-    // Only remove highlight if not dragging over child elements
-    if (!dropZone.contains(e.relatedTarget)) {
+// Sidebar section toggle
+function toggleSection(header) {
+    const section = header.closest('.explorer-section');
+    const chevron = header.querySelector('.explorer-chevron');
+    const body = section.querySelector('.explorer-section-body');
+
+    if (section.classList.contains('collapsed')) {
+        section.classList.remove('collapsed');
+        chevron.style.transform = 'rotate(0deg)';
+        body.classList.remove('collapsed');
+    } else {
+        section.classList.add('collapsed');
+        chevron.style.transform = 'rotate(90deg)';
+        body.classList.add('collapsed');
+    }
+}
+
+// Upload handling
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const uploadForm = document.getElementById('upload-form');
+
+if (dropZone) {
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('highlight');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
         dropZone.classList.remove('highlight');
-    }
-});
+    });
 
-dropZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropZone.classList.remove('highlight');
-    
-    if (e.dataTransfer.files.length) {
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('highlight');
         fileInput.files = e.dataTransfer.files;
-        handleFileUpload();
-    }
-});
+        uploadForm.submit();
+    });
 
-fileInput.addEventListener('change', handleFileUpload);
-
-let uploadRetryCount = 0;
-const maxRetries = 3;
-
-function handleFileUpload(retry = false) {
-    if (fileInput.files.length) {
-        const file = fileInput.files[0];
-
-        // Check for empty file
-        if (file.size === 0) {
-            showUploadError('File is empty. Please select a file with content.');
-            fileInput.value = ''; // Clear the input
-            return;
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            uploadForm.submit();
         }
+    });
+}
 
-        // Check for special characters in filename
-        const specialCharPattern = /[^a-zA-Z0-9._\- ]/;
-        if (specialCharPattern.test(file.name)) {
-            alert('Filename contains special characters. It will be uploaded as is, but ensure compatibility.');
-        }
+// Modals
+function showFolderModal() {
+    new bootstrap.Modal(document.getElementById('folderModal')).show();
+}
 
-        // File size validation (10MB limit)
-        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
-        if (file.size > maxSize) {
-            showUploadError('File too large. Maximum file size is 10MB.');
-            fileInput.value = ''; // Clear the input
-            return;
-        }
+function showTagModal() {
+    new bootstrap.Modal(document.getElementById('tagModal')).show();
+}
 
-        const formData = new FormData();
-        formData.append('file', file);
+// File Preview
+function openPreview(url) {
+    const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+    const loading = document.getElementById('preview-loading');
+    const content = document.getElementById('preview-content');
+    const error = document.getElementById('preview-error');
+    const text = document.getElementById('preview-text');
 
-        // Append CSRF token to FormData
-        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
-        formData.append('csrf_token', csrfToken);
+    loading.classList.remove('d-none');
+    content.classList.add('d-none');
+    error.classList.add('d-none');
 
-        if (!retry) {
-            uploadProgress.classList.remove('d-none');
-            clearUploadError();
-            uploadRetryCount = 0;
-        }
-
-        // Update progress bar (simulated progress for better UX)
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-            progress += 5;
-            progressBar.style.width = `${Math.min(progress, 90)}%`;
-            if (progress >= 90) clearInterval(progressInterval);
-        }, 100);
-
-        fetch("{{ url_for('main.upload') }}", {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            return response.json();
+    fetch(url)
+        .then(r => {
+            if (!r.ok) throw new Error('Failed to load');
+            return r.json();
         })
         .then(data => {
-            clearInterval(progressInterval);
-            progressBar.style.width = '100%';
-
-            if (data.success) {
-                // Automatic page refresh after successful upload
-                setTimeout(() => {
-                    location.reload();
-                }, 500);
+            if (data.success && data.content) {
+                text.textContent = data.content;
+                loading.classList.add('d-none');
+                content.classList.remove('d-none');
             } else {
-                showUploadError('Upload failed: ' + data.error);
-                uploadProgress.classList.add('d-none');
-                progressBar.style.width = '0%';
+                throw new Error('No content');
             }
         })
-        .catch(error => {
-            clearInterval(progressInterval);
-            console.error('Upload error:', error);
-
-            if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                // Network error - offer retry
-                if (uploadRetryCount < maxRetries) {
-                    uploadRetryCount++;
-                    const retry = confirm(`Network connection lost. Retry upload? (${uploadRetryCount}/${maxRetries})`);
-                    if (retry) {
-                        setTimeout(() => handleFileUpload(true), 2000); // Retry after 2 seconds
-                        return;
-                    }
-                } else {
-                    showUploadError('Upload failed after multiple retries. Please check your connection and try again.');
-                }
-            } else {
-                showUploadError('Upload error: ' + error.message);
-            }
-            uploadProgress.classList.add('d-none');
-            progressBar.style.width = '0%';
+        .catch(() => {
+            loading.classList.add('d-none');
+            error.classList.remove('d-none');
         });
-    }
+
+    modal.show();
 }
-
-function showUploadError(message) {
-    const errorDiv = document.getElementById('uploadError');
-    errorDiv.textContent = message;
-    errorDiv.classList.remove('d-none');
-}
-
-function clearUploadError() {
-    const errorDiv = document.getElementById('uploadError');
-    errorDiv.textContent = '';
-    errorDiv.classList.add('d-none');
-}
-
-// Query form loading spinner
-const queryForm = document.getElementById('queryForm');
-const searchIcon = document.getElementById('searchIcon');
-const loadingSpinner = document.getElementById('loadingSpinner');
-
-queryForm.addEventListener('submit', () => {
-    searchIcon.classList.add('d-none');
-    loadingSpinner.classList.remove('d-none');
-});
-
-// File preview functionality
-document.querySelectorAll('.preview-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const filename = btn.dataset.filename;
-        const content = btn.dataset.content;
-
-        document.getElementById('previewModalLabel').textContent = `Preview: ${filename}`;
-        document.getElementById('previewContent').textContent = content;
-
-        const modal = new bootstrap.Modal(document.getElementById('previewModal'));
-        modal.show();
-    });
-});
 </script>
-
 {% endblock %}
