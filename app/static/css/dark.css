@@ -3099,6 +3099,107 @@ footer {
   transition: width 0.5s ease;
 }
 
+/* ============================================
+   Statistics & Settings Pages
+   ============================================ */
+
+.stats-page-grid,
+.settings-page-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  max-width: 1100px;
+}
+
+.stat-panel {
+  padding: 20px 22px;
+}
+
+.stat-panel-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.stat-panel-footrow {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.stat-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: 14px;
+}
+
+.stat-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--glass-border-soft);
+  font-size: 0.88rem;
+}
+
+.stat-list-row:last-child {
+  border-bottom: none;
+}
+
+.stat-list-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.85);
+  min-width: 0;
+}
+
+.stat-list-left i {
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.stat-list-value {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.stat-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.stat-empty {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  padding: 10px 0;
+}
+
+.settings-form .form-control {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+}
+
+.settings-form .form-control:focus {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--accent);
+  box-shadow: none;
+  color: var(--text-primary);
+}
+
+@media (max-width: 900px) {
+  .stats-page-grid,
+  .settings-page-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Explorer content wrapper */
 .explorer-content {
   padding: 16px;
