@@ -205,6 +205,34 @@
                     </div>
                 </div>
 
+                <!-- Query Section -->
+                <div class="p-3 border-bottom" style="border-color: var(--glass-border-soft) !important;">
+                    <form method="POST" action="{{ url_for('main.query_documents') }}" id="queryForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text" style="background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.2); color: var(--text-muted);"><i class="fas fa-robot"></i></span>
+                            <input type="text" class="form-control" name="query" placeholder="Ask a question about your documents..." maxlength="1000" required>
+                            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane"></i></button>
+                        </div>
+                        {% if documents %}
+                        <div class="mt-2" id="query-doc-select">
+                            <small class="text-muted me-2">Search in:</small>
+                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                {% for doc in documents %}
+                                {% if doc.status == 'completed' %}
+                                <label class="d-inline-flex align-items-center gap-1" style="font-size: 0.75rem;">
+                                    <input type="checkbox" name="file_ids" value="{{ doc.id }}" checked
+                                        style="accent-color: var(--accent); width: 14px; height: 14px;">
+                                    <span class="text-muted">{{ doc.filename }}</span>
+                                </label>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+
                 <!-- File Grid / List -->
                 {% if documents %}
                 <div class="p-3">
@@ -239,9 +267,6 @@
                                         <i class="fas fa-ellipsis-v"></i>
                                     </button>
                                     <div class="kebab-dropdown">
-                                        <a href="{{ url_for('main.preview_file', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();">
-                                            <i class="fas fa-eye"></i> Preview
-                                        </a>
                                         {% if doc.status == 'completed' %}
                                         <form method="POST" action="{{ url_for('main.summarize_document', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();" style="padding: 0;">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -372,7 +397,6 @@
                                 <span class="file-badge badge-{{ doc.status }}">{{ doc.status }}</span>
                             </div>
                             <div class="file-list-col-actions" onclick="event.stopPropagation();">
-                                <a href="{{ url_for('main.preview_file', file_id=doc.id) }}" class="file-action-btn" title="Preview"><i class="fas fa-eye"></i></a>
                                 {% if doc.status == 'completed' %}
                                 <form method="POST" action="{{ url_for('main.summarize_document', file_id=doc.id) }}" class="d-inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -490,7 +514,6 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <a id="preview-download-btn" href="#" class="btn btn-primary"><i class="fas fa-download me-1"></i> Download</a>
             </div>
         </div>
     </div>
@@ -610,15 +633,10 @@ function openPreview(url) {
     const content = document.getElementById('preview-content');
     const error = document.getElementById('preview-error');
     const text = document.getElementById('preview-text');
-    const downloadBtn = document.getElementById('preview-download-btn');
 
     loading.classList.remove('d-none');
     content.classList.add('d-none');
     error.classList.add('d-none');
-
-    const fileId = url.split('/').pop();
-    downloadBtn.href = '/view-file/' + fileId;
-    downloadBtn.classList.add('d-none');
 
     fetch(url)
         .then(r => {
@@ -630,7 +648,6 @@ function openPreview(url) {
                 text.textContent = data.content;
                 loading.classList.add('d-none');
                 content.classList.remove('d-none');
-                downloadBtn.classList.remove('d-none');
             } else {
                 throw new Error('No content');
             }

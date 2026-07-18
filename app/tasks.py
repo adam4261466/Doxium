@@ -97,7 +97,7 @@ def generate_query_answer(user_id, query_text, file_ids=None):
             client = Groq(api_key=groq_api_key)
 
             response = client.chat.completions.create(
-                model="meta-llama/llama-4-scout-17b-16e-instruct",
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {
                         "role": "system",
@@ -170,7 +170,7 @@ def generate_summary(user_id, file_id):
             client = Groq(api_key=groq_api_key)
 
             response = client.chat.completions.create(
-                model="meta-llama/llama-4-scout-17b-16e-instruct",
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {
                         "role": "system",
@@ -232,7 +232,7 @@ def generate_flashcards(user_id, file_id):
             client = Groq(api_key=groq_api_key)
 
             response = client.chat.completions.create(
-                model="meta-llama/llama-4-scout-17b-16e-instruct",
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {
                         "role": "system",
@@ -292,7 +292,7 @@ def generate_quiz(user_id, file_id):
             client = Groq(api_key=groq_api_key)
 
             response = client.chat.completions.create(
-                model="meta-llama/llama-4-scout-17b-16e-instruct",
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {
                         "role": "system",
