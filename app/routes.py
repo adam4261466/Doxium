@@ -569,6 +569,94 @@ def dashboard():
         current_tag_id=tag_id,
     )
 
+@main.route("/statistics")
+@login_required
+def statistics():
+    all_files = File.query.filter_by(user_id=current_user.id).all()
+    folders = Folder.query.filter_by(user_id=current_user.id).all()
+    tags = Tag.query.filter_by(user_id=current_user.id).all()
+
+    limits = get_limits(current_user)
+    total_size = sum(f.size for f in all_files)
+    used_mb = total_size / (1024 * 1024)
+    storage_pct = min((used_mb / limits["storage_mb"] * 100) if limits["storage_mb"] else 0, 100)
+
+    file_type_icons = {
+        "pdf": ("fa-file-pdf", "text-danger"),
+        "doc": ("fa-file-word", "text-primary"),
+        "docx": ("fa-file-word", "text-primary"),
+        "ppt": ("fa-file-powerpoint", "text-warning"),
+        "pptx": ("fa-file-powerpoint", "text-warning"),
+        "xls": ("fa-file-excel", "text-success"),
+        "xlsx": ("fa-file-excel", "text-success"),
+        "csv": ("fa-file-excel", "text-success"),
+        "md": ("fa-brands fa-markdown", "text-info"),
+        "txt": ("fa-file-lines", "text-secondary"),
+        "json": ("fa-file-code", "text-info"),
+        "html": ("fa-file-code", "text-info"),
+    }
+    type_counts = {}
+    for f in all_files:
+        ext = (os.path.splitext(f.filename)[1].lstrip(".").lower() or "txt")
+        type_counts[ext] = type_counts.get(ext, 0) + 1
+    file_types = []
+    for ext, count in sorted(type_counts.items(), key=lambda x: -x[1]):
+        icon, color = file_type_icons.get(ext, ("fa-file", "text-secondary"))
+        file_types.append({"ext": ext.upper(), "count": count, "icon": icon, "color": color})
+
+    completed_count = sum(1 for f in all_files if f.processed)
+    processing_count = len(all_files) - completed_count
+
+    return render_template(
+        "statistics.html",
+        user=current_user,
+        folders=folders,
+        tags=tags,
+        used_mb=used_mb,
+        limit_mb=limits["storage_mb"],
+        storage_pct=storage_pct,
+        file_types=file_types,
+        completed_count=completed_count,
+        processing_count=processing_count,
+        documents_count=len(all_files),
+        folders_count=len(folders),
+        tags_count=len(tags),
+    )
+
+
+@main.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    folders = Folder.query.filter_by(user_id=current_user.id).all()
+    tags = Tag.query.filter_by(user_id=current_user.id).all()
+
+    if request.method == "POST":
+        current_password = request.form.get("current_password", "")
+        new_password = request.form.get("new_password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if not current_user.check_password(current_password):
+            flash("Current password is incorrect.", "danger")
+        elif len(new_password) < 8:
+            flash("New password must be at least 8 characters.", "danger")
+        elif new_password != confirm_password:
+            flash("New passwords do not match.", "danger")
+        else:
+            current_user.set_password(new_password)
+            db.session.commit()
+            flash("Password updated successfully.", "success")
+        return redirect(url_for("main.settings"))
+
+    limits = get_limits(current_user)
+    return render_template(
+        "settings.html",
+        user=current_user,
+        folders=folders,
+        tags=tags,
+        limits=limits,
+    )
+
+
 @main.route("/upload", methods=["POST"])
 @login_required
 def upload():
