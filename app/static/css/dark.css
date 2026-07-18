@@ -2934,7 +2934,7 @@ button.explorer-nav-item {
 /* Document tiles */
 .doc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
 }
 
@@ -3145,6 +3145,7 @@ button.explorer-nav-item {
 @media (max-width: 768px) {
   .explorer-page { padding: 0; }
   .usage-grid { grid-template-columns: 1fr; }
+  .doc-grid { grid-template-columns: 1fr; }
   .dash-welcome-title { font-size: 1.5rem; }
   .dash-welcome-actions { align-items: flex-start; }
   .explorer-search-input { width: 130px; }
