@@ -1,157 +1,162 @@
 {% extends "base.html" %}
-{% block title %}Pricing - Doxium{% endblock %}
+
 {% block content %}
-<div class="container-fluid py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-9">
- 
-            <div class="text-center mb-5">
-                <h1 class="display-4 fw-bold mb-3">Simple, Honest Pricing</h1>
-                <p class="lead text-muted">Start free. Upgrade when you need more power.</p>
-            </div>
- 
-            {% if current_user.is_authenticated and current_user.is_pilot %}
-                <div class="row justify-content-center mb-4">
-                    <div class="col-md-8">
-                        <div class="alert alert-success text-center">
-                            <i class="fas fa-star me-2"></i><strong>You're on Doxium Pro.</strong>
-                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-success btn-sm ms-3">Dashboard</a>
-                        </div>
-                    </div>
-                </div>
-            {% endif %}
- 
-            <div class="row g-4 justify-content-center">
- 
-                <!-- FREE -->
-                <div class="col-lg-5 col-md-6">
-                    <div class="card h-100">
-                        <div class="card-header text-center py-4">
-                            <h5 class="text-muted mb-1">FREE</h5>
-                            <div class="display-5 fw-bold">$0</div>
-                            <small class="text-muted">No credit card needed</small>
-                        </div>
-                        <div class="card-body">
-                            <ul class="list-unstyled">
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>10 document uploads / month</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>100 AI queries / month</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>100 MB storage</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>PDF files only</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>5 MB max file size</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Clickable citations</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Folder organization</li>
-                                <li class="mb-2 text-muted"><i class="fas fa-times text-danger me-2"></i>No DOCX / PPTX / CSV / JSON</li>
-                                <li class="mb-2 text-muted"><i class="fas fa-times text-danger me-2"></i>Community support only</li>
-                            </ul>
-                        </div>
-                        <div class="card-footer text-center pb-4">
-                            {% if current_user.is_authenticated %}
-                                <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-primary w-100">Go to Dashboard</a>
-                            {% else %}
-                                <a href="{{ url_for('main.register') }}" class="btn btn-outline-primary w-100">
-                                    <i class="fas fa-user-plus me-2"></i>Get Started Free
-                                </a>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
- 
-                <!-- PRO -->
-                <div class="col-lg-5 col-md-6">
-                    <div class="card h-100" style="border-color: var(--accent) !important; box-shadow: 0 0 30px rgba(99,102,241,0.3);">
-                        <div class="card-header text-center py-4" style="background: var(--accent-gradient);">
-                            <span class="badge bg-warning mb-2">RECOMMENDED</span>
-                            <h5 class="text-white mb-1">PRO</h5>
-                            <div class="display-5 fw-bold text-white">$7<small class="fs-6 fw-normal">/month</small></div>
-                            <small class="text-white-50">Billed monthly · Cancel anytime</small>
-                        </div>
-                        <div class="card-body">
-                            <ul class="list-unstyled">
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>Unlimited</strong> document uploads (fair-use)</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>500</strong> AI queries / month</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>2 GB</strong> storage</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>All file types (PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, HTML, JSON)</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>100 MB</strong> max file size</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Multi-document chat with document selector</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>AI summaries, flashcards & quizzes</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Export to Word / PDF / Markdown</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Email support</li>
-                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>7-day money-back guarantee</li>
-                            </ul>
-                        </div>
-                        <div class="card-footer text-center pb-4">
-                            {% if current_user.is_authenticated and not current_user.is_pilot %}
-                                <form action="{{ url_for('main.create_checkout_session') }}" method="POST">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn btn-primary w-100 btn-lg">
-                                        <i class="fas fa-bolt me-2"></i>Upgrade to Pro — $7/mo
-                                    </button>
-                                </form>
-                            {% elif not current_user.is_authenticated %}
-                                <a href="{{ url_for('main.register') }}" class="btn btn-primary w-100 btn-lg">
-                                    <i class="fas fa-bolt me-2"></i>Get Pro — $7/mo
-                                </a>
-                            {% else %}
-                                <button class="btn btn-primary w-100 btn-lg" disabled>
-                                    <i class="fas fa-check me-2"></i>Current Plan
-                                </button>
-                            {% endif %}
-                            <small class="text-muted d-block mt-2">
-                                <i class="fas fa-lock me-1"></i>Secure payment by Lemon Squeezy
-                            </small>
-                        </div>
-                    </div>
-                </div>
- 
-            </div>
- 
-            <!-- FAQ -->
-            <div class="row justify-content-center mt-5">
-                <div class="col-lg-9">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>Frequently Asked Questions</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-4">
-                                <strong>What file types does Pro support?</strong>
-                                <p class="text-muted mb-0 mt-1">PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, HTML, and JSON. Free plan is PDF only.</p>
-                            </div>
-                            <div class="mb-4">
-                                <strong>Do document upload limits reset monthly?</strong>
-                                <p class="text-muted mb-0 mt-1">Yes — on the Free plan, you get 10 uploads per month (resets on the 1st). Pro users get unlimited uploads.</p>
-                            </div>
-                            <div class="mb-4">
-                                <strong>What happens when I cancel?</strong>
-                                <p class="text-muted mb-0 mt-1">Your Pro access continues until the billing period ends, then your account reverts to Free limits. Files beyond the Free limit are kept for 30 days for you to download.</p>
-                            </div>
-                            <div class="mb-4">
-                                <strong>Is there a free trial?</strong>
-                                <p class="text-muted mb-0 mt-1">We offer a 7-day money-back guarantee instead — you get full Pro access immediately and can request a full refund within 7 days if you're not satisfied.</p>
-                            </div>
-                            <div class="mb-4">
-                                <strong>Do you train AI on my documents?</strong>
-                                <p class="text-muted mb-0 mt-1">Never. Your documents are private to your account and are never used to train any AI models.</p>
-                            </div>
-                            <div>
-                                <strong>How are queries counted?</strong>
-                                <p class="text-muted mb-0 mt-1">Each question submitted in the dashboard counts as 1 query, regardless of how long your documents are. Queries reset on your monthly billing date.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
- 
-            <div class="text-center mt-4">
-                <small class="text-muted">
-                    By subscribing you agree to our
-                    <a href="{{ url_for('main.terms') }}" class="text-primary">Terms of Service</a>,
-                    <a href="{{ url_for('main.privacy') }}" class="text-primary">Privacy Policy</a>, and
-                    <a href="{{ url_for('main.refund') }}" class="text-primary">Refund Policy</a>.
-                </small>
-            </div>
- 
+<section class="py-32 text-center">
+  <div class="container-fluid">
+    <h1 class="text-4xl fw-bold mb-4">Choose the <span class="gradient-text">Perfect Plan</span></h1>
+    <p class="text-xl text-muted mx-auto" style="max-width:600px;">Start for free, scale as you grow. No hidden fees.</p>
+
+    <div class="row g-4 mt-8 justify-content-center" style="max-width:1100px; margin-left:auto; margin-right:auto;">
+
+      <div class="col-lg-4 col-md-6">
+        <div class="card glass-card p-6 h-full d-flex flex-column" style="min-height:520px;">
+          <div class="text-center mb-4">
+            <h3 class="text-xl fw-bold mb-1">Free</h3>
+            <div class="text-3xl fw-bold mt-3">$0<span class="text-muted text-sm">/mo</span></div>
+            <p class="text-muted text-sm mt-2">Perfect for trying out Doxium</p>
+          </div>
+          <div class="mt-auto">
+            <ul class="list-unstyled text-sm text-muted" style="text-align:left;">
+              <li class="mb-2"><i data-lucide="check" class="me-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>10 uploads</li>
+              <li class="mb-2"><i data-lucide="check" class="me-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>100 queries</li>
+              <li class="mb-2"><i data-lucide="check" class="me-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>100 MB storage</li>
+              <li class="mb-2"><i data-lucide="check" class="me-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>PDF only</li>
+              <li class="mb-2"><i data-lucide="check" class="me-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>Basic search</li>
+            </ul>
+            <a href="{{ url_for('main.register') }}" class="btn btn-secondary btn-lg w-full mt-4">Get Started</a>
+          </div>
         </div>
+      </div>
+
+      <div class="col-lg-4 col-md-6">
+        <div class="card glass-card p-6 h-full d-flex flex-column position-relative" style="min-height:520px; border:1px solid var(--primary-color, #7c3aed);">
+          <span class="badge badge-purple position-absolute" style="top:-12px; left:50%; transform:translateX(-50%);">Most Popular</span>
+          <div class="text-center mb-4">
+            <h3 class="text-xl fw-bold mb-1">Pro</h3>
+            <div class="text-3xl fw-bold mt-3">$12<span class="text-muted text-sm">/mo</span></div>
+            <p class="text-muted text-sm mt-2">For power users and small teams</p>
+          </div>
+          <div class="mt-auto">
+            <ul class="list-unstyled text-sm text-muted" style="text-align:left;">
+              <li class="mb-2"><i data-lucide="check" class="me-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>Unlimited uploads</li>
+              <li class="mb-2"><i data-lucide="check" class="me-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>500 queries</li>
+              <li class="mb-2"><i data-lucide="check" class="me-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>2 GB storage</li>
+              <li class="mb-2"><i data-lucide="check" class="me-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>All formats</li>
+              <li class="mb-2"><i data-lucide="check" class="me-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>FAISS search</li>
+              <li class="mb-2"><i data-lucide="check" class="me-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>Summaries, flashcards & quizzes</li>
+              <li class="mb-2"><i data-lucide="check" class="me-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>Priority support</li>
+            </ul>
+            {% if user.is_authenticated and user.is_pilot %}
+              <button class="btn btn-secondary btn-lg w-full mt-4" disabled>Current Plan</button>
+            {% else %}
+              <form method="POST" action="{{ url_for('main.create_checkout_session') }}" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="btn btn-primary btn-lg w-full glow-purple mt-4">Upgrade to Pro</button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4 col-md-6">
+        <div class="card glass-card p-6 h-full d-flex flex-column" style="min-height:520px;">
+          <div class="text-center mb-4">
+            <h3 class="text-xl fw-bold mb-1">Enterprise</h3>
+            <div class="text-3xl fw-bold mt-3">Custom</div>
+            <p class="text-muted text-sm mt-2">For organizations at scale</p>
+          </div>
+          <div class="mt-auto">
+            <ul class="list-unstyled text-sm text-muted" style="text-align:left;">
+              <li class="mb-2"><i data-lucide="check" class="me-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>Everything in Pro</li>
+              <li class="mb-2"><i data-lucide="check" class="me-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>Unlimited everything</li>
+              <li class="mb-2"><i data-lucide="check" class="me-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>Custom AI models</li>
+              <li class="mb-2"><i data-lucide="check" class="me-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>SSO / SAML</li>
+              <li class="mb-2"><i data-lucide="check" class="me-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>API access</li>
+              <li class="mb-2"><i data-lucide="check" class="me-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>Dedicated support</li>
+              <li class="mb-2"><i data-lucide="check" class="me-2" style="width:16px;height:16px;display:inline-block;vertical-align:middle;"></i>Custom SLA &amp; on-premise</li>
+            </ul>
+            <a href="mailto:sales@doxium.app" class="btn btn-secondary btn-lg w-full mt-4">Contact Sales</a>
+          </div>
+        </div>
+      </div>
+
     </div>
-</div>
+  </div>
+</section>
+
+<section class="py-20">
+  <div class="container-fluid">
+    <h2 class="text-3xl fw-bold text-center mb-8">Why Choose <span class="gradient-text">Doxium</span></h2>
+    <div class="row g-4 justify-content-center" style="max-width:1000px; margin-left:auto; margin-right:auto;">
+      <div class="col-md-3 col-sm-6 text-center">
+        <div class="glass-card rounded-2xl p-6">
+          <i data-lucide="brain" class="text-primary mx-auto mb-3" style="width:40px;height:40px;"></i>
+          <h5 class="fw-bold">AI-Powered</h5>
+          <p class="text-sm text-muted mt-2">Advanced AI that understands your documents and answers questions intelligently.</p>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 text-center">
+        <div class="glass-card rounded-2xl p-6">
+          <i data-lucide="shield-check" class="text-success mx-auto mb-3" style="width:40px;height:40px;"></i>
+          <h5 class="fw-bold">Enterprise Security</h5>
+          <p class="text-sm text-muted mt-2">End-to-end encryption with SOC 2 compliance and data isolation.</p>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 text-center">
+        <div class="glass-card rounded-2xl p-6">
+          <i data-lucide="sparkles" class="text-warning mx-auto mb-3" style="width:40px;height:40px;"></i>
+          <h5 class="fw-bold">Smart Processing</h5>
+          <p class="text-sm text-muted mt-2">Automatically extracts, indexes, and structures your content.</p>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 text-center">
+        <div class="glass-card rounded-2xl p-6">
+          <i data-lucide="zap" class="text-primary mx-auto mb-3" style="width:40px;height:40px;"></i>
+          <h5 class="fw-bold">Lightning Fast</h5>
+          <p class="text-sm text-muted mt-2">Sub-second search results powered by FAISS vector similarity.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="py-20">
+  <div class="container-fluid">
+    <h2 class="text-3xl fw-bold text-center mb-8">Frequently Asked <span class="gradient-text">Questions</span></h2>
+    <div class="mx-auto" style="max-width:700px;">
+      <div class="glass-card rounded-xl p-4 mb-3">
+        <h5 class="fw-bold mb-2">What document formats are supported?</h5>
+        <p class="text-sm text-muted mb-0">The Free plan supports PDF files. Pro and Enterprise plans support PDF, DOCX, TXT, Markdown, HTML, and more formats.</p>
+      </div>
+      <div class="glass-card rounded-xl p-4 mb-3">
+        <h5 class="fw-bold mb-2">How does the AI query work?</h5>
+        <p class="text-sm text-muted mb-0">Upload a document and ask questions in natural language. Doxium indexes your content with FAISS and uses AI to generate accurate answers with source references.</p>
+      </div>
+      <div class="glass-card rounded-xl p-4 mb-3">
+        <h5 class="fw-bold mb-2">Can I cancel anytime?</h5>
+        <p class="text-sm text-muted mb-0">Yes. You can cancel your subscription at any time from your dashboard. Your plan remains active until the end of the current billing period.</p>
+      </div>
+      <div class="glass-card rounded-xl p-4 mb-3">
+        <h5 class="fw-bold mb-2">Is my data secure?</h5>
+        <p class="text-sm text-muted mb-0">Absolutely. Files are encrypted at rest and in transit. We use isolated storage per user and never share your data with third parties.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="py-20 text-center">
+  <div class="container-fluid">
+    <h2 class="text-3xl fw-bold mb-4">Ready to get started?</h2>
+    <p class="text-lg text-muted mb-6">Create a free account and start exploring your documents with AI.</p>
+    {% if user.is_authenticated %}
+      <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg glow-purple">Go to Dashboard</a>
+    {% else %}
+      <a href="{{ url_for('main.register') }}" class="btn btn-primary btn-lg glow-purple">Create Free Account</a>
+    {% endif %}
+  </div>
+</section>
+
+<script>
+  if (window.lucide) lucide.createIcons();
+</script>
 {% endblock %}

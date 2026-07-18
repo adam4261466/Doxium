@@ -1,12 +1,119 @@
 {% extends "base.html" %}
+{% block title %}System Stats — Doxium Admin{% endblock %}
 {% block content %}
-<h2>System Stats</h2>
-<p><a href="{{ url_for('main.admin') }}" class="btn btn-secondary">Back to Admin</a></p>
-<ul>
-  <li><strong>Total Users:</strong> {{ user_count }}</li>
-  <li><strong>Pilot Users:</strong> {{ pilot_count }}</li>
-  <li><strong>Total Files:</strong> {{ file_count }}</li>
-  <li><strong>Total Chunks:</strong> {{ chunk_count }}</li>
-  <li><strong>Total Storage Used:</strong> {{ "%.2f"|format(total_used_mb) }} MB</li>
-</ul>
+<div class="container-fluid py-5" style="max-width:1100px; margin:0 auto;">
+    <div class="d-flex align-items-center justify-content-between mb-6">
+        <div>
+            <h1 class="text-2xl fw-bold mb-1"><i class="fas fa-chart-bar me-2 text-primary"></i>System Statistics</h1>
+            <p class="text-muted text-sm">Platform-wide overview</p>
+        </div>
+        <a href="{{ url_for('main.admin') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Admin Panel
+        </a>
+    </div>
+
+    <div class="row g-4 mb-6" style="grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); display:grid;">
+        <div class="glass-card p-4">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="stat-icon" style="background:rgba(124,58,237,0.12);color:#7c3aed;">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-muted">Total Users</div>
+                    <div class="fw-bold text-2xl">{{ user_count }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card p-4">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="stat-icon" style="background:rgba(168,85,247,0.12);color:#a855f7;">
+                    <i class="fas fa-crown"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-muted">Pro Users</div>
+                    <div class="fw-bold text-2xl">{{ pilot_count }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card p-4">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="stat-icon" style="background:rgba(34,197,94,0.12);color:#22c55e;">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-muted">Total Files</div>
+                    <div class="fw-bold text-2xl">{{ file_count }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card p-4">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#f59e0b;">
+                    <i class="fas fa-puzzle-piece"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-muted">Total Chunks</div>
+                    <div class="fw-bold text-2xl">{{ chunk_count }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card p-4">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="stat-icon" style="background:rgba(59,130,246,0.12);color:#3b82f6;">
+                    <i class="fas fa-database"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-muted">Storage Used</div>
+                    <div class="fw-bold text-2xl">{{ "%.1f"|format(total_used_mb) }} MB</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card p-6">
+        <h3 class="fw-bold mb-4"><i class="fas fa-info-circle me-2 text-primary"></i>Quick Summary</h3>
+        <div class="row g-4" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr));">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="width:40px;height:40px;font-size:1rem;background:rgba(124,58,237,0.12);color:#7c3aed;">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-muted">Pilot Conversion</div>
+                    <div class="fw-bold text-lg">{{ ((pilot_count / user_count * 100)|round(1)) if user_count > 0 else 0 }}%</div>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="width:40px;height:40px;font-size:1rem;background:rgba(34,197,94,0.12);color:#22c55e;">
+                    <i class="fas fa-file-medical"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-muted">Avg Files / User</div>
+                    <div class="fw-bold text-lg">{{ ((file_count / user_count)|round(1)) if user_count > 0 else 0 }}</div>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="width:40px;height:40px;font-size:1rem;background:rgba(245,158,11,0.12);color:#f59e0b;">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-muted">Avg Chunks / File</div>
+                    <div class="fw-bold text-lg">{{ ((chunk_count / file_count)|round(1)) if file_count > 0 else 0 }}</div>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="width:40px;height:40px;font-size:1rem;background:rgba(59,130,246,0.12);color:#3b82f6;">
+                    <i class="fas fa-hdd"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-muted">Avg Storage / User</div>
+                    <div class="fw-bold text-lg">{{ ((total_used_mb / user_count)|round(2)) if user_count > 0 else 0 }} MB</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

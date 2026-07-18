@@ -1,105 +1,100 @@
 {% extends "base.html" %}
 
-{% block title %}{{ data.type|title }} - {{ data.filename }} - Doxium{% endblock %}
+{% block title %}{{ data.type|title }} — Doxium{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card glow-primary">
-                <div class="card-body py-4">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h1 class="mb-2">
-                                {% if data.type == 'summary' %}
-                                    <i class="fas fa-align-left me-3 text-primary"></i>Document Summary
-                                {% elif data.type == 'flashcards' %}
-                                    <i class="fas fa-clone me-3 text-primary"></i>Flashcards
-                                {% elif data.type == 'quiz' %}
-                                    <i class="fas fa-question-circle me-3 text-primary"></i>Quiz
-                                {% endif %}
-                            </h1>
-                            <p class="mb-0 text-muted">{{ data.filename }}</p>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
-                                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="container-fluid" style="max-width:1000px;margin:0 auto;padding-top:1.5rem;padding-bottom:3rem;">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h2 class="fw-bold mb-1" style="color:#fff;">
+        {% if data.type == 'summary' %}
+          <i class="fas fa-align-left me-2" style="color:#22c55e;"></i>Document Summary
+        {% elif data.type == 'flashcards' %}
+          <i class="fas fa-layer-group me-2" style="color:#7c3aed;"></i>Flashcards
+        {% elif data.type == 'quiz' %}
+          <i class="fas fa-question-circle me-2" style="color:#f59e0b;"></i>Quiz
+        {% endif %}
+      </h2>
+      <p class="text-muted text-sm mb-0">{{ data.filename|default('') }}</p>
     </div>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+    </a>
+  </div>
 
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-
-            {% if data.type == 'summary' %}
-            <div class="card">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="fas fa-align-left me-2"></i>Summary</h5>
-                </div>
-                <div class="card-body">
-                    <div class="answer-content p-3 rounded markdown-body" id="summaryContent">
-                        {{ data.content }}
-                    </div>
-                </div>
-            </div>
-
-            {% elif data.type == 'flashcards' %}
-            <div class="row g-4">
-                {% for card in data.cards %}
-                <div class="col-md-6">
-                    <div class="flashcard" onclick="this.classList.toggle('flipped')">
-                        <div class="flashcard-inner">
-                            <div class="flashcard-front card">
-                                <div class="card-body">
-                                    <h5>{{ card.front }}</h5>
-                                </div>
-                            </div>
-                            <div class="flashcard-back">
-                                <p>{{ card.back }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-
-            {% elif data.type == 'quiz' %}
-            <div id="quizContainer">
-                {% for q in data.questions %}
-                <div class="card mb-4 quiz-question" data-correct="{{ q.correct }}">
-                    <div class="card-header">
-                        <h5 class="mb-0">Question {{ loop.index }} of {{ data.questions|length }}</h5>
-                    </div>
-                    <div class="card-body">
-                        <p class="fw-bold mb-3">{{ q.question }}</p>
-                        <div class="quiz-options">
-                            {% for opt in q.options %}
-                            <div class="quiz-option mb-2" onclick="checkAnswer(this, '{{ opt[0] }}', '{{ q.correct }}', '{{ q.explanation|default('') }}')">
-                                {{ opt }}
-                            </div>
-                            {% endfor %}
-                        </div>
-                        <div class="quiz-feedback mt-3 d-none"></div>
-                    </div>
-                </div>
-                {% endfor %}
-                <div class="text-center mt-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <h4>Score: <span id="quizScore">0</span> / {{ data.questions|length }}</h4>
-                            <button class="btn btn-primary mt-2" onclick="location.reload()">Try Again</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-
-        </div>
+  <!-- Summary -->
+  {% if data.type == 'summary' %}
+  <div class="glass-card" style="padding:0;overflow:hidden;">
+    <div style="padding:0.75rem 1.25rem;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:0.5rem;">
+      <i class="fas fa-align-left" style="color:#22c55e;"></i>
+      <span class="fw-semibold" style="font-size:0.875rem;">Summary</span>
     </div>
+    <div style="padding:1.5rem;">
+      <div class="answer-content markdown-body" id="summaryContent">{{ data.content }}</div>
+    </div>
+  </div>
+
+  <!-- Flashcards -->
+  {% elif data.type == 'flashcards' %}
+  <div class="d-grid gap-4" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr));">
+    {% for card in data.content %}
+    <div class="flashcard" onclick="this.classList.toggle('flipped')" style="min-height:220px;">
+      <div class="flashcard-inner">
+        <div class="flashcard-front glass-card">
+          <div style="padding:1.5rem;width:100%;">
+            <div class="d-flex align-items-center gap-2 mb-3">
+              <span class="badge badge-purple" style="font-size:0.65rem;">{{ loop.index }}</span>
+              <span class="text-xs text-muted">Click to flip</span>
+            </div>
+            <p class="fw-bold" style="font-size:1rem;color:#fff;line-height:1.5;">{{ card.question|default(card.front) }}</p>
+          </div>
+        </div>
+        <div class="flashcard-back">
+          <div style="width:100%;">
+            <p style="font-size:0.95rem;line-height:1.6;color:rgba(255,255,255,0.9);">{{ card.answer|default(card.back) }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Quiz -->
+  {% if data.type == 'quiz' %}
+  <div id="quizContainer">
+    {% for q in data.content %}
+    <div class="glass-card mb-4 quiz-question" data-correct="{{ q.correct }}" style="padding:1.25rem;">
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <span class="badge badge-purple" style="font-size:0.7rem;min-width:28px;text-align:center;">{{ loop.index }}</span>
+        <span class="text-xs text-muted">of {{ data.content|length }}</span>
+      </div>
+      <p class="fw-bold mb-3" style="font-size:1rem;color:#fff;line-height:1.5;">{{ q.question }}</p>
+      <div class="quiz-options">
+        {% for opt in q.options %}
+        <div class="quiz-option mb-2" onclick="checkAnswer(this, '{{ opt[0] }}', '{{ q.correct }}', '{{ q.explanation|default('') }}')">
+          <span class="fw-semibold" style="color:#7c3aed;margin-right:0.5rem;">{{ opt[0] }}.</span>
+          {{ opt[2:] if opt|length > 2 else opt[1:] }}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="quiz-feedback mt-3 d-none" style="padding:0.75rem;border-radius:var(--radius);background:rgba(255,255,255,0.04);font-size:0.875rem;"></div>
+    </div>
+    {% endfor %}
+
+    <div class="glass-card text-center" style="padding:2rem;">
+      <i class="fas fa-trophy" style="font-size:2rem;color:#f59e0b;margin-bottom:0.75rem;display:block;"></i>
+      <h4 class="fw-bold mb-1" style="color:#fff;">Score: <span id="quizScore">0</span> / {{ data.content|length }}</h4>
+      <p class="text-muted text-sm mb-3" id="quizFeedback"></p>
+      <button class="btn btn-primary" onclick="location.reload()">
+        <i class="fas fa-redo me-1"></i>Try Again
+      </button>
+    </div>
+  </div>
+  {% endif %}
+
 </div>
 {% endblock %}
 
@@ -107,38 +102,46 @@
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    var summaryEl = document.getElementById('summaryContent');
-    if (summaryEl) {
-        var raw = summaryEl.textContent.trim();
-        summaryEl.innerHTML = marked.parse(raw);
-    }
+  var summaryEl = document.getElementById('summaryContent');
+  if (summaryEl) {
+    var raw = summaryEl.textContent.trim();
+    summaryEl.innerHTML = marked.parse(raw);
+  }
 });
 
-let score = 0;
-let answered = 0;
-const totalQuestions = {{ data.questions|length if data.type == 'quiz' else 0 }};
+var score = 0;
+var answered = 0;
+var totalQuestions = {{ data.content|length if data.type == 'quiz' else 0 }};
 
 function checkAnswer(el, selected, correct, explanation) {
-    if (el.closest('.quiz-question').classList.contains('answered')) return;
-    el.closest('.quiz-question').classList.add('answered');
-    answered++;
+  if (el.closest('.quiz-question').classList.contains('answered')) return;
+  el.closest('.quiz-question').classList.add('answered');
+  answered++;
 
-    const options = el.closest('.quiz-options').querySelectorAll('.quiz-option');
-    options.forEach(opt => {
-        const letter = opt.textContent.trim()[0];
-        if (letter === correct) opt.classList.add('correct');
-        else if (letter === selected && letter !== correct) opt.classList.add('incorrect');
-        opt.style.pointerEvents = 'none';
-    });
+  var options = el.closest('.quiz-options').querySelectorAll('.quiz-option');
+  options.forEach(function(opt) {
+    var letter = opt.textContent.trim()[0];
+    if (letter === correct) opt.classList.add('correct');
+    else if (letter === selected && letter !== correct) opt.classList.add('incorrect');
+    opt.style.pointerEvents = 'none';
+  });
 
-    if (selected === correct) score++;
-    document.getElementById('quizScore').textContent = score;
+  if (selected === correct) score++;
+  document.getElementById('quizScore').textContent = score;
 
-    if (explanation) {
-        const feedback = el.closest('.quiz-question').querySelector('.quiz-feedback');
-        feedback.textContent = explanation;
-        feedback.classList.remove('d-none');
-    }
+  if (explanation) {
+    var feedback = el.closest('.quiz-question').querySelector('.quiz-feedback');
+    feedback.textContent = explanation;
+    feedback.classList.remove('d-none');
+  }
+
+  if (answered === totalQuestions) {
+    var pct = Math.round((score / totalQuestions) * 100);
+    var fb = document.getElementById('quizFeedback');
+    if (pct >= 80) fb.textContent = 'Excellent work!';
+    else if (pct >= 50) fb.textContent = 'Good effort! Review the topics you missed.';
+    else fb.textContent = 'Keep studying! You\'ll get there.';
+  }
 }
 </script>
 {% endblock %}

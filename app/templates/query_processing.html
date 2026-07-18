@@ -1,18 +1,72 @@
 {% extends "base.html" %}
 
+{% block title %}Processing Query — Doxium{% endblock %}
+
 {% block content %}
-<div class="container mt-5 text-center">
-    <div class="spinner-border text-primary" style="width: 4rem; height: 4rem;" role="status">
-        <span class="visually-hidden">Generating...</span>
+<style>
+  .processing-spinner {
+    width: 64px; height: 64px;
+    border: 4px solid rgba(255,255,255,0.08);
+    border-top-color: #7c3aed;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1.5rem;
+  }
+  .processing-dots span {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #7c3aed;
+    animation: dotPulse 1.4s ease-in-out infinite;
+  }
+  .processing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .processing-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes dotPulse {
+    0%, 80%, 100% { transform: scale(0.4); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+  .processing-ring {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent, rgba(124,58,237,0.3), transparent);
+    animation: spin 3s linear infinite;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 2rem;
+  }
+  .processing-ring-inner {
+    width: 96px; height: 96px;
+    border-radius: 50%;
+    background: rgba(10,12,24,0.9);
+    display: flex; align-items: center; justify-content: center;
+  }
+</style>
+
+<div style="display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 200px);">
+  <div class="glass-card text-center" style="padding:3rem 4rem;max-width:480px;width:100%;">
+    <div class="processing-ring">
+      <div class="processing-ring-inner">
+        <i class="fas fa-robot" style="font-size:2rem;color:#7c3aed;"></i>
+      </div>
     </div>
-    <h2 class="mt-4">AI is thinking...</h2>
-    <p class="text-muted">Processing your query with document search (10-30 seconds)</p>
-    
-    <script>
-        // Auto-refresh every 3 seconds
-        setTimeout(function() {
-            window.location.reload();
-        }, 3000);
-    </script>
+
+    <h3 class="fw-bold mb-2" style="color:#fff;">Processing your request...</h3>
+    <p class="text-muted mb-3" style="font-size:0.9rem;">This may take 10-30 seconds</p>
+
+    <div class="processing-dots" style="display:flex;gap:8px;justify-content:center;margin-bottom:1.5rem;">
+      <span></span><span></span><span></span>
+    </div>
+
+    <div style="height:4px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;">
+      <div style="height:100%;width:30%;background:linear-gradient(135deg,#7c3aed,#6366f1);border-radius:4px;animation:shimmer 1.5s ease-in-out infinite;background-size:200% 100%;"></div>
+    </div>
+
+    <p class="text-muted mt-3" style="font-size:0.75rem;">
+      <i class="fas fa-info-circle me-1"></i>Searching documents and generating answer
+    </p>
+  </div>
 </div>
+
+<script>
+  setTimeout(function() { window.location.reload(); }, 3000);
+</script>
 {% endblock %}

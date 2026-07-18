@@ -1,111 +1,370 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container-fluid py-5">
+<!-- Hero Section -->
+<section class="relative overflow-hidden" style="padding-top:5rem; padding-bottom:8rem;">
+    <div class="bg-radial-glow absolute inset-0 z-0"></div>
+    <div class="container-fluid position-relative" style="z-index:10; max-width:1000px; margin:0 auto;">
+        <div class="text-center">
+            <div class="d-flex justify-content-center mb-4">
+                <span class="badge badge-purple" style="padding:0.5rem 1rem; font-size:0.85rem;">
+                    <i class="fas fa-bolt me-2"></i>AI-Powered Document Intelligence
+                </span>
+            </div>
 
-    <!-- Hero -->
-    <div class="row justify-content-center mb-5">
-        <div class="col-lg-10">
+            <h1 class="fw-bold mb-4" style="font-size:3.5rem; line-height:1.1;">
+                Your documents,<br>
+                <span class="gradient-text">intelligently searchable.</span>
+            </h1>
 
-            <div class="card hero-card border-0 shadow-lg text-center p-5">
-                <div class="hero-icon-wrapper mb-4">
-                    <i class="fas fa-file-alt fa-6x text-primary"></i>
+            <p class="text-lg text-muted mb-5 mx-auto" style="max-width:600px; line-height:1.7;">
+                Upload, organize, and query your documents with AI. Get instant answers, generate study materials, and unlock insights from your knowledge base.
+            </p>
+
+            <div class="d-flex justify-content-center gap-3 flex-wrap mb-5">
+                <a href="{{ url_for('main.register') }}" class="btn btn-primary btn-lg glow-purple-strong" style="padding:1rem 2rem;">
+                    Start Free Trial
+                    <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+                <a href="{{ url_for('main.login') }}" class="btn btn-secondary btn-lg" style="padding:1rem 2rem;">
+                    Sign In to Your Account
+                </a>
+            </div>
+
+            <!-- Dashboard Mockup -->
+            <div class="glass-strong rounded-2xl p-1 glow-purple mx-auto" style="max-width:900px;">
+                <div class="rounded-xl overflow-hidden" style="background:hsl(240,10%,5%);">
+                    <div class="d-flex align-items-center gap-2 px-4 py-3" style="border-bottom:1px solid var(--border);">
+                        <div class="rounded-full" style="width:12px;height:12px;background:rgba(239,68,68,0.6);"></div>
+                        <div class="rounded-full" style="width:12px;height:12px;background:rgba(245,158,11,0.6);"></div>
+                        <div class="rounded-full" style="width:12px;height:12px;background:rgba(34,197,94,0.6);"></div>
+                        <span class="text-xs text-muted ms-2 font-mono">app.doxium.ai/dashboard</span>
+                    </div>
+                    <div class="p-4">
+                        <div class="row g-3" style="min-height:300px;">
+                            <div class="col-md-3">
+                                <div class="glass rounded-xl p-3 h-100">
+                                    <div class="mb-2" style="height:28px;border-radius:8px;background:rgba(255,255,255,0.04);"></div>
+                                    <div class="mb-2" style="height:28px;border-radius:8px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.2);"></div>
+                                    <div class="mb-2" style="height:28px;border-radius:8px;background:rgba(255,255,255,0.04);"></div>
+                                    <div class="mb-2" style="height:28px;border-radius:8px;background:rgba(255,255,255,0.04);"></div>
+                                    <div style="height:28px;border-radius:8px;background:rgba(255,255,255,0.04);"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="glass rounded-xl p-4 h-100">
+                                    <div class="mb-4" style="height:40px;border-radius:12px;background:rgba(255,255,255,0.04);"></div>
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-md-4">
+                                            <div style="height:100px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);padding:1rem;">
+                                                <div style="width:32px;height:32px;border-radius:8px;background:rgba(124,58,237,0.2);margin-bottom:0.75rem;"></div>
+                                                <div style="height:10px;border-radius:4px;background:rgba(255,255,255,0.06);width:75%;margin-bottom:0.5rem;"></div>
+                                                <div style="height:8px;border-radius:4px;background:rgba(255,255,255,0.04);width:100%;margin-bottom:0.25rem;"></div>
+                                                <div style="height:8px;border-radius:4px;background:rgba(255,255,255,0.04);width:60%;"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div style="height:100px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);padding:1rem;">
+                                                <div style="width:32px;height:32px;border-radius:8px;background:rgba(34,197,94,0.2);margin-bottom:0.75rem;"></div>
+                                                <div style="height:10px;border-radius:4px;background:rgba(255,255,255,0.06);width:75%;margin-bottom:0.5rem;"></div>
+                                                <div style="height:8px;border-radius:4px;background:rgba(255,255,255,0.04);width:100%;margin-bottom:0.25rem;"></div>
+                                                <div style="height:8px;border-radius:4px;background:rgba(255,255,255,0.04);width:60%;"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div style="height:100px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);padding:1rem;">
+                                                <div style="width:32px;height:32px;border-radius:8px;background:rgba(59,130,246,0.2);margin-bottom:0.75rem;"></div>
+                                                <div style="height:10px;border-radius:4px;background:rgba(255,255,255,0.06);width:75%;margin-bottom:0.5rem;"></div>
+                                                <div style="height:8px;border-radius:4px;background:rgba(255,255,255,0.04);width:100%;margin-bottom:0.25rem;"></div>
+                                                <div style="height:8px;border-radius:4px;background:rgba(255,255,255,0.04);width:60%;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="height:140px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</section>
 
-                <h1 class="display-4 fw-bold mb-3">Doxium</h1>
-                <p class="lead text-muted mb-4">
-                    The smartest way to search, analyze, and understand your documents with AI.
+<!-- Stats Section -->
+<section style="padding:4rem 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+    <div class="container-fluid" style="max-width:1100px; margin:0 auto;">
+        <div class="row g-4 text-center">
+            <div class="col-md-6 col-lg-3">
+                <div class="text-3xl fw-bold gradient-text mb-1">50K+</div>
+                <div class="text-sm text-muted">Documents Processed</div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="text-3xl fw-bold gradient-text mb-1">99.9%</div>
+                <div class="text-sm text-muted">Uptime SLA</div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="text-3xl fw-bold gradient-text mb-1">&lt;1s</div>
+                <div class="text-sm text-muted">Average Query Time</div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="text-3xl fw-bold gradient-text mb-1">10K+</div>
+                <div class="text-sm text-muted">Active Users</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section style="padding:6rem 0;">
+    <div class="container-fluid" style="max-width:1100px; margin:0 auto;">
+        <div class="text-center mb-5">
+            <span class="badge badge-purple" style="padding:0.5rem 1rem; font-size:0.85rem; margin-bottom:1rem; display:inline-block;">
+                <i class="fas fa-bolt me-2"></i>Powerful Features
+            </span>
+            <h2 class="text-3xl fw-bold mb-3">
+                Everything you need to <span class="gradient-text">master your documents</span>
+            </h2>
+            <p class="text-lg text-muted" style="max-width:600px; margin:0 auto;">
+                From intelligent document processing to AI-powered study tools, Doxium has you covered.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4">
+                <div class="card-modern h-100" style="padding:1.5rem;">
+                    <div class="d-flex align-items-center justify-content-center rounded-xl mb-4" style="width:56px;height:56px;background:rgba(139,92,246,0.15);">
+                        <i class="fas fa-brain" style="font-size:24px;color:#8b5cf6;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Smart Document Management</h5>
+                    <p class="text-sm text-muted mb-0">Upload, organize, and search through your documents with AI-powered tagging and categorization.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card-modern h-100" style="padding:1.5rem;">
+                    <div class="d-flex align-items-center justify-content-center rounded-xl mb-4" style="width:56px;height:56px;background:rgba(59,130,246,0.15);">
+                        <i class="fas fa-comment-dots" style="font-size:24px;color:#3b82f6;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">AI-Powered Queries</h5>
+                    <p class="text-sm text-muted mb-0">Ask natural language questions about your documents and get intelligent, context-aware answers.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card-modern h-100" style="padding:1.5rem;">
+                    <div class="d-flex align-items-center justify-content-center rounded-xl mb-4" style="width:56px;height:56px;background:rgba(16,185,129,0.15);">
+                        <i class="fas fa-book-open" style="font-size:24px;color:#10b981;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Study Tools</h5>
+                    <p class="text-sm text-muted mb-0">Generate summaries, flashcards, and quizzes from your documents for effective learning.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card-modern h-100" style="padding:1.5rem;">
+                    <div class="d-flex align-items-center justify-content-center rounded-xl mb-4" style="width:56px;height:56px;background:rgba(245,158,11,0.15);">
+                        <i class="fas fa-shield-halved" style="font-size:24px;color:#f59e0b;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Secure & Private</h5>
+                    <p class="text-sm text-muted mb-0">Enterprise-grade security with encrypted storage. We never train on your documents.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card-modern h-100" style="padding:1.5rem;">
+                    <div class="d-flex align-items-center justify-content-center rounded-xl mb-4" style="width:56px;height:56px;background:rgba(236,72,153,0.15);">
+                        <i class="fas fa-folder-tree" style="font-size:24px;color:#ec4899;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Folders & Tags</h5>
+                    <p class="text-sm text-muted mb-0">Organize your knowledge base with nested folders and color-coded tags for instant access.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card-modern h-100" style="padding:1.5rem;">
+                    <div class="d-flex align-items-center justify-content-center rounded-xl mb-4" style="width:56px;height:56px;background:rgba(99,102,241,0.15);">
+                        <i class="fas fa-bolt" style="font-size:24px;color:#6366f1;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Lightning Fast</h5>
+                    <p class="text-sm text-muted mb-0">FAISS-powered vector search delivers sub-second results even with thousands of documents.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section style="padding:6rem 0; border-top:1px solid var(--border);">
+    <div class="container-fluid" style="max-width:1100px; margin:0 auto;">
+        <div class="text-center mb-5">
+            <h2 class="text-3xl fw-bold mb-3">
+                Loved by <span class="gradient-text">thousands</span>
+            </h2>
+            <p class="text-lg text-muted" style="max-width:500px; margin:0 auto;">
+                See what our users have to say about their experience with Doxium.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card-modern" style="padding:1.5rem;">
+                    <div class="d-flex gap-1 mb-3">
+                        <i class="fas fa-star" style="color:#f59e0b;"></i>
+                        <i class="fas fa-star" style="color:#f59e0b;"></i>
+                        <i class="fas fa-star" style="color:#f59e0b;"></i>
+                        <i class="fas fa-star" style="color:#f59e0b;"></i>
+                        <i class="fas fa-star" style="color:#f59e0b;"></i>
+                    </div>
+                    <p class="text-sm text-muted mb-4" style="line-height:1.7;">"Doxium transformed how I interact with research papers. The AI query feature is incredibly accurate."</p>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-full d-flex align-items-center justify-content-center" style="width:40px;height:40px;background:linear-gradient(135deg,#7c3aed,#6366f1);">
+                            <span class="fw-bold text-white text-sm">SC</span>
+                        </div>
+                        <div>
+                            <div class="text-sm fw-semibold">Sarah Chen</div>
+                            <div class="text-xs text-muted">Data Scientist</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card-modern" style="padding:1.5rem;">
+                    <div class="d-flex gap-1 mb-3">
+                        <i class="fas fa-star" style="color:#f59e0b;"></i>
+                        <i class="fas fa-star" style="color:#f59e0b;"></i>
+                        <i class="fas fa-star" style="color:#f59e0b;"></i>
+                        <i class="fas fa-star" style="color:#f59e0b;"></i>
+                        <i class="fas fa-star" style="color:#f59e0b;"></i>
+                    </div>
+                    <p class="text-sm text-muted mb-4" style="line-height:1.7;">"Being able to ask questions about our entire document library saves hours every week."</p>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-full d-flex align-items-center justify-content-center" style="width:40px;height:40px;background:linear-gradient(135deg,#22c55e,#16a34a);">
+                            <span class="fw-bold text-white text-sm">MJ</span>
+                        </div>
+                        <div>
+                            <div class="text-sm fw-semibold">Marcus Johnson</div>
+                            <div class="text-xs text-muted">Product Manager</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card-modern" style="padding:1.5rem;">
+                    <div class="d-flex gap-1 mb-3">
+                        <i class="fas fa-star" style="color:#f59e0b;"></i>
+                        <i class="fas fa-star" style="color:#f59e0b;"></i>
+                        <i class="fas fa-star" style="color:#f59e0b;"></i>
+                        <i class="fas fa-star" style="color:#f59e0b;"></i>
+                        <i class="fas fa-star" style="color:#f59e0b;"></i>
+                    </div>
+                    <p class="text-sm text-muted mb-4" style="line-height:1.7;">"The flashcard and quiz generation from my lecture notes is a game-changer for studying."</p>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-full d-flex align-items-center justify-content-center" style="width:40px;height:40px;background:linear-gradient(135deg,#f59e0b,#f97316);">
+                            <span class="fw-bold text-white text-sm">ER</span>
+                        </div>
+                        <div>
+                            <div class="text-sm fw-semibold">Emily Rodriguez</div>
+                            <div class="text-xs text-muted">Student</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing Preview -->
+<section style="padding:6rem 0; border-top:1px solid var(--border);">
+    <div class="container-fluid" style="max-width:800px; margin:0 auto;">
+        <div class="text-center mb-5">
+            <h2 class="text-3xl fw-bold mb-3">
+                Simple, <span class="gradient-text">transparent</span> pricing
+            </h2>
+            <p class="text-lg text-muted">Start free and upgrade when you need more power.</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card-modern h-100" style="padding:2rem;">
+                    <h5 class="fw-bold mb-2" style="color:rgba(255,255,255,0.6);">Free</h5>
+                    <div class="d-flex align-items-baseline gap-1 mb-4">
+                        <span class="text-4xl fw-bold">$0</span>
+                        <span class="text-muted text-sm">/mo</span>
+                    </div>
+                    <ul class="list-unstyled mb-4">
+                        <li class="d-flex align-items-center gap-3 mb-3 text-sm" style="color:rgba(255,255,255,0.5);">
+                            <i class="fas fa-chevron-right" style="color:#7c3aed;font-size:0.75rem;"></i>10 uploads/month
+                        </li>
+                        <li class="d-flex align-items-center gap-3 mb-3 text-sm" style="color:rgba(255,255,255,0.5);">
+                            <i class="fas fa-chevron-right" style="color:#7c3aed;font-size:0.75rem;"></i>100 AI queries/month
+                        </li>
+                        <li class="d-flex align-items-center gap-3 mb-3 text-sm" style="color:rgba(255,255,255,0.5);">
+                            <i class="fas fa-chevron-right" style="color:#7c3aed;font-size:0.75rem;"></i>100 MB storage
+                        </li>
+                        <li class="d-flex align-items-center gap-3 mb-3 text-sm" style="color:rgba(255,255,255,0.5);">
+                            <i class="fas fa-chevron-right" style="color:#7c3aed;font-size:0.75rem;"></i>PDF only
+                        </li>
+                    </ul>
+                    <a href="{{ url_for('main.register') }}" class="btn btn-secondary w-100">Get Started</a>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card-modern h-100" style="padding:2rem; border:1px solid rgba(124,58,237,0.3); background:rgba(124,58,237,0.04);">
+                    <div class="text-center mb-2">
+                        <span class="badge badge-purple" style="font-size:0.7rem;">Most Popular</span>
+                    </div>
+                    <h5 class="fw-bold mb-2 gradient-text">Pro</h5>
+                    <div class="d-flex align-items-baseline gap-1 mb-4">
+                        <span class="text-4xl fw-bold">$12</span>
+                        <span class="text-muted text-sm">/mo</span>
+                    </div>
+                    <ul class="list-unstyled mb-4">
+                        <li class="d-flex align-items-center gap-3 mb-3 text-sm" style="color:rgba(255,255,255,0.5);">
+                            <i class="fas fa-chevron-right" style="color:#7c3aed;font-size:0.75rem;"></i>Unlimited uploads
+                        </li>
+                        <li class="d-flex align-items-center gap-3 mb-3 text-sm" style="color:rgba(255,255,255,0.5);">
+                            <i class="fas fa-chevron-right" style="color:#7c3aed;font-size:0.75rem;"></i>500 AI queries/month
+                        </li>
+                        <li class="d-flex align-items-center gap-3 mb-3 text-sm" style="color:rgba(255,255,255,0.5);">
+                            <i class="fas fa-chevron-right" style="color:#7c3aed;font-size:0.75rem;"></i>2 GB storage
+                        </li>
+                        <li class="d-flex align-items-center gap-3 mb-3 text-sm" style="color:rgba(255,255,255,0.5);">
+                            <i class="fas fa-chevron-right" style="color:#7c3aed;font-size:0.75rem;"></i>All file formats
+                        </li>
+                        <li class="d-flex align-items-center gap-3 mb-3 text-sm" style="color:rgba(255,255,255,0.5);">
+                            <i class="fas fa-chevron-right" style="color:#7c3aed;font-size:0.75rem;"></i>AI summaries & quizzes
+                        </li>
+                        <li class="d-flex align-items-center gap-3 mb-3 text-sm" style="color:rgba(255,255,255,0.5);">
+                            <i class="fas fa-chevron-right" style="color:#7c3aed;font-size:0.75rem;"></i>Flashcard generation
+                        </li>
+                        <li class="d-flex align-items-center gap-3 mb-3 text-sm" style="color:rgba(255,255,255,0.5);">
+                            <i class="fas fa-chevron-right" style="color:#7c3aed;font-size:0.75rem;"></i>Priority support
+                        </li>
+                    </ul>
+                    <a href="{{ url_for('main.register') }}" class="btn btn-primary w-100 glow-purple">
+                        Upgrade to Pro
+                        <i class="fas fa-arrow-right ms-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section style="padding:6rem 0;">
+    <div class="container-fluid" style="max-width:700px; margin:0 auto;">
+        <div class="glass-strong rounded-3xl text-center" style="padding:3rem; position:relative; overflow:hidden;">
+            <div class="position-absolute inset-0" style="background:linear-gradient(135deg,rgba(124,58,237,0.1),transparent,rgba(99,102,241,0.1));"></div>
+            <div style="position:relative; z-index:10;">
+                <h2 class="text-3xl fw-bold mb-3">
+                    Ready to unlock your <span class="gradient-text">document intelligence</span>?
+                </h2>
+                <p class="text-muted mb-4 mx-auto" style="max-width:450px;">
+                    Join thousands of professionals who trust Doxium to manage and understand their documents.
                 </p>
-
-                {% if user.is_authenticated %}
-                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg px-4 me-3">
-                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                    </a>
-                    <a href="{{ url_for('main.logout') }}" class="btn btn-outline-primary btn-lg px-4">
-                        <i class="fas fa-sign-out-alt me-2"></i>Logout
-                    </a>
-                {% else %}
-                    <a href="{{ url_for('main.register') }}" class="btn btn-primary btn-lg px-4 me-3">
-                        <i class="fas fa-user-plus me-2"></i>Create Account
-                    </a>
-                    <a href="{{ url_for('main.login') }}" class="btn btn-outline-primary btn-lg px-4">
-                        <i class="fas fa-sign-in-alt me-2"></i>Sign In
-                    </a>
-                {% endif %}
-            </div>
-
-        </div>
-        <!-- Fazier badge -->
-        <div class="text-center mt-3">
-        <a href="https://fazier.com/launches/web-production-6ddf4c.up.railway.app" target="_blank"><img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=launched&theme=dark" width=120 alt="Fazier badge" /></a>
-        </div>
-    </div>
-
-    <!-- How It Works Video -->
-    <div class="row justify-content-center mb-5">
-        <div class="col-lg-8">
-
-            <div class="card border-0 shadow-sm p-4 text-center">
-                
-                <h3 class="fw-bold mb-3">
-                    <i class="fas fa-play-circle text-primary me-2"></i>
-                    How Doxium Works
-                </h3>
-
-                <p class="text-muted mb-4">
-                    Watch this quick 60-second guide to see how you can upload documents and ask AI questions instantly.
-                </p>
-
-                <div class="ratio ratio-16x9">
-                    <iframe 
-                        src=""
-                        title="Doxium Tutorial"
-                        allowfullscreen>
-                    </iframe>
-                </div>
-
-            </div>
-
-        </div>
-    </div>
-
-    <!-- Features -->
-    <div class="row g-4 mb-5">
-        <div class="col-md-4">
-            <div class="feature-card card h-100 shadow-sm border-0">
-                <div class="card-body text-center py-4">
-                    <i class="fas fa-brain fa-3x text-primary mb-3"></i>
-                    <h4 class="fw-bold mb-2">AI Search</h4>
-                    <p class="text-muted">
-                        Ask natural-language questions and get accurate answers instantly.
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="feature-card card h-100 shadow-sm border-0">
-                <div class="card-body text-center py-4">
-                    <i class="fas fa-cloud-upload-alt fa-3x text-success mb-3"></i>
-                    <h4 class="fw-bold mb-2">Effortless Uploads</h4>
-                    <p class="text-muted">
-                        Drag & drop documents. Supports PDF, Word, text, slides, and more.
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="feature-card card h-100 shadow-sm border-0">
-                <div class="card-body text-center py-4">
-                    <i class="fas fa-shield-alt fa-3x text-warning mb-3"></i>
-                    <h4 class="fw-bold mb-2">Private & Secure</h4>
-                    <p class="text-muted">
-                        We never train on your documents. Your data stays yours — always.
-                    </p>
-                </div>
+                <a href="{{ url_for('main.register') }}" class="btn btn-primary btn-lg glow-purple-strong" style="padding:1rem 2rem;">
+                    Start Free Today
+                    <i class="fas fa-arrow-right ms-2"></i>
+                </a>
             </div>
         </div>
     </div>
-
+</section>
 {% endblock %}

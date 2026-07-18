@@ -1,16 +1,148 @@
 {% extends "base.html" %}
+{% block title %}User Stats: {{ user.username }} — Doxium Admin{% endblock %}
 {% block content %}
-<h2>User Stats: {{ user.username }}</h2>
-<p><a href="{{ url_for('main.admin') }}" class="btn btn-secondary">Back to Admin</a></p>
-<ul>
-  <li><strong>ID:</strong> {{ user.id }}</li>
-  <li><strong>Username:</strong> {{ user.username }}</li>
-  <li><strong>Email:</strong> {{ user.email }}</li>
-  <li><strong>Created At:</strong> {{ user.created_at.strftime("%Y-%m-%d %H:%M") }}</li>
-  <li><strong>Pilot Status:</strong> {{ 'Yes' if user.is_pilot else 'No' }}</li>
-  <li><strong>Pilot Purchased At:</strong> {{ user.pilot_purchased_at.strftime("%Y-%m-%d %H:%M") if user.pilot_purchased_at else "N/A" }}</li>
-  <li><strong>Files Count:</strong> {{ file_count }}</li>
-  <li><strong>Storage Used:</strong> {{ "%.2f"|format(used_mb) }} MB</li>
-  <li><strong>Storage Available:</strong> {{ "%.2f"|format(available_mb) }} MB</li>
-</ul>
+<div class="container-fluid py-5" style="max-width:1000px; margin:0 auto;">
+    <div class="d-flex align-items-center justify-content-between mb-6">
+        <div class="d-flex align-items-center gap-3">
+            <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#7c3aed,#6366f1);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;color:#fff;flex-shrink:0;">
+                {{ user.username[0]|upper }}
+            </div>
+            <div>
+                <h1 class="text-xl fw-bold mb-0">{{ user.username }}</h1>
+                <p class="text-muted text-sm mb-0">{{ user.email }}</p>
+            </div>
+        </div>
+        <a href="{{ url_for('main.admin') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Admin Panel
+        </a>
+    </div>
+
+    <div class="row g-4 mb-6" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr));">
+        <div class="glass-card p-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:rgba(124,58,237,0.12);color:#7c3aed;">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-muted">Total Files</div>
+                    <div class="fw-bold text-2xl">{{ file_count }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card p-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:rgba(59,130,246,0.12);color:#3b82f6;">
+                    <i class="fas fa-database"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-muted">Storage Used</div>
+                    <div class="fw-bold text-2xl">{{ "%.2f"|format(used_mb) }} MB</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card p-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:rgba(34,197,94,0.12);color:#22c55e;">
+                    <i class="fas fa-hdd"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-muted">Available</div>
+                    <div class="fw-bold text-2xl">{{ "%.2f"|format(available_mb) }} MB</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card p-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:{{ 'rgba(168,85,247,0.12)' if user.is_pilot else 'rgba(255,255,255,0.06)' }};color:{{ '#a855f7' if user.is_pilot else 'rgba(255,255,255,0.4)' }};">
+                    <i class="fas fa-crown"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-muted">Plan</div>
+                    <div class="fw-bold text-lg">{{ 'Pro' if user.is_pilot else 'Free' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card p-6 mb-6">
+        <h3 class="fw-bold mb-4"><i class="fas fa-user me-2 text-primary"></i>User Details</h3>
+        <div class="row g-4" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr));">
+            <div>
+                <div class="text-xs text-muted mb-1">User ID</div>
+                <div class="fw-semibold">#{{ user.id }}</div>
+            </div>
+            <div>
+                <div class="text-xs text-muted mb-1">Username</div>
+                <div class="fw-semibold">{{ user.username }}</div>
+            </div>
+            <div>
+                <div class="text-xs text-muted mb-1">Email</div>
+                <div class="fw-semibold">{{ user.email }}</div>
+            </div>
+            <div>
+                <div class="text-xs text-muted mb-1">Subscription Status</div>
+                <div class="fw-semibold">{{ user.subscription_status or 'None' }}</div>
+            </div>
+            <div>
+                <div class="text-xs text-muted mb-1">Pro User</div>
+                <div>
+                    {% if user.is_pilot %}
+                        <span class="badge badge-success">Pro</span>
+                    {% else %}
+                        <span class="badge badge-info">Free</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card p-6 mb-6">
+        <h3 class="fw-bold mb-4"><i class="fas fa-chart-bar me-2 text-primary"></i>Storage Usage</h3>
+        {% set total_storage = used_mb + available_mb %}
+        {% set storage_pct = (used_mb / total_storage * 100)|round(1) if total_storage > 0 else 0 %}
+        <div class="mb-3">
+            <div class="d-flex justify-content-between mb-2">
+                <span class="text-sm text-muted">{{ "%.2f"|format(used_mb) }} MB used</span>
+                <span class="text-sm text-muted">{{ "%.2f"|format(available_mb) }} MB available</span>
+            </div>
+            <div class="storage-bar" style="height:8px;">
+                <div class="storage-bar-fill" style="width:{{ storage_pct }}%;"></div>
+            </div>
+            <div class="text-xs text-muted mt-2">{{ "%.1f"|format(storage_pct) }}% of {{ "%.2f"|format(total_storage) }} MB total</div>
+        </div>
+    </div>
+
+    <div class="glass-card p-6">
+        <h3 class="fw-bold mb-4"><i class="fas fa-cog me-2 text-primary"></i>Actions</h3>
+        <div class="d-flex flex-wrap gap-3">
+            <form action="{{ url_for('main.toggle_pilot', user_id=user.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn {{ 'btn-outline-secondary' if user.is_pilot else 'btn-primary' }}">
+                    <i class="fas fa-crown me-1"></i>{{ 'Remove Pro' if user.is_pilot else 'Grant Pro' }}
+                </button>
+            </form>
+            <form action="{{ url_for('main.reset_index', user_id=user.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-warning">
+                    <i class="fas fa-redo me-1"></i>Reset Index
+                </button>
+            </form>
+            <form action="{{ url_for('main.impersonate', user_id=user.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-secondary">
+                    <i class="fas fa-mask me-1"></i>Impersonate
+                </button>
+            </form>
+            <form action="{{ url_for('main.delete_user', user_id=user.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to permanently delete this user and ALL their data? This cannot be undone.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash-alt me-1"></i>Delete User
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}

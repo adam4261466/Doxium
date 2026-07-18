@@ -1,108 +1,135 @@
 {% extends "base.html" %}
 
-{% block title %}Query Results - Doxium{% endblock %}
+{% block title %}Query Results — Doxium{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card glow-primary">
-                <div class="card-body py-4">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h1 class="mb-2"><i class="fas fa-search me-3 text-primary"></i>Query Results</h1>
-                            <p class="mb-0 text-muted">AI-powered insights from your documents</p>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg">
-                                <i class="fas fa-plus me-2"></i>Ask Another Question
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<div class="container-fluid" style="max-width:1100px;margin:0 auto;padding-top:1.5rem;padding-bottom:3rem;">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h2 class="fw-bold mb-1" style="color:#fff;">
+        <i class="fas fa-robot me-2" style="color:#7c3aed;"></i>Query Results
+      </h2>
+      <p class="text-muted text-sm mb-0">AI-powered insights from your documents</p>
+    </div>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
+      <i class="fas fa-plus me-1"></i>Ask Another Question
+    </a>
+  </div>
+
+  <!-- Query Display -->
+  <div class="glass-card mb-4" style="padding:1rem 1.25rem;">
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge badge-purple" style="font-size:0.7rem;"><i class="fas fa-search me-1"></i>Query</span>
+      <span class="fw-semibold" style="color:#fff;">{{ query }}</span>
+    </div>
+  </div>
+
+  <div class="d-flex gap-4" style="flex-wrap:wrap;">
+
+    <!-- Answer -->
+    <div style="flex:1;min-width:0;">
+      <div class="glass-card mb-4" style="padding:0;overflow:hidden;">
+        <div style="padding:0.75rem 1.25rem;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;">
+          <div class="d-flex align-items-center gap-2">
+            <i class="fas fa-brain" style="color:#22c55e;"></i>
+            <span class="fw-semibold" style="font-size:0.875rem;">AI Answer</span>
+          </div>
+          <div class="dropdown">
+            <button class="btn btn-ghost btn-sm" data-bs-toggle="dropdown" style="padding:0.25rem 0.5rem;font-size:0.8rem;">
+              <i class="fas fa-download me-1"></i>Export
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="{{ url_for('main.export_query', fmt='md', task_id=task_id) }}"><i class="fas fa-file-alt me-2"></i>Markdown</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('main.export_query', fmt='txt', task_id=task_id) }}"><i class="fas fa-file me-2"></i>Plain Text</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('main.export_query', fmt='docx', task_id=task_id) }}"><i class="fas fa-file-word me-2"></i>Word</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('main.export_query', fmt='pdf', task_id=task_id) }}"><i class="fas fa-file-pdf me-2"></i>PDF</a></li>
+            </ul>
+          </div>
         </div>
+        <div style="padding:1.25rem;">
+          <div class="answer-content markdown-body" id="answerContent">{{ answer }}</div>
+        </div>
+      </div>
+
+      <!-- New Query Form -->
+      <div class="glass-card" style="padding:1.25rem;">
+        <h5 class="fw-semibold mb-3" style="font-size:0.9rem;color:#fff;">
+          <i class="fas fa-paper-plane me-2" style="color:#7c3aed;"></i>Follow-up Question
+        </h5>
+        <form method="POST" action="{{ url_for('main.query_documents') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-2">
+            <textarea name="query" class="form-control" rows="3" placeholder="Ask another question about your documents..." required style="resize:vertical;"></textarea>
+          </div>
+          <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary btn-sm">
+              <i class="fas fa-paper-plane me-1"></i>Ask
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
-    <div class="row g-4">
-        <!-- Main Content -->
-        <div class="col-lg-8">
-            <!-- Your Question -->
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>Your Question</h5>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info border-0" role="alert">
-                        <i class="fas fa-quote-left text-primary me-2"></i>
-                        <strong>{{ query }}</strong>
-                        <i class="fas fa-quote-right text-primary ms-2"></i>
-                    </div>
-                </div>
-            </div>
-
-            <!-- AI Answer -->
-            <div class="card mb-4 glow-success">
-                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-brain me-2"></i>AI Answer</h5>
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-light dropdown-toggle" data-bs-toggle="dropdown">
-                            <i class="fas fa-download me-1"></i>Export
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{ url_for('main.export_query', fmt='md', task_id=task_id) }}"><i class="fas fa-file-alt me-2"></i>Markdown</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('main.export_query', fmt='txt', task_id=task_id) }}"><i class="fas fa-file me-2"></i>Plain Text</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('main.export_query', fmt='docx', task_id=task_id) }}"><i class="fas fa-file-word me-2"></i>Word</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('main.export_query', fmt='pdf', task_id=task_id) }}"><i class="fas fa-file-pdf me-2"></i>PDF</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="answer-content p-3 rounded markdown-body" id="answerContent">
-                        {{ answer }}
-                    </div>
-                </div>
-            </div>
+    <!-- Source Chunks Sidebar -->
+    <div style="width:340px;flex-shrink:0;">
+      <div class="glass-card" style="padding:0;overflow:hidden;">
+        <div style="padding:0.75rem 1.25rem;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <div class="d-flex align-items-center gap-2">
+            <i class="fas fa-layer-group" style="color:#f59e0b;"></i>
+            <span class="fw-semibold" style="font-size:0.875rem;">Supporting Sources</span>
+            <span class="badge badge-purple" style="font-size:0.65rem;margin-left:auto;">{{ supporting_chunks|length }}</span>
+          </div>
         </div>
-
-        <!-- Sidebar -->
-        <div class="col-lg-4">
-            <!-- Supporting Documents -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Supporting Documents</h5>
-                    <small class="text-muted">({{ supporting_chunks|length }} sources)</small>
-                </div>
-                <div class="card-body scroll-panel-lg">
-                    {% for chunk in supporting_chunks %}
-                        <div class="document-chunk mb-3 p-3 rounded border clickable-chunk" id="source-{{ loop.index }}"
-                             onclick="openFileViewer({{ chunk.file_id }}, '{{ chunk.filename|e }}')"
-                             style="cursor: pointer;">
-                            <div class="d-flex align-items-start mb-2">
-                                <span class="citation-num badge bg-primary me-2">{{ chunk.source_num|default(loop.index) }}</span>
-                                <div class="flex-grow-1">
-                                    <strong class="text-primary">{{ chunk.filename|default('Unknown file') }}</strong>
-                                    <br>
-                                    <small class="text-muted">
-                                        <i class="fas fa-external-link-alt me-1"></i>Click to view full file
-                                    </small>
-                                </div>
-                            </div>
-                            <div class="chunk-text p-2 rounded">
-                                {{ chunk.text|truncate(300) }}
-                            </div>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-info-circle text-muted fs-2"></i>
-                            <p class="text-muted mt-2">No supporting documents found</p>
-                        </div>
-                    {% endfor %}
-                </div>
+        <div class="scroll-panel-lg" style="padding:0.75rem;">
+          {% for chunk in supporting_chunks %}
+          <div class="document-chunk mb-2" id="source-{{ chunk.source_num|default(loop.index) }}">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span class="badge badge-purple" style="font-size:0.65rem;min-width:20px;text-align:center;">{{ chunk.source_num|default(loop.index) }}</span>
+              <span class="fw-semibold text-sm truncate" style="color:#fff;">{{ chunk.filename }}</span>
             </div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span class="text-xs text-muted">Relevance:</span>
+              <div style="flex:1;height:4px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;">
+                <div style="height:100%;width:{{ (chunk.score * 100)|int }}%;background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:4px;"></div>
+              </div>
+              <span class="text-xs text-muted">{{ "%.0f"|format(chunk.score * 100) }}%</span>
+            </div>
+            <div class="chunk-text" id="chunkText-{{ loop.index }}">{{ chunk.text }}</div>
+            <button class="btn btn-ghost btn-sm mt-2" style="padding:0.2rem 0.5rem;font-size:0.7rem;" onclick="toggleChunk('{{ loop.index }}')">
+              <i class="fas fa-expand-alt me-1"></i>Expand
+            </button>
+          </div>
+          {% else %}
+          <div class="text-center py-4">
+            <i class="fas fa-info-circle text-muted" style="font-size:1.5rem;"></i>
+            <p class="text-muted text-sm mt-2 mb-0">No supporting sources found</p>
+          </div>
+          {% endfor %}
         </div>
+      </div>
     </div>
+
+  </div>
+</div>
+
+<!-- File Viewer Modal -->
+<div class="modal fade" id="fileViewerModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-semibold" id="fileViewerLabel">File Content</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <pre id="fileViewerContent" class="preview-content" style="white-space:pre-wrap;max-height:70vh;overflow-y:auto;"></pre>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
@@ -110,89 +137,55 @@
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Animate cards on load
-    const cards = document.querySelectorAll('.card');
-    cards.forEach((card, index) => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(20px)';
-        setTimeout(() => {
-            card.style.transition = 'all 0.5s ease';
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-        }, index * 100);
-    });
-
-    // Render markdown in the answer
-    const answerEl = document.getElementById('answerContent');
-    if (answerEl) {
-        var raw = answerEl.textContent.trim();
-        answerEl.innerHTML = marked.parse(raw);
-
-        // Make citations clickable after rendering
-        var html = answerEl.innerHTML;
-        html = html.replace(/\[(\d+)\]/g, '<a href="#source-$1" class="citation-link" onclick="highlightSource($1);return false;">[$1]</a>');
-        answerEl.innerHTML = html;
-    }
-
-    // Initialize tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
+  var answerEl = document.getElementById('answerContent');
+  if (answerEl) {
+    var raw = answerEl.textContent.trim();
+    answerEl.innerHTML = marked.parse(raw);
+    var html = answerEl.innerHTML;
+    html = html.replace(/\[(\d+)\]/g, '<a href="#source-$1" class="citation-link" onclick="highlightSource($1);return false;">[$1]</a>');
+    answerEl.innerHTML = html;
+  }
 });
 
 function highlightSource(num) {
-    // Remove previous highlights
-    document.querySelectorAll('.document-chunk').forEach(el => {
-        el.classList.remove('chunk-highlighted');
-    });
+  document.querySelectorAll('.document-chunk').forEach(function(el) {
+    el.classList.remove('chunk-highlighted');
+  });
+  var target = document.getElementById('source-' + num);
+  if (target) {
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    target.classList.add('chunk-highlighted');
+    setTimeout(function() { target.classList.remove('chunk-highlighted'); }, 3000);
+  }
+}
 
-    var target = document.getElementById('source-' + num);
-    if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        target.classList.add('chunk-highlighted');
-        setTimeout(() => target.classList.remove('chunk-highlighted'), 3000);
-    }
+function toggleChunk(idx) {
+  var el = document.getElementById('chunkText-' + idx);
+  var btn = el.parentElement.querySelector('button');
+  if (el.style.maxHeight === 'none') {
+    el.style.maxHeight = '150px';
+    el.style.overflowY = 'auto';
+    btn.innerHTML = '<i class="fas fa-expand-alt me-1"></i>Expand';
+  } else {
+    el.style.maxHeight = 'none';
+    el.style.overflowY = 'visible';
+    btn.innerHTML = '<i class="fas fa-compress-alt me-1"></i>Collapse';
+  }
 }
 
 function openFileViewer(fileId, filename) {
-    var modal = document.getElementById('fileViewerModal');
-    var titleEl = document.getElementById('fileViewerLabel');
-    var bodyEl = document.getElementById('fileViewerContent');
-
-    titleEl.textContent = filename;
-    bodyEl.textContent = 'Loading file content...';
-
-    var bsModal = new bootstrap.Modal(modal);
-    bsModal.show();
-
-    fetch('/preview/' + fileId)
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            bodyEl.textContent = data.content || 'No content available';
-        })
-        .catch(function() {
-            bodyEl.textContent = 'Failed to load file content.';
-        });
+  var modal = document.getElementById('fileViewerModal');
+  document.getElementById('fileViewerLabel').textContent = filename;
+  document.getElementById('fileViewerContent').textContent = 'Loading...';
+  new bootstrap.Modal(modal).show();
+  fetch('/preview/' + fileId)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      document.getElementById('fileViewerContent').textContent = data.content || 'No content available';
+    })
+    .catch(function() {
+      document.getElementById('fileViewerContent').textContent = 'Failed to load file content.';
+    });
 }
 </script>
-
-<!-- File Viewer Modal -->
-<div class="modal fade" id="fileViewerModal" tabindex="-1" aria-labelledby="fileViewerLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="fileViewerLabel">File Content</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <pre id="fileViewerContent" class="preview-content p-3 rounded" style="white-space: pre-wrap; max-height: 70vh; overflow-y: auto;"></pre>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 {% endblock %}

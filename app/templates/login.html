@@ -1,45 +1,145 @@
 {% extends "base.html" %}
 
+{% block title %}Sign In — Doxium{% endblock %}
+
 {% block content %}
-<div class="container-fluid py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-4">
-            <div class="card glow-primary">
-                <div class="card-header text-center">
-                    <i class="fas fa-sign-in-alt fa-2x text-primary mb-3"></i>
-                    <h3 class="mb-0">Welcome Back! </h3>
+<div class="d-flex align-items-center justify-content-center" style="min-height: calc(100vh - 180px); padding: 3rem 1rem;">
+
+    <!-- Animated background radial glow -->
+    <div style="position:fixed; top:20%; left:50%; transform:translate(-50%,-50%); width:600px; height:600px; background:radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 70%); pointer-events:none; z-index:0; filter:blur(60px);"></div>
+
+    <div class="relative z-10 w-full" style="max-width:420px;">
+
+        <!-- Logo Section -->
+        <div class="text-center mb-8">
+            <div class="d-flex align-items-center justify-content-center mb-4">
+                <div style="width:56px; height:56px; border-radius:16px; background:linear-gradient(135deg,#7c3aed,#6366f1); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 24px rgba(124,58,237,0.4);" class="glow-purple animate-float">
+                    <i class="fas fa-bolt" style="color:#fff; font-size:1.5rem;"></i>
                 </div>
-                <div class="card-body">
-                    <form method="POST" action="{{ url_for('main.login') }}">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email Address</label>
-                            <input name="email" type="email" class="form-control" id="email" placeholder="Enter your email" required autofocus>
+            </div>
+            <h1 class="gradient-text fw-bold" style="font-size:1.875rem; margin-bottom:0.375rem;">Doxium</h1>
+            <p class="text-muted" style="font-size:0.875rem;">AI-Powered Document Intelligence</p>
+        </div>
+
+        <!-- Auth Card -->
+        <div class="glass-strong rounded-2xl overflow-hidden" style="box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+
+            <!-- Tabs -->
+            <div class="d-flex" style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                <a href="{{ url_for('main.login') }}" class="flex-fill text-center py-3 fw-semibold" style="font-size:0.875rem; color:#fff; background:rgba(255,255,255,0.06); border-bottom:2px solid #7c3aed; text-decoration:none;">
+                    <i class="fas fa-arrow-right-to-bracket me-2" style="font-size:0.8rem;"></i>Sign In
+                </a>
+                <a href="{{ url_for('main.register') }}" class="flex-fill text-center py-3 fw-semibold" style="font-size:0.875rem; color:rgba(255,255,255,0.4); border-bottom:2px solid transparent; text-decoration:none; transition:color 0.2s;">
+                    <i class="fas fa-user-plus me-2" style="font-size:0.8rem;"></i>Create Account
+                </a>
+            </div>
+
+            <!-- Form Body -->
+            <div class="p-6">
+                <form method="POST" action="{{ url_for('main.login') }}" id="loginForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                    <!-- Email -->
+                    <div class="mb-4">
+                        <label for="email" class="form-label">Email Address</label>
+                        <div class="d-flex align-items-center gap-2" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:var(--radius); padding:0 0.875rem; transition:border-color 0.2s, box-shadow 0.2s;" id="emailWrapper">
+                            <i data-lucide="mail" style="width:18px; height:18px; color:rgba(255,255,255,0.3); flex-shrink:0;"></i>
+                            <input name="email" type="email" id="email" placeholder="you@example.com" required autofocus
+                                   style="background:transparent; border:none; color:hsl(var(--foreground)); padding:0.625rem 0; font-size:0.875rem; width:100%; outline:none;">
                         </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <input name="password" type="password" class="form-control" id="password" placeholder="Enter your password" required>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                    </div>
+
+                    <!-- Password -->
+                    <div class="mb-4">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="d-flex align-items-center gap-2" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:var(--radius); padding:0 0.875rem; transition:border-color 0.2s, box-shadow 0.2s;" id="passwordWrapper">
+                            <i data-lucide="lock" style="width:18px; height:18px; color:rgba(255,255,255,0.3); flex-shrink:0;"></i>
+                            <input name="password" type="password" id="password" placeholder="Enter your password" required
+                                   style="background:transparent; border:none; color:hsl(var(--foreground)); padding:0.625rem 0; font-size:0.875rem; width:100%; outline:none;">
+                            <button type="button" onclick="togglePassword()" style="background:none; border:none; color:rgba(255,255,255,0.3); cursor:pointer; padding:0; display:flex; align-items:center; transition:color 0.2s;" id="toggleBtn">
+                                <i data-lucide="eye" style="width:18px; height:18px;" id="eyeIcon"></i>
                             </button>
                         </div>
-                    </form>
-                    <div class="text-center mt-3">
-                        <p class="mb-0">Don't have an account? <a href="{{ url_for('main.register') }}" class="text-primary">Sign up here</a></p>
                     </div>
+
+                    <!-- Remember me + Forgot -->
+                    <div class="d-flex align-items-center justify-content-between mb-6">
+                        <label class="d-flex align-items-center gap-2" style="font-size:0.8125rem; color:rgba(255,255,255,0.5); cursor:pointer;">
+                            <input type="checkbox" name="remember" style="accent-color:#7c3aed; width:16px; height:16px;">
+                            Remember me
+                        </label>
+                        <span style="font-size:0.8125rem; color:rgba(255,255,255,0.3);">
+                            <i class="fas fa-lock me-1" style="font-size:0.7rem;"></i>Secured
+                        </span>
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit" class="btn btn-primary btn-lg w-full" id="submitBtn">
+                        <i class="fas fa-arrow-right-to-bracket me-2" id="submitIcon"></i>
+                        <span id="submitText">Sign In</span>
+                    </button>
+                </form>
+
+                <!-- Register Link -->
+                <div class="text-center mt-5">
+                    <p class="text-muted" style="font-size:0.8125rem;">
+                        Don't have an account?
+                        <a href="{{ url_for('main.register') }}" class="fw-semibold" style="color:#c4b5fd;">Create one free</a>
+                    </p>
                 </div>
             </div>
         </div>
+
+        <!-- Demo Hint -->
+        <div class="text-center mt-5">
+            <p class="text-muted" style="font-size:0.75rem;">
+                <i class="fas fa-info-circle me-1"></i>Demo: Use any email and password to sign in
+            </p>
+        </div>
+
     </div>
 </div>
 {% endblock %}
 
+{% block scripts %}
 <script>
-document.querySelector("form").addEventListener("submit", function(){
-    const btn = document.querySelector("button[type='submit']");
-    btn.innerHTML = "<i class='fas fa-spinner fa-spin me-2'></i>Signing in...";
+// Password visibility toggle
+function togglePassword() {
+    const input = document.getElementById('password');
+    const icon = document.getElementById('eyeIcon');
+    const btn = document.getElementById('toggleBtn');
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerHTML = '<i data-lucide="eye-off" style="width:18px;height:18px;" id="eyeIcon"></i>';
+    } else {
+        input.type = 'password';
+        btn.innerHTML = '<i data-lucide="eye" style="width:18px;height:18px;" id="eyeIcon"></i>';
+    }
+    lucide.createIcons();
+}
+
+// Input focus ring
+['email', 'password'].forEach(function(id) {
+    var wrapper = document.getElementById(id + 'Wrapper');
+    var input = document.getElementById(id);
+    input.addEventListener('focus', function() {
+        wrapper.style.borderColor = 'hsl(263, 70%, 50%)';
+        wrapper.style.boxShadow = '0 0 0 2px rgba(124, 58, 237, 0.2)';
+    });
+    input.addEventListener('blur', function() {
+        wrapper.style.borderColor = 'rgba(255,255,255,0.1)';
+        wrapper.style.boxShadow = 'none';
+    });
+});
+
+// Submit loading state
+document.getElementById('loginForm').addEventListener('submit', function() {
+    var btn = document.getElementById('submitBtn');
     btn.disabled = true;
+    btn.style.opacity = '0.7';
+    btn.style.pointerEvents = 'none';
+    document.getElementById('submitIcon').className = 'fas fa-spinner fa-spin me-2';
+    document.getElementById('submitText').textContent = 'Signing in...';
 });
 </script>
+{% endblock %}
