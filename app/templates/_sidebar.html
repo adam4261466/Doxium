@@ -10,7 +10,7 @@
             <span class="sidebar-logo-text">Doxium</span>
         </div>
 
-        <!-- Primary Nav -->
+        <!-- All Nav -->
         <nav class="sidebar-nav">
             <a href="{{ url_for('main.dashboard') }}" class="sidebar-nav-item {{ 'active' if active_page == 'dashboard' and not current_folder_id and not current_tag_id }}" title="Dashboard">
                 <div class="sidebar-nav-icon"><i class="fas fa-th-large"></i></div>
@@ -20,85 +20,14 @@
                 <div class="sidebar-nav-icon"><i class="fas fa-robot"></i></div>
                 <span class="sidebar-nav-label">AI Query</span>
             </button>
-        </nav>
-
-        <!-- Folders Card -->
-        <div class="sidebar-card">
-            <div class="sidebar-card-header" onclick="toggleSidebarSection(this)">
-                <div class="sidebar-card-header-left">
-                    <i class="fas fa-chevron-down sidebar-chevron"></i>
-                    <i class="fas fa-folder text-warning sidebar-card-icon"></i>
-                    <span class="sidebar-card-title">Folders</span>
-                </div>
-                <span class="sidebar-count">{{ folders | length }}</span>
-            </div>
-            <div class="sidebar-card-body">
-                {% if folders %}
-                    {% for folder in folders %}
-                        <div class="sidebar-item group">
-                            <a href="{{ url_for('main.dashboard', folder_id=folder.id) }}" class="sidebar-item-link {{ 'active' if active_page == 'dashboard' and current_folder_id == folder.id }}" title="{{ folder.name }}">
-                                <i class="fas fa-folder{{ '-open' if current_folder_id == folder.id }} text-warning"></i>
-                                <span class="sidebar-item-text">{{ folder.name }}</span>
-                            </a>
-                            <div class="sidebar-item-actions">
-                                <button class="sidebar-item-action" onclick="renameFolder({{ folder.id }}, '{{ folder.name | e }}')" title="Rename">
-                                    <i class="fas fa-pen"></i>
-                                </button>
-                                <form action="{{ url_for('main.delete_folder', folder_id=folder.id) }}" method="post" class="d-inline">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="sidebar-item-action sidebar-item-action-danger" onclick="return confirm('Delete folder? Files will be moved to root.')" title="Delete">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-                <button class="sidebar-item sidebar-add-item" onclick="showFolderModal()" title="New Folder">
-                    <i class="fas fa-plus"></i>
-                    <span class="sidebar-item-text">New Folder</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Tags Card -->
-        <div class="sidebar-card">
-            <div class="sidebar-card-header" onclick="toggleSidebarSection(this)">
-                <div class="sidebar-card-header-left">
-                    <i class="fas fa-chevron-down sidebar-chevron"></i>
-                    <i class="fas fa-tags text-info sidebar-card-icon"></i>
-                    <span class="sidebar-card-title">Tags</span>
-                </div>
-                <span class="sidebar-count">{{ tags | length }}</span>
-            </div>
-            <div class="sidebar-card-body">
-                {% if tags %}
-                    {% for tag in tags %}
-                        <div class="sidebar-item group">
-                            <a href="{{ url_for('main.dashboard', tag_id=tag.id) }}" class="sidebar-item-link {{ 'active' if active_page == 'dashboard' and current_tag_id == tag.id }}" title="{{ tag.name }}">
-                                <span class="sidebar-tag-dot" style="background: {{ tag.color }};"></span>
-                                <span class="sidebar-item-text">{{ tag.name }}</span>
-                            </a>
-                            <div class="sidebar-item-actions">
-                                <form action="{{ url_for('main.delete_tag', tag_id=tag.id) }}" method="post" class="d-inline">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="sidebar-item-action sidebar-item-action-danger" onclick="return confirm('Delete tag?')" title="Delete">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-                <button class="sidebar-item sidebar-add-item" onclick="showTagModal()" title="New Tag">
-                    <i class="fas fa-plus"></i>
-                    <span class="sidebar-item-text">New Tag</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Secondary Nav -->
-        <nav class="sidebar-nav sidebar-nav-bottom">
+            <a href="{{ url_for('main.dashboard') }}" class="sidebar-nav-item {{ 'active' if active_page == 'dashboard' and current_folder_id }}" title="Folders">
+                <div class="sidebar-nav-icon"><i class="fas fa-folder"></i></div>
+                <span class="sidebar-nav-label">Folders</span>
+            </a>
+            <a href="{{ url_for('main.dashboard') }}" class="sidebar-nav-item {{ 'active' if active_page == 'dashboard' and current_tag_id }}" title="Tags">
+                <div class="sidebar-nav-icon"><i class="fas fa-tag"></i></div>
+                <span class="sidebar-nav-label">Tags</span>
+            </a>
             <a href="{{ url_for('main.statistics') }}" class="sidebar-nav-item {{ 'active' if active_page == 'statistics' }}" title="Statistics">
                 <div class="sidebar-nav-icon"><i class="fas fa-chart-bar"></i></div>
                 <span class="sidebar-nav-label">Statistics</span>
