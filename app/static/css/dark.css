@@ -1092,35 +1092,6 @@ footer {
   padding: 10px;
 }
 
-/* Sidebar Sections (Folders / Tags) */
-.sidebar-section {
-  margin-top: 24px;
-}
-
-.sidebar-section-title {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.3);
-  padding: 0 12px;
-  margin-bottom: 8px;
-}
-
-.sidebar-section-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.sidebar.collapsed .sidebar-section-title {
-  opacity: 0;
-  height: 0;
-  padding: 0;
-  margin: 0;
-  overflow: hidden;
-}
-
 /* Sidebar Items (folder/tag entries) */
 .sidebar-item {
   display: flex;
