@@ -2690,9 +2690,8 @@ footer {
    ============================================ */
 
 .explorer-page {
-  padding: 20px 24px 40px;
-  max-width: 1440px;
-  margin: 0 auto;
+  padding: 0;
+  width: 100%;
 }
 
 /* Welcome Banner */
@@ -3131,7 +3130,7 @@ footer {
 }
 
 @media (max-width: 768px) {
-  .explorer-page { padding: 14px; }
+  .explorer-page { padding: 0; }
   .usage-grid { grid-template-columns: 1fr; }
   .dash-welcome-title { font-size: 1.5rem; }
   .dash-welcome-actions { align-items: flex-start; }
