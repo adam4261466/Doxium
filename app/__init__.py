@@ -21,23 +21,12 @@ mail = Mail()
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
-def _get_limiter_storage():
-    url = os.getenv("REDIS_URL", "")
-    if not url:
-        return "memory://"
-    try:
-        import redis as _redis
-        r = _redis.from_url(url, socket_connect_timeout=3, socket_timeout=3)
-        r.ping()
-        return url
-    except Exception:
-        logging.warning("Redis unavailable, falling back to in-memory rate limiter")
-        return "memory://"
-
+# Force in-memory rate limiter. Redis is unreliable on Railway
+# (connections drop mid-request), which crashes the entire app.
 limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["60 per minute"],
-    storage_uri=_get_limiter_storage()
+    storage_uri="memory://"
 )
 
 from .models import User

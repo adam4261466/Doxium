@@ -1,3 +1,4 @@
+import logging
 from celery import Celery
 from celery.schedules import crontab
 
@@ -17,12 +18,19 @@ celery.conf.update(
 
 def init_celery(app):
     """Configure celery with the Flask app's settings. Called inside create_app()."""
-    celery.conf.update(
-        broker_url=app.config.get("CELERY_BROKER_URL", "redis://localhost:6379/0"),
-        result_backend=app.config.get("CELERY_RESULT_BACKEND",
-                                      app.config.get("CELERY_BROKER_URL",
-                                                     "redis://localhost:6379/0")),
-    )
+    broker = app.config.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
+    backend = app.config.get("CELERY_RESULT_BACKEND", broker)
+
+    try:
+        import redis as _redis
+        r = _redis.from_url(broker, socket_connect_timeout=3, socket_timeout=3)
+        r.ping()
+        r.close()
+        logging.info("Redis connected, enabling Celery with Redis broker")
+        celery.conf.update(broker_url=broker, result_backend=backend)
+    except Exception:
+        logging.warning("Redis unavailable, Celery tasks will be disabled")
+        celery.conf.update(broker_url="memory://", result_backend="cache+memory://")
 
     celery.conf.beat_schedule = {
         "cleanup-expired-files-daily": {
