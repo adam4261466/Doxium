@@ -526,31 +526,38 @@ def dashboard():
 
     all_files = all_files.all()
 
-    files_with_content = []
+    folders_map = {f.id: f for f in Folder.query.filter_by(user_id=current_user.id).all()}
+
+    documents = []
     for file in all_files:
-        files_with_content.append({
-            "filename": file.filename,
-            "size": file.size,
+        ext = os.path.splitext(file.filename)[1].lstrip(".").lower() or "txt"
+        if file.processed:
+            status = "completed"
+        else:
+            status = "pending"
+        documents.append({
             "id": file.id,
-            "processed": file.processed,
+            "filename": file.filename,
+            "file_type": ext,
+            "status": status,
+            "file_size": file.size,
             "folder_id": file.folder_id,
-            "tags": [{"id": t.id, "name": t.name, "color": t.color} for t in file.tags],
+            "folder": folders_map.get(file.folder_id),
+            "tags": file.tags,
         })
+
     limits = get_limits(current_user)
     monthly_uploads = get_monthly_upload_count(current_user.id) if limits["max_uploads_per_month"] is not None else None
     total_size = sum(f.size for f in current_user.files)
     used_mb = total_size / (1024 * 1024)
     available_mb = limits["storage_mb"] - used_mb
-    folders = Folder.query.filter_by(user_id=current_user.id).all()
+    folders = list(folders_map.values())
     tags = Tag.query.filter_by(user_id=current_user.id).all()
-
-    active_folder = Folder.query.filter_by(id=folder_id, user_id=current_user.id).first() if folder_id else None
-    active_tag = Tag.query.filter_by(id=tag_id, user_id=current_user.id).first() if tag_id else None
 
     return render_template(
         "dashboard.html",
         user=current_user,
-        files=files_with_content,
+        documents=documents,
         is_pilot=current_user.is_pilot,
         limits=limits,
         monthly_uploads=monthly_uploads,
@@ -558,10 +565,8 @@ def dashboard():
         storage_available_mb=available_mb,
         folders=folders,
         tags=tags,
-        active_folder_id=folder_id,
-        active_tag_id=tag_id,
-        active_folder=active_folder,
-        active_tag=active_tag,
+        current_folder_id=folder_id,
+        current_tag_id=tag_id,
     )
 
 @main.route("/upload", methods=["POST"])
@@ -628,6 +633,7 @@ def upload():
             size=size,
             user_id=current_user.id,
             content=file_bytes,
+            folder_id=request.form.get("folder_id", type=int),
         )
         db.session.add(new_file)
         db.session.commit()
