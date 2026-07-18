@@ -83,7 +83,7 @@
             <div class="col-lg-3 explorer-sidebar">
                 <div class="p-3">
                     <h6 class="text-muted small fw-bold mb-2">Navigation</h6>
-                    <a href="{{ url_for('dashboard') }}" class="explorer-nav-item mb-1 {{ 'active' if not current_folder_id and not current_tag_id else '' }}">
+                    <a href="{{ url_for('main.dashboard') }}" class="explorer-nav-item mb-1 {{ 'active' if not current_folder_id and not current_tag_id else '' }}">
                         <i class="fas fa-home me-2"></i> All Documents
                     </a>
                 </div>
@@ -100,11 +100,11 @@
                     <div class="explorer-section-body">
                         {% for folder in folders %}
                         <div class="explorer-nav-item-wrapper">
-                            <a href="{{ url_for('dashboard', folder_id=folder.id) }}" class="explorer-nav-item {{ 'active' if current_folder_id == folder.id else '' }}">
+                            <a href="{{ url_for('main.dashboard', folder_id=folder.id) }}" class="explorer-nav-item {{ 'active' if current_folder_id == folder.id else '' }}">
                                 <i class="fas fa-folder{{ '-open' if current_folder_id == folder.id else '' }} me-2" style="color: #f59e0b;"></i>
                                 {{ folder.name }}
                             </a>
-                            <form method="POST" action="{{ url_for('delete_folder', folder_id=folder.id) }}" class="explorer-delete-form" onsubmit="return confirm('Delete folder \'{{ folder.name }}\'? Documents will be moved to root.');">
+                            <form method="POST" action="{{ url_for('main.delete_folder', folder_id=folder.id) }}" class="explorer-delete-form" onsubmit="return confirm('Delete folder \'{{ folder.name }}\'? Documents will be moved to root.');">
                                 <button type="submit" class="explorer-delete-btn" title="Delete folder">
                                     <i class="fas fa-times"></i>
                                 </button>
@@ -128,7 +128,7 @@
                     </div>
                     <div class="explorer-section-body">
                         {% for tag in tags %}
-                        <a href="{{ url_for('dashboard', tag_id=tag.id) }}" class="explorer-nav-item {{ 'active' if current_tag_id == tag.id else '' }}">
+                        <a href="{{ url_for('main.dashboard', tag_id=tag.id) }}" class="explorer-nav-item {{ 'active' if current_tag_id == tag.id else '' }}">
                             <span class="explorer-tag-dot" style="background: {{ tag.color }};"></span>
                             {{ tag.name }}
                         </a>
@@ -142,7 +142,7 @@
                 <!-- Upload Section -->
                 <div class="p-3 border-top" style="border-color: var(--glass-border-soft) !important;">
                     <h6 class="text-muted small fw-bold mb-2">Quick Upload</h6>
-                    <form method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data" id="upload-form">
+                    <form method="POST" action="{{ url_for('main.upload') }}" enctype="multipart/form-data" id="upload-form">
                         {% if current_folder_id %}
                         <input type="hidden" name="folder_id" value="{{ current_folder_id }}">
                         {% endif %}
@@ -166,7 +166,7 @@
             <div class="col-lg-9 explorer-main">
                 <!-- Breadcrumb -->
                 <div class="explorer-breadcrumb">
-                    <a href="{{ url_for('dashboard') }}" class="breadcrumb-link">
+                    <a href="{{ url_for('main.dashboard') }}" class="breadcrumb-link">
                         <i class="fas fa-home"></i>
                     </a>
                     <span class="breadcrumb-sep"><i class="fas fa-chevron-right"></i></span>
@@ -209,7 +209,7 @@
                     <!-- Grid View -->
                     <div id="grid-container" class="file-grid">
                         {% for doc in documents %}
-                        <div class="file-card" onclick="openPreview('{{ url_for('preview_file', file_id=doc.id) }}')">
+                        <div class="file-card" onclick="openPreview('{{ url_for('main.preview_file', file_id=doc.id) }}')">
                             <div class="file-card-header">
                                 <div class="file-icon {{ 'icon-' + (doc.file_type or 'txt') }}">
                                     {% if doc.file_type == 'pdf' %}
@@ -237,22 +237,39 @@
                                         <i class="fas fa-ellipsis-v"></i>
                                     </button>
                                     <div class="kebab-dropdown">
-                                        <a href="{{ url_for('preview_file', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();">
+                                        <a href="{{ url_for('main.preview_file', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();">
                                             <i class="fas fa-eye"></i> Preview
                                         </a>
-                                        <a href="{{ url_for('download_file', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();">
-                                            <i class="fas fa-download"></i> Download
-                                        </a>
-                                        <a href="{{ url_for('query_page', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();">
-                                            <i class="fas fa-robot"></i> Query
-                                        </a>
-                                        <a href="{{ url_for('study_page', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();">
-                                            <i class="fas fa-graduation-cap"></i> Study
-                                        </a>
+                                        {% if doc.status == 'completed' %}
+                                        <form method="POST" action="{{ url_for('main.summarize_document', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();" style="padding: 0;">
+                                            <button type="submit" class="kebab-item-btn">
+                                                <i class="fas fa-file-alt"></i> Summarize
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('main.flashcards_document', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();" style="padding: 0;">
+                                            <button type="submit" class="kebab-item-btn">
+                                                <i class="fas fa-clone"></i> Flashcards
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('main.quiz_document', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();" style="padding: 0;">
+                                            <button type="submit" class="kebab-item-btn">
+                                                <i class="fas fa-question-circle"></i> Quiz
+                                            </button>
+                                        </form>
+                                        {% elif doc.status == 'pending' or doc.status == 'processing' %}
+                                        <div class="kebab-item-text">
+                                            <i class="fas fa-spinner fa-spin"></i> Processing...
+                                        </div>
+                                        {% else %}
+                                        <form method="POST" action="{{ url_for('main.process_file_route', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();" style="padding: 0;">
+                                            <button type="submit" class="kebab-item-btn">
+                                                <i class="fas fa-sync-alt"></i> Process
+                                            </button>
+                                        </form>
+                                        {% endif %}
                                         <div class="kebab-divider"></div>
                                         {% if doc.folder_id %}
-                                        <form method="POST" action="{{ url_for('move_to_folder') }}" class="kebab-item" onclick="event.stopPropagation();">
-                                            <input type="hidden" name="file_id" value="{{ doc.id }}">
+                                        <form method="POST" action="{{ url_for('main.move_file', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();" style="padding: 0;">
                                             <input type="hidden" name="folder_id" value="">
                                             <button type="submit" class="kebab-item-btn">
                                                 <i class="fas fa-folder-minus"></i> Remove from folder
@@ -263,8 +280,7 @@
                                             <i class="fas fa-folder-plus"></i> Move to...
                                             <div class="kebab-submenu">
                                                 {% for folder in folders %}
-                                                <form method="POST" action="{{ url_for('move_to_folder') }}">
-                                                    <input type="hidden" name="file_id" value="{{ doc.id }}">
+                                                <form method="POST" action="{{ url_for('main.move_file', file_id=doc.id) }}" style="padding: 0;">
                                                     <input type="hidden" name="folder_id" value="{{ folder.id }}">
                                                     <button type="submit" class="kebab-item-btn">
                                                         <i class="fas fa-folder"></i> {{ folder.name }}
@@ -275,7 +291,7 @@
                                         </div>
                                         {% endif %}
                                         <div class="kebab-divider"></div>
-                                        <form method="POST" action="{{ url_for('delete_file', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();">
+                                        <form method="POST" action="{{ url_for('main.delete_file', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();" style="padding: 0;">
                                             <button type="submit" class="kebab-item-btn text-danger" onclick="return confirm('Delete {{ doc.filename }}? This cannot be undone.')">
                                                 <i class="fas fa-trash"></i> Delete
                                             </button>
@@ -312,7 +328,7 @@
                             <div class="file-list-col-actions">Actions</div>
                         </div>
                         {% for doc in documents %}
-                        <div class="file-list-row" onclick="openPreview('{{ url_for('preview_file', file_id=doc.id) }}')">
+                        <div class="file-list-row" onclick="openPreview('{{ url_for('main.preview_file', file_id=doc.id) }}')">
                             <div class="file-list-col-name">
                                 <span class="file-icon-sm {{ 'icon-' + (doc.file_type or 'txt') }}">
                                     {% if doc.file_type == 'pdf' %}
@@ -351,10 +367,20 @@
                                 <span class="file-badge badge-{{ doc.status }}">{{ doc.status }}</span>
                             </div>
                             <div class="file-list-col-actions" onclick="event.stopPropagation();">
-                                <a href="{{ url_for('query_page', file_id=doc.id) }}" class="file-action-btn" title="Query"><i class="fas fa-robot"></i></a>
-                                <a href="{{ url_for('study_page', file_id=doc.id) }}" class="file-action-btn" title="Study"><i class="fas fa-graduation-cap"></i></a>
-                                <a href="{{ url_for('download_file', file_id=doc.id) }}" class="file-action-btn" title="Download"><i class="fas fa-download"></i></a>
-                                <form method="POST" action="{{ url_for('delete_file', file_id=doc.id) }}" class="d-inline" onsubmit="return confirm('Delete {{ doc.filename }}?')">
+                                <a href="{{ url_for('main.preview_file', file_id=doc.id) }}" class="file-action-btn" title="Preview"><i class="fas fa-eye"></i></a>
+                                {% if doc.status == 'completed' %}
+                                <form method="POST" action="{{ url_for('main.summarize_document', file_id=doc.id) }}" class="d-inline">
+                                    <button type="submit" class="file-action-btn" title="Summarize"><i class="fas fa-file-alt"></i></button>
+                                </form>
+                                <form method="POST" action="{{ url_for('main.flashcards_document', file_id=doc.id) }}" class="d-inline">
+                                    <button type="submit" class="file-action-btn" title="Flashcards"><i class="fas fa-clone"></i></button>
+                                </form>
+                                {% elif doc.status != 'processing' and doc.status != 'pending' %}
+                                <form method="POST" action="{{ url_for('main.process_file_route', file_id=doc.id) }}" class="d-inline">
+                                    <button type="submit" class="file-action-btn" title="Process"><i class="fas fa-sync-alt"></i></button>
+                                </form>
+                                {% endif %}
+                                <form method="POST" action="{{ url_for('main.delete_file', file_id=doc.id) }}" class="d-inline" onsubmit="return confirm('Delete {{ doc.filename }}?')">
                                     <button type="submit" class="file-action-btn text-danger" title="Delete"><i class="fas fa-trash"></i></button>
                                 </form>
                             </div>
@@ -381,7 +407,7 @@
 <div class="modal fade" id="folderModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="{{ url_for('create_folder') }}">
+            <form method="POST" action="{{ url_for('main.create_folder') }}">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="fas fa-folder-plus me-2"></i>New Folder</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -406,7 +432,7 @@
 <div class="modal fade" id="tagModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="{{ url_for('create_tag') }}">
+            <form method="POST" action="{{ url_for('main.create_tag') }}">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="fas fa-tag me-2"></i>New Tag</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
