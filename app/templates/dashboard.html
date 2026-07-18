@@ -196,6 +196,9 @@
                         {{ documents | length }} item{{ 's' if documents | length != 1 else '' }}
                     </div>
                     <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="selectModeBtn" onclick="toggleSelectMode()" title="Select files to query">
+                            <i class="fas fa-check-square me-1"></i> Select
+                        </button>
                         <div class="btn-group btn-group-sm" role="group">
                             <input type="radio" class="btn-check" name="view-mode" id="grid-view" value="grid" checked>
                             <label class="btn btn-outline-secondary" for="grid-view"><i class="fas fa-th"></i></label>
@@ -205,31 +208,17 @@
                     </div>
                 </div>
 
-                <!-- Query Section -->
+                <!-- Query Bar -->
                 <div class="p-3 border-bottom" style="border-color: var(--glass-border-soft) !important;">
                     <form method="POST" action="{{ url_for('main.query_documents') }}" id="queryForm">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="file_ids" id="queryFileIds" value="">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text" style="background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.2); color: var(--text-muted);"><i class="fas fa-robot"></i></span>
-                            <input type="text" class="form-control" name="query" placeholder="Ask a question about your documents..." maxlength="1000" required>
+                            <input type="text" class="form-control" name="query" id="queryInput" placeholder="Ask about all your documents..." maxlength="1000" required>
                             <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane"></i></button>
                         </div>
-                        {% if documents %}
-                        <div class="mt-2" id="query-doc-select">
-                            <small class="text-muted me-2">Search in:</small>
-                            <div class="d-flex flex-wrap gap-1 mt-1">
-                                {% for doc in documents %}
-                                {% if doc.status == 'completed' %}
-                                <label class="d-inline-flex align-items-center gap-1" style="font-size: 0.75rem;">
-                                    <input type="checkbox" name="file_ids" value="{{ doc.id }}" checked
-                                        style="accent-color: var(--accent); width: 14px; height: 14px;">
-                                    <span class="text-muted">{{ doc.filename }}</span>
-                                </label>
-                                {% endif %}
-                                {% endfor %}
-                            </div>
-                        </div>
-                        {% endif %}
+                        <div class="mt-1" id="queryScope"></div>
                     </form>
                 </div>
 
@@ -239,7 +228,8 @@
                     <!-- Grid View -->
                     <div id="grid-container" class="file-grid">
                         {% for doc in documents %}
-                        <div class="file-card" onclick="openPreview('{{ url_for('main.preview_file', file_id=doc.id) }}')">
+                        <div class="file-card" data-file-id="{{ doc.id }}" onclick="handleCardClick(event, '{{ url_for('main.preview_file', file_id=doc.id) }}', {{ doc.id }})">
+                            <input type="checkbox" class="file-select-check d-none" value="{{ doc.id }}" onchange="updateSelection()">
                             <div class="file-card-header">
                                 <div class="file-icon {{ 'icon-' + (doc.file_type or 'txt') }}">
                                     {% if doc.file_type == 'pdf' %}
@@ -268,6 +258,10 @@
                                     </button>
                                     <div class="kebab-dropdown">
                                         {% if doc.status == 'completed' %}
+                                        <button type="button" class="kebab-item-btn" onclick="event.stopPropagation(); askAboutFile({{ doc.id }}, '{{ doc.filename | e }}')">
+                                            <i class="fas fa-comment-dots"></i> Ask about this file
+                                        </button>
+                                        <div class="kebab-divider"></div>
                                         <form method="POST" action="{{ url_for('main.summarize_document', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();" style="padding: 0;">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                             <button type="submit" class="kebab-item-btn">
@@ -358,7 +352,8 @@
                             <div class="file-list-col-actions">Actions</div>
                         </div>
                         {% for doc in documents %}
-                        <div class="file-list-row" onclick="openPreview('{{ url_for('main.preview_file', file_id=doc.id) }}')">
+                        <div class="file-list-row" data-file-id="{{ doc.id }}" onclick="handleRowClick(event, '{{ url_for('main.preview_file', file_id=doc.id) }}', {{ doc.id }})">
+                            <input type="checkbox" class="file-select-check d-none" value="{{ doc.id }}" onchange="updateSelection()">
                             <div class="file-list-col-name">
                                 <span class="file-icon-sm {{ 'icon-' + (doc.file_type or 'txt') }}">
                                     {% if doc.file_type == 'pdf' %}
@@ -398,6 +393,7 @@
                             </div>
                             <div class="file-list-col-actions" onclick="event.stopPropagation();">
                                 {% if doc.status == 'completed' %}
+                                <button type="button" class="file-action-btn" title="Ask about this file" onclick="askAboutFile({{ doc.id }}, '{{ doc.filename | e }}')"><i class="fas fa-comment-dots"></i></button>
                                 <form method="POST" action="{{ url_for('main.summarize_document', file_id=doc.id) }}" class="d-inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                     <button type="submit" class="file-action-btn" title="Summarize"><i class="fas fa-file-alt"></i></button>
@@ -491,6 +487,43 @@
     </div>
 </div>
 
+<!-- Ask About File Modal -->
+<div class="modal fade" id="askModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('main.query_documents') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" name="file_ids" id="askFileId" value="">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-comment-dots me-2"></i><span id="askModalTitle">Ask about file</span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" class="form-control" name="query" placeholder="What would you like to know?" maxlength="1000" required autofocus>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane me-1"></i> Ask</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Query Selected Bar -->
+<div id="querySelectedBar" class="d-none" style="position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1050; min-width: 420px; max-width: 90vw;">
+    <div class="glass-card p-3" style="border: 1px solid var(--accent); box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);">
+        <form method="POST" action="{{ url_for('main.query_documents') }}" class="d-flex gap-2 align-items-center">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="hidden" name="file_ids" id="selectedFileIds" value="">
+            <span class="text-muted small" id="selectedCount">0 files</span>
+            <input type="text" class="form-control form-control-sm" name="query" placeholder="Ask about selected files..." maxlength="1000" required>
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane"></i></button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearSelection()"><i class="fas fa-times"></i></button>
+        </form>
+    </div>
+</div>
+
 <!-- File Preview Modal -->
 <div class="modal fade" id="previewModal" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -524,6 +557,8 @@
 {% block scripts %}
 {{ super() }}
 <script>
+let selectMode = false;
+
 // View toggle with localStorage
 document.addEventListener('DOMContentLoaded', function() {
     const savedView = localStorage.getItem('dashboard-view') || 'grid';
@@ -549,6 +584,92 @@ function toggleView(mode) {
         grid.classList.add('d-none');
         list.classList.remove('d-none');
     }
+}
+
+// Select mode
+function toggleSelectMode() {
+    selectMode = !selectMode;
+    const btn = document.getElementById('selectModeBtn');
+    const layout = document.querySelector('.explorer-layout');
+    if (selectMode) {
+        btn.classList.add('active');
+        btn.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
+        layout.classList.add('select-mode');
+    } else {
+        clearSelection();
+        btn.classList.remove('active');
+        btn.innerHTML = '<i class="fas fa-check-square me-1"></i> Select';
+        layout.classList.remove('select-mode');
+    }
+}
+
+function handleCardClick(e, url, fileId) {
+    if (!selectMode) {
+        openPreview(url);
+        return;
+    }
+    if (e.target.closest('.kebab-btn') || e.target.closest('.kebab-dropdown') || e.target.closest('form')) return;
+    const card = e.currentTarget;
+    const cb = card.querySelector('.file-select-check');
+    cb.checked = !cb.checked;
+    card.classList.toggle('selected', cb.checked);
+    updateSelection();
+}
+
+function handleRowClick(e, url, fileId) {
+    if (!selectMode) {
+        openPreview(url);
+        return;
+    }
+    if (e.target.closest('form') || e.target.closest('.file-action-btn')) return;
+    const row = e.currentTarget;
+    const cb = row.querySelector('.file-select-check');
+    cb.checked = !cb.checked;
+    row.classList.toggle('selected', cb.checked);
+    updateSelection();
+}
+
+function updateSelection() {
+    const checks = document.querySelectorAll('.file-select-check:checked');
+    const ids = Array.from(checks).map(c => c.value);
+    const bar = document.getElementById('querySelectedBar');
+    const count = document.getElementById('selectedCount');
+    const selectedIds = document.getElementById('selectedFileIds');
+    const queryFileIds = document.getElementById('queryFileIds');
+    const queryScope = document.getElementById('queryScope');
+    const queryInput = document.getElementById('queryInput');
+
+    if (ids.length > 0) {
+        bar.classList.remove('d-none');
+        count.textContent = ids.length + ' file' + (ids.length > 1 ? 's' : '') + ' selected';
+        selectedIds.value = ids.join(',');
+        queryInput.placeholder = 'Ask about selected files...';
+    } else {
+        bar.classList.add('d-none');
+        queryInput.placeholder = 'Ask about all your documents...';
+    }
+    queryFileIds.value = ids.length > 0 ? ids.join(',') : '';
+    if (ids.length > 0) {
+        queryScope.innerHTML = '<small class="text-muted"><i class="fas fa-filter"></i> Searching in ' + ids.length + ' selected file' + (ids.length > 1 ? 's' : '') + '</small>';
+    } else {
+        queryScope.innerHTML = '';
+    }
+}
+
+function clearSelection() {
+    document.querySelectorAll('.file-select-check').forEach(cb => {
+        cb.checked = false;
+        cb.closest('.file-card, .file-list-row').classList.remove('selected');
+    });
+    updateSelection();
+    if (selectMode) toggleSelectMode();
+}
+
+// Ask about file modal
+function askAboutFile(fileId, filename) {
+    document.getElementById('askFileId').value = fileId;
+    document.getElementById('askModalTitle').textContent = 'Ask about ' + filename;
+    new bootstrap.Modal(document.getElementById('askModal')).show();
 }
 
 // Kebab menu

@@ -1545,6 +1545,54 @@ footer {
 }
 
 /* ========================================
+   Select Mode
+   ======================================== */
+
+.select-mode .file-card,
+.select-mode .file-list-row {
+    position: relative;
+}
+
+.select-mode .file-select-check {
+    display: block !important;
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 20px;
+    height: 20px;
+    accent-color: var(--accent);
+    cursor: pointer;
+    z-index: 5;
+    border-radius: 4px;
+}
+
+.select-mode .file-card.selected {
+    border-color: var(--accent) !important;
+    background: rgba(99, 102, 241, 0.12);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+}
+
+.select-mode .file-list-row.selected {
+    background: rgba(99, 102, 241, 0.12);
+}
+
+.select-mode .file-card .file-card-menu,
+.select-mode .file-list-col-actions {
+    pointer-events: none;
+    opacity: 0.2;
+}
+
+.select-mode .file-select-check:checked + .file-card-header {
+    margin-top: 8px;
+}
+
+#selectModeBtn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #ffffff;
+}
+
+/* ========================================
    List View (alternative to grid)
    ======================================== */
 
