@@ -242,7 +242,7 @@
                                         <a href="{{ url_for('main.preview_file', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();">
                                             <i class="fas fa-eye"></i> Preview
                                         </a>
-                                        {% elif doc.status == 'completed' %}
+                                        {% if doc.status == 'completed' %}
                                         <form method="POST" action="{{ url_for('main.summarize_document', file_id=doc.id) }}" class="kebab-item" onclick="event.stopPropagation();" style="padding: 0;">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                             <button type="submit" class="kebab-item-btn">
