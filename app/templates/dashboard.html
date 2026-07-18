@@ -1,6 +1,31 @@
 {% extends "base.html" %}
 {% block title %}Dashboard - Doxium{% endblock %}
 
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand" href="{{ url_for('main.home') }}">
+            <div class="brand-icon">
+                <i class="fas fa-sparkles text-white" style="font-size: 0.9rem;"></i>
+            </div>
+            <span class="gradient-text">Doxium</span>
+        </a>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            {% if session.get('admin_id') %}
+                <a class="btn btn-ghost btn-sm" href="{{ url_for('main.return_to_admin') }}">
+                    <i class="fas fa-shield-alt me-1"></i> Admin
+                </a>
+            {% endif %}
+            {% if not current_user.is_pilot %}
+                <a class="btn btn-ghost btn-sm" href="{{ url_for('main.pricing') }}">
+                    <i class="fas fa-bolt me-1"></i> Upgrade
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
 {% block content %}
 {% set active_folder = (folders | selectattr('id', 'equalto', current_folder_id) | first) if current_folder_id else none %}
 {% set active_tag = (tags | selectattr('id', 'equalto', current_tag_id) | first) if current_tag_id else none %}
@@ -13,10 +38,19 @@
         <!-- Explorer Sidebar -->
         <div class="col-lg-3 col-xl-2 explorer-sidebar">
             <div class="explorer-nav">
-                <!-- Quick Access -->
+                <!-- Navigation -->
                 <div class="explorer-section">
                     <a href="{{ url_for('main.dashboard') }}" class="explorer-nav-item {{ 'active' if not current_folder_id and not current_tag_id }}">
-                        <i class="fas fa-clock me-2"></i>Quick Access
+                        <i class="fas fa-th-large me-2"></i>Dashboard
+                    </a>
+                    <button type="button" class="explorer-nav-item w-100 text-start" onclick="new bootstrap.Modal(document.getElementById('askAllModal')).show()">
+                        <i class="fas fa-robot me-2"></i>AI Query
+                    </button>
+                    <a href="{{ url_for('main.pricing') }}" class="explorer-nav-item">
+                        <i class="fas fa-chart-bar me-2"></i>Statistics
+                    </a>
+                    <a href="#" class="explorer-nav-item">
+                        <i class="fas fa-cog me-2"></i>Settings
                     </a>
                 </div>
 
@@ -25,6 +59,7 @@
                     <div class="explorer-section-header" onclick="toggleExplorerSection(this)">
                         <i class="fas fa-chevron-down explorer-chevron me-1"></i>
                         <i class="fas fa-folder me-2 text-warning"></i>Folders
+                        <span class="sidebar-count">{{ folders | length }}</span>
                         <button class="btn btn-sm ms-auto explorer-add-btn" onclick="event.stopPropagation(); showFolderModal();" title="New folder">
                             <i class="fas fa-plus"></i>
                         </button>
@@ -46,9 +81,10 @@
                                     </form>
                                 </div>
                             {% endfor %}
-                        {% else %}
-                            <small class="text-muted d-block px-3 py-1">No folders yet</small>
                         {% endif %}
+                        <a href="javascript:void(0)" class="explorer-nav-item" onclick="showFolderModal()">
+                            <i class="fas fa-plus me-2" style="color: var(--text-dim);"></i><span style="color: var(--text-dim);">New Folder</span>
+                        </a>
                     </div>
                 </div>
 
@@ -57,6 +93,7 @@
                     <div class="explorer-section-header" onclick="toggleExplorerSection(this)">
                         <i class="fas fa-chevron-down explorer-chevron me-1"></i>
                         <i class="fas fa-tags me-2 text-info"></i>Tags
+                        <span class="sidebar-count">{{ tags | length }}</span>
                         <button class="btn btn-sm ms-auto explorer-add-btn" onclick="event.stopPropagation(); showTagModal();" title="New tag">
                             <i class="fas fa-plus"></i>
                         </button>
@@ -78,43 +115,32 @@
                                     </form>
                                 </div>
                             {% endfor %}
-                        {% else %}
-                            <small class="text-muted d-block px-3 py-1">No tags yet</small>
                         {% endif %}
+                        <a href="javascript:void(0)" class="explorer-nav-item" onclick="showTagModal()">
+                            <i class="fas fa-plus me-2" style="color: var(--text-dim);"></i><span style="color: var(--text-dim);">New Tag</span>
+                        </a>
                     </div>
                 </div>
+            </div>
+
+            <!-- Account Section at Bottom -->
+            <div class="sidebar-user">
+                <div class="sidebar-user-avatar"><i class="fas fa-user"></i></div>
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-name">{{ current_user.username }}</div>
+                    <div class="sidebar-user-email">{{ current_user.email }}</div>
+                </div>
+                <a href="{{ url_for('main.logout') }}" class="sidebar-logout-btn" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
             </div>
         </div>
 
         <!-- Main Content Area -->
         <div class="col-lg-9 col-xl-10 explorer-main">
 
-            <!-- Welcome Banner -->
-            <div class="dash-welcome">
-                <div class="dash-welcome-info">
-                    <div class="dash-welcome-avatar"><i class="fas fa-user-circle"></i></div>
-                    <div>
-                        <h1 class="dash-welcome-title">Welcome back!</h1>
-                        <p class="dash-welcome-sub">Manage your documents with AI-powered insights.</p>
-                    </div>
-                </div>
-                <div class="dash-welcome-actions">
-                    {% if user.is_pilot %}
-                        <span class="plan-badge plan-badge-pro"><i class="fas fa-star me-2"></i>Pro Plan</span>
-                    {% else %}
-                        <a href="{{ url_for('main.pricing') }}" class="plan-badge plan-badge-free"><i class="fas fa-user me-2"></i>Free Plan &middot; Upgrade</a>
-                    {% endif %}
-                    <div class="dash-welcome-links">
-                        <a href="{{ url_for('main.download_all_files') }}" class="btn btn-glass btn-sm"><i class="fas fa-download me-1"></i>Download All</a>
-                        {% if current_user.is_pilot and current_user.ls_customer_portal_url %}
-                        <a href="{{ current_user.ls_customer_portal_url }}" target="_blank" class="btn btn-glass btn-sm"><i class="fas fa-cog me-1"></i>Manage</a>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
             <!-- Usage Stats -->
-            <div class="usage-grid">
+            <div class="usage-grid" style="margin: 20px 24px 0;">
                 <div class="usage-card">
                     <div class="usage-icon usage-icon-indigo"><i class="fas fa-file-alt"></i></div>
                     <div class="usage-body">
@@ -137,17 +163,6 @@
                         <span class="usage-value">{{ limits.max_queries_per_month }}</span>
                     </div>
                 </div>
-            </div>
-            <div class="explorer-breadcrumb">
-                <a href="{{ url_for('main.dashboard') }}" class="breadcrumb-link"><i class="fas fa-home me-1"></i>Home</a>
-                <span class="breadcrumb-sep"><i class="fas fa-chevron-right"></i></span>
-                {% if active_folder %}
-                    <span class="breadcrumb-current"><i class="fas fa-folder me-1 text-warning"></i>{{ active_folder.name }}</span>
-                {% elif active_tag %}
-                    <span class="breadcrumb-current"><i class="fas fa-tag me-1 text-info"></i>{{ active_tag.name }}</span>
-                {% else %}
-                    <span class="breadcrumb-current"><i class="fas fa-clock me-1"></i>Quick Access</span>
-                {% endif %}
             </div>
 
             <!-- Toolbar -->
