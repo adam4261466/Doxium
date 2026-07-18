@@ -38,129 +38,8 @@
 
     <!-- Explorer Layout -->
     <div class="explorer-layout">
-        <!-- Sidebar -->
-        <aside class="sidebar" id="appSidebar">
-            <div class="sidebar-inner">
-                <!-- Logo -->
-                <div class="sidebar-logo">
-                    <div class="sidebar-logo-icon">
-                        <i class="fas fa-sparkles"></i>
-                    </div>
-                    <span class="sidebar-logo-text">Doxium</span>
-                </div>
-
-                <!-- Primary Nav -->
-                <nav class="sidebar-nav">
-                    <a href="{{ url_for('main.dashboard') }}" class="sidebar-nav-item {{ 'active' if not current_folder_id and not current_tag_id }}" title="Dashboard">
-                        <div class="sidebar-nav-icon"><i class="fas fa-th-large"></i></div>
-                        <span class="sidebar-nav-label">Dashboard</span>
-                    </a>
-                    <button type="button" class="sidebar-nav-item" onclick="new bootstrap.Modal(document.getElementById('askAllModal')).show()" title="AI Query">
-                        <div class="sidebar-nav-icon"><i class="fas fa-robot"></i></div>
-                        <span class="sidebar-nav-label">AI Query</span>
-                    </button>
-                </nav>
-
-                <!-- Folders Card -->
-                <div class="sidebar-card">
-                    <div class="sidebar-card-header" onclick="toggleSidebarSection(this)">
-                        <div class="sidebar-card-header-left">
-                            <i class="fas fa-chevron-down sidebar-chevron"></i>
-                            <i class="fas fa-folder text-warning sidebar-card-icon"></i>
-                            <span class="sidebar-card-title">Folders</span>
-                        </div>
-                        <span class="sidebar-count">{{ folders | length }}</span>
-                    </div>
-                    <div class="sidebar-card-body">
-                        {% if folders %}
-                            {% for folder in folders %}
-                                <div class="sidebar-item group">
-                                    <a href="{{ url_for('main.dashboard', folder_id=folder.id) }}" class="sidebar-item-link {{ 'active' if current_folder_id == folder.id }}" title="{{ folder.name }}">
-                                        <i class="fas fa-folder{{ '-open' if current_folder_id == folder.id }} text-warning"></i>
-                                        <span class="sidebar-item-text">{{ folder.name }}</span>
-                                    </a>
-                                    <div class="sidebar-item-actions">
-                                        <button class="sidebar-item-action" onclick="renameFolder({{ folder.id }}, '{{ folder.name | e }}')" title="Rename">
-                                            <i class="fas fa-pen"></i>
-                                        </button>
-                                        <form action="{{ url_for('main.delete_folder', folder_id=folder.id) }}" method="post" class="d-inline">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                            <button type="submit" class="sidebar-item-action sidebar-item-action-danger" onclick="return confirm('Delete folder? Files will be moved to root.')" title="Delete">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        {% endif %}
-                        <button class="sidebar-item sidebar-add-item" onclick="showFolderModal()" title="New Folder">
-                            <i class="fas fa-plus"></i>
-                            <span class="sidebar-item-text">New Folder</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Tags Card -->
-                <div class="sidebar-card">
-                    <div class="sidebar-card-header" onclick="toggleSidebarSection(this)">
-                        <div class="sidebar-card-header-left">
-                            <i class="fas fa-chevron-down sidebar-chevron"></i>
-                            <i class="fas fa-tags text-info sidebar-card-icon"></i>
-                            <span class="sidebar-card-title">Tags</span>
-                        </div>
-                        <span class="sidebar-count">{{ tags | length }}</span>
-                    </div>
-                    <div class="sidebar-card-body">
-                        {% if tags %}
-                            {% for tag in tags %}
-                                <div class="sidebar-item group">
-                                    <a href="{{ url_for('main.dashboard', tag_id=tag.id) }}" class="sidebar-item-link {{ 'active' if current_tag_id == tag.id }}" title="{{ tag.name }}">
-                                        <span class="sidebar-tag-dot" style="background: {{ tag.color }};"></span>
-                                        <span class="sidebar-item-text">{{ tag.name }}</span>
-                                    </a>
-                                    <div class="sidebar-item-actions">
-                                        <form action="{{ url_for('main.delete_tag', tag_id=tag.id) }}" method="post" class="d-inline">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                            <button type="submit" class="sidebar-item-action sidebar-item-action-danger" onclick="return confirm('Delete tag?')" title="Delete">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        {% endif %}
-                        <button class="sidebar-item sidebar-add-item" onclick="showTagModal()" title="New Tag">
-                            <i class="fas fa-plus"></i>
-                            <span class="sidebar-item-text">New Tag</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Secondary Nav -->
-                <nav class="sidebar-nav sidebar-nav-bottom">
-                    <a href="{{ url_for('main.pricing') }}" class="sidebar-nav-item" title="Statistics">
-                        <div class="sidebar-nav-icon"><i class="fas fa-chart-bar"></i></div>
-                        <span class="sidebar-nav-label">Statistics</span>
-                    </a>
-                    <a href="#" class="sidebar-nav-item" title="Settings">
-                        <div class="sidebar-nav-icon"><i class="fas fa-cog"></i></div>
-                        <span class="sidebar-nav-label">Settings</span>
-                    </a>
-                </nav>
-            </div>
-
-            <!-- User Footer -->
-            <div class="sidebar-footer">
-                <div class="sidebar-user-avatar"><i class="fas fa-user"></i></div>
-                <div class="sidebar-user-info">
-                    <div class="sidebar-user-name">{{ current_user.username }}</div>
-                    <div class="sidebar-user-email">{{ current_user.email }}</div>
-                </div>
-                <a href="{{ url_for('main.logout') }}" class="sidebar-logout-btn" title="Logout">
-                    <i class="fas fa-sign-out-alt"></i>
-                </a>
-            </div>
-        </aside>
+        {% set active_page = 'dashboard' %}
+        {% include "_sidebar.html" %}
 
         <!-- Main Content Area -->
         <div class="explorer-main">
@@ -414,57 +293,7 @@
 </form>
 
 <!-- Folder Modal -->
-<div class="modal fade" id="folderModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content glass-modal">
-            <form method="POST" action="{{ url_for('main.create_folder') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-folder-plus me-2" style="color: var(--accent);"></i>New Folder</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" name="parent_id" value="{{ current_folder_id or '' }}">
-                    <input type="text" class="form-control" name="name" required placeholder="Folder name" autofocus>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-glass" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Tag Modal -->
-<div class="modal fade" id="tagModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content glass-modal">
-            <form method="POST" action="{{ url_for('main.create_tag') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-tag me-2" style="color: var(--accent);"></i>New Tag</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="text" class="form-control mb-3" name="name" required placeholder="Tag name" autofocus>
-                    <div class="d-flex gap-2">
-                        {% for color in ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#f97316'] %}
-                        <label class="tag-color-option">
-                            <input type="radio" name="color" value="{{ color }}" {{ 'checked' if color == '#8b5cf6' else '' }}>
-                            <span class="tag-color-dot" style="background: {{ color }};"></span>
-                        </label>
-                        {% endfor %}
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-glass" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+{% include "_sidebar_modals.html" %}
 
 <!-- Ask About File Modal -->
 <div class="modal fade" id="askModal" tabindex="-1">
@@ -560,38 +389,7 @@ let selectMode = false;
 document.addEventListener('DOMContentLoaded', function() {
     const savedView = localStorage.getItem('dashboard-view') || 'grid';
     if (savedView === 'list') toggleView('list');
-    initSidebar();
 });
-
-function toggleSidebar() {
-    const sidebar = document.getElementById('appSidebar');
-    if (window.innerWidth <= 991) {
-        sidebar.classList.toggle('mobile-open');
-    } else {
-        sidebar.classList.toggle('collapsed');
-        localStorage.setItem('sidebar-collapsed', sidebar.classList.contains('collapsed') ? '1' : '0');
-    }
-}
-
-function initSidebar() {
-    const sidebar = document.getElementById('appSidebar');
-    const saved = localStorage.getItem('sidebar-collapsed');
-    if (saved === '1' && window.innerWidth > 991) {
-        sidebar.classList.add('collapsed');
-    }
-    document.addEventListener('click', function(e) {
-        if (window.innerWidth <= 991 && sidebar.classList.contains('mobile-open')) {
-            if (!sidebar.contains(e.target) && !e.target.closest('.sidebar-toggle-btn')) {
-                sidebar.classList.remove('mobile-open');
-            }
-        }
-    });
-}
-
-function toggleSidebarSection(header) {
-    const card = header.closest('.sidebar-card');
-    card.classList.toggle('collapsed');
-}
 
 function toggleView(mode) {
     const grid = document.getElementById('grid-container');
@@ -675,24 +473,6 @@ function toggleKebab(btn) {
 document.addEventListener('click', function(e) {
     if (!e.target.closest('.kebab-btn') && !e.target.closest('.kebab-dropdown')) { document.querySelectorAll('.kebab-dropdown.show').forEach(d => d.classList.remove('show')); }
 });
-
-function showFolderModal() { new bootstrap.Modal(document.getElementById('folderModal')).show(); }
-function showTagModal() { new bootstrap.Modal(document.getElementById('tagModal')).show(); }
-
-function renameFolder(folderId, currentName) {
-    const newName = prompt('Rename folder:', currentName);
-    if (newName && newName !== currentName) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/folders/' + folderId + '/rename';
-        const csrf = document.querySelector('input[name="csrf_token"]');
-        if (csrf) { const c = document.createElement('input'); c.type='hidden'; c.name='csrf_token'; c.value=csrf.value; form.appendChild(c); }
-        const inp = document.createElement('input'); inp.type='hidden'; inp.name='name'; inp.value=newName;
-        form.appendChild(inp);
-        document.body.appendChild(form);
-        form.submit();
-    }
-}
 
 function openPreview(url) {
     const modal = new bootstrap.Modal(document.getElementById('previewModal'));
