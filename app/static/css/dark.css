@@ -1092,6 +1092,42 @@ footer {
   padding: 10px;
 }
 
+.sidebar-nav-flyout-wrap { position: relative; }
+
+.sidebar-nav-flyout {
+  display: none;
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 0;
+  min-width: 200px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: rgba(20, 20, 30, 0.95);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+}
+
+.sidebar.collapsed .sidebar-nav-flyout { left: calc(100% + 4px); }
+.sidebar-nav-flyout.open { display: block; }
+
+.sidebar-flyout-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 6px;
+  color: rgba(255, 255, 255, 0.7); text-decoration: none;
+  font-size: 0.825rem; white-space: nowrap;
+  background: none; border: none; width: 100%; text-align: left;
+  font-family: 'Poppins', sans-serif; cursor: pointer;
+}
+.sidebar-flyout-item:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
+.sidebar-flyout-item.active { background: rgba(139, 92, 246, 0.2); color: #c084fc; }
+.sidebar-flyout-add { margin-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 10px; color: #c084fc; }
+.sidebar-flyout-empty { padding: 8px 10px; font-size: 0.8rem; color: rgba(255, 255, 255, 0.35); }
+.sidebar-flyout-tag-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
 /* Sidebar Items (folder/tag entries) */
 .sidebar-item {
   display: flex;
