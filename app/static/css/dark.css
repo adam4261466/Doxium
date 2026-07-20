@@ -1111,7 +1111,17 @@ footer {
 
 .sidebar-nav-flyout.open { display: block; }
 .sidebar.collapsed .sidebar-nav-flyout { left: calc(100% + 4px); }
-.sidebar-nav-flyout.open { display: block; }
+.sidebar-flyout-row { display: flex; align-items: center; gap: 2px; }
+.sidebar-flyout-row .sidebar-flyout-item { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.sidebar-flyout-actions { display: flex; gap: 2px; padding-right: 4px; }
+.sidebar-flyout-action {
+  display: flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border: none; border-radius: 5px;
+  background: rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.6);
+  font-size: 0.7rem; cursor: pointer; flex-shrink: 0;
+}
+.sidebar-flyout-action:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.sidebar-flyout-action-danger:hover { background: rgba(239, 68, 68, 0.2); color: #f87171; }
 
 .sidebar-flyout-item {
   display: flex; align-items: center; gap: 8px;
