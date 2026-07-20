@@ -86,7 +86,25 @@ function renameFolder(folderId, currentName) {
         form.submit();
     }
 }
-
+function renameTag(tagId, currentName) {
+    const newName = prompt('Rename tag:', currentName);
+    if (newName && newName !== currentName) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/tags/' + tagId + '/rename';
+        const csrf = document.querySelector('input[name="csrf_token"]');
+        if (csrf) {
+            const c = document.createElement('input');
+            c.type = 'hidden'; c.name = 'csrf_token'; c.value = csrf.value;
+            form.appendChild(c);
+        }
+        const inp = document.createElement('input');
+        inp.type = 'hidden'; inp.name = 'name'; inp.value = newName;
+        form.appendChild(inp);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
 // Opens the "Ask AI" modal if present on the current page, otherwise
 // navigates to the dashboard where the AI Query modal lives.
 function openAIQuery(dashboardUrl) {
