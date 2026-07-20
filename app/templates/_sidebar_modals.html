@@ -9,7 +9,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" name="parent_id" value="{{ current_folder_id | default('') }}">
+                    <input type="hidden" name="parent_id" value="{{ current_folder_id | default('', true) }}">
                     <input type="text" class="form-control" name="name" required placeholder="Folder name" autofocus>
                 </div>
                 <div class="modal-footer">
