@@ -31,6 +31,21 @@ function initSidebar() {
     });
 }
 
+function toggleSidebarFlyout(e, flyoutId) {
+    e.preventDefault();
+    e.stopPropagation();
+    const target = document.getElementById(flyoutId);
+    if (!target) return;
+    const isOpen = target.classList.contains('open');
+    document.querySelectorAll('.sidebar-nav-flyout.open').forEach(el => el.classList.remove('open'));
+    if (!isOpen) target.classList.add('open');
+}
+
+document.addEventListener('click', function (e) {
+    if (!e.target.closest('.sidebar-nav-flyout-wrap')) {
+        document.querySelectorAll('.sidebar-nav-flyout.open').forEach(el => el.classList.remove('open'));
+    }
+});
 function showFolderModal() {
     const el = document.getElementById('folderModal');
     if (el) new bootstrap.Modal(el).show();
