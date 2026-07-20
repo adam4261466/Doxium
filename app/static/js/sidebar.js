@@ -31,32 +31,6 @@ function initSidebar() {
     });
 }
 
-function toggleSidebarFlyout(e, flyoutId) {
-    e.preventDefault();
-    e.stopPropagation();
-    const target = document.getElementById(flyoutId);
-    if (!target) return;
-    const isOpen = target.classList.contains('open');
-    document.querySelectorAll('.sidebar-nav-flyout.open').forEach(el => el.classList.remove('open'));
-    if (isOpen) return;
-
-    const btn = e.currentTarget;
-    const rect = btn.getBoundingClientRect();
-    target.classList.add('open');
-    const flyoutHeight = target.offsetHeight;
-    let top = rect.top;
-    if (top + flyoutHeight > window.innerHeight - 8) {
-        top = Math.max(8, window.innerHeight - flyoutHeight - 8);
-    }
-    target.style.top = top + 'px';
-    target.style.left = (rect.right + 8) + 'px';
-}
-
-document.addEventListener('click', function (e) {
-    if (!e.target.closest('.sidebar-nav-flyout-wrap')) {
-        document.querySelectorAll('.sidebar-nav-flyout.open').forEach(el => el.classList.remove('open'));
-    }
-});
 function showFolderModal() {
     const el = document.getElementById('folderModal');
     if (el) new bootstrap.Modal(el).show();
@@ -86,6 +60,7 @@ function renameFolder(folderId, currentName) {
         form.submit();
     }
 }
+
 function renameTag(tagId, currentName) {
     const newName = prompt('Rename tag:', currentName);
     if (newName && newName !== currentName) {
@@ -105,6 +80,7 @@ function renameTag(tagId, currentName) {
         form.submit();
     }
 }
+
 // Opens the "Ask AI" modal if present on the current page, otherwise
 // navigates to the dashboard where the AI Query modal lives.
 function openAIQuery(dashboardUrl) {
