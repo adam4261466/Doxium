@@ -507,6 +507,10 @@ def _set_user_pilot(user, is_pilot, status=None, subscription_id=None, expires_a
     if is_pilot:  # re-subscribing clears it
         user.subscription_cancelled_at = None
     db.session.commit()
+
+# -----------------------
+# Dashboard + File Management
+# -----------------------
 @main.route("/folders")
 @login_required
 def folders_page():
@@ -521,9 +525,8 @@ def tags_page():
     tags = Tag.query.filter_by(user_id=current_user.id).all()
     counts = {t.id: len(t.files) for t in tags}
     return render_template("tags.html", tags=tags, tag_counts=counts, active_page="tags")
-# -----------------------
-# Dashboard + File Management
-# -----------------------
+
+
 @main.route("/dashboard")
 @login_required
 def dashboard():
@@ -976,6 +979,20 @@ def create_tag():
     db.session.add(tag)
     db.session.commit()
     flash(f"Tag '{name}' created.", "success")
+    return redirect(url_for("main.dashboard"))
+
+
+@main.route("/tags/<int:tag_id>/rename", methods=["POST"])
+@login_required
+def rename_tag(tag_id):
+    tag = Tag.query.filter_by(id=tag_id, user_id=current_user.id).first_or_404()
+    name = request.form.get("name", "").strip()
+    if not name:
+        flash("Tag name is required.", "danger")
+        return redirect(url_for("main.dashboard"))
+    tag.name = name
+    db.session.commit()
+    flash("Tag renamed.", "success")
     return redirect(url_for("main.dashboard"))
 
 
