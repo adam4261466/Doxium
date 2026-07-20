@@ -38,7 +38,18 @@ function toggleSidebarFlyout(e, flyoutId) {
     if (!target) return;
     const isOpen = target.classList.contains('open');
     document.querySelectorAll('.sidebar-nav-flyout.open').forEach(el => el.classList.remove('open'));
-    if (!isOpen) target.classList.add('open');
+    if (isOpen) return;
+
+    const btn = e.currentTarget;
+    const rect = btn.getBoundingClientRect();
+    target.classList.add('open');
+    const flyoutHeight = target.offsetHeight;
+    let top = rect.top;
+    if (top + flyoutHeight > window.innerHeight - 8) {
+        top = Math.max(8, window.innerHeight - flyoutHeight - 8);
+    }
+    target.style.top = top + 'px';
+    target.style.left = (rect.right + 8) + 'px';
 }
 
 document.addEventListener('click', function (e) {
