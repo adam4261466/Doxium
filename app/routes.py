@@ -899,7 +899,7 @@ def create_folder():
     if not name:
         flash("Folder name is required.", "danger")
         return redirect(url_for("main.dashboard"))
-        parent_id = request.form.get("parent_id")
+    parent_id = request.form.get("parent_id")
     parent_id_val = int(parent_id) if parent_id and parent_id.strip().isdigit() else None
     folder = Folder(name=name, user_id=current_user.id, parent_id=parent_id_val)
     db.session.add(folder)
