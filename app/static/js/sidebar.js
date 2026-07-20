@@ -31,6 +31,11 @@ function initSidebar() {
     });
 }
 
+function toggleSidebarSection(header) {
+    const card = header.closest('.sidebar-card');
+    if (card) card.classList.toggle('collapsed');
+}
+
 function showFolderModal() {
     const el = document.getElementById('folderModal');
     if (el) new bootstrap.Modal(el).show();
