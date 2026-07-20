@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Folders - Doxium{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid px-4">
+        <button class="btn btn-ghost sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()" title="Toggle sidebar">
+            <i class="fas fa-bars"></i>
+        </button>
+        <a class="navbar-brand" href="{{ url_for('main.home') }}">
+            <div class="brand-icon">
+                <i class="fas fa-sparkles text-white" style="font-size: 0.9rem;"></i>
+            </div>
+            <span class="gradient-text">Doxium</span>
+        </a>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            {% if session.get('admin_id') %}
+                <a class="btn btn-ghost btn-sm" href="{{ url_for('main.return_to_admin') }}">
+                    <i class="fas fa-shield-alt me-1"></i> Admin
+                </a>
+            {% endif %}
+            {% if not current_user.is_pilot %}
+                <a class="btn btn-ghost btn-sm" href="{{ url_for('main.pricing') }}">
+                    <i class="fas fa-bolt me-1"></i> Upgrade
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="explorer-page">
+    <div class="explorer-layout">
+        {% set active_page = 'folders' %}
+        {% include "_sidebar.html" %}
+
+        <div class="explorer-main">
+            <!-- Toolbar -->
+            <div class="explorer-toolbar" style="margin: 14px 24px 0;">
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-ghost btn-sm" title="Back to dashboard">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    <h5 class="mb-0 fw-bold text-white">Folders</h5>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#folderModal">
+                        <i class="fas fa-plus me-1"></i>New folder
+                    </button>
+                </div>
+            </div>
+
+            <!-- Folders Content -->
+            <div class="explorer-content">
+                {% if folders %}
+                <div class="page-list-grid">
+                    <a href="{{ url_for('main.dashboard') }}" class="page-list-card">
+                        <div class="page-list-card-icon"><i class="fas fa-th-large"></i></div>
+                        <div class="page-list-card-body">
+                            <div class="page-list-card-title">All documents</div>
+                            <div class="page-list-card-meta">View everything, unfiltered</div>
+                        </div>
+                    </a>
+                    {% for folder in folders %}
+                    <div class="page-list-card">
+                        <a href="{{ url_for('main.dashboard', folder_id=folder.id) }}" class="page-list-card-link">
+                            <div class="page-list-card-icon" style="background: rgba(245, 158, 11, 0.18); color: #f59e0b;">
+                                <i class="fas fa-folder"></i>
+                            </div>
+                            <div class="page-list-card-body">
+                                <div class="page-list-card-title">{{ folder.name }}</div>
+                                <div class="page-list-card-meta">{{ folder_counts.get(folder.id, 0) }} file(s)</div>
+                            </div>
+                        </a>
+                        <div class="page-list-card-actions">
+                            <button type="button" class="sidebar-flyout-action" onclick="renameFolder({{ folder.id }}, '{{ folder.name | e }}')" title="Rename">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <form action="{{ url_for('main.delete_folder', folder_id=folder.id) }}" method="post" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="sidebar-flyout-action sidebar-flyout-action-danger" onclick="return confirm('Delete folder? Files will be moved to root.')" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="explorer-empty">
+                    <i class="fas fa-folder-open explorer-empty-icon"></i>
+                    <p class="explorer-empty-text">No folders yet. Create one to start organizing your documents.</p>
+                    <button type="button" class="btn btn-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#folderModal">
+                        <i class="fas fa-plus me-1"></i>New folder
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include "_sidebar_modals.html" %}
+{% endblock %}
