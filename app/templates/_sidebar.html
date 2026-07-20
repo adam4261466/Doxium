@@ -20,14 +20,48 @@
                 <div class="sidebar-nav-icon"><i class="fas fa-robot"></i></div>
                 <span class="sidebar-nav-label">AI Query</span>
             </button>
-            <a href="{{ url_for('main.dashboard') }}" class="sidebar-nav-item {{ 'active' if active_page == 'dashboard' and current_folder_id }}" title="Folders">
-                <div class="sidebar-nav-icon"><i class="fas fa-folder"></i></div>
-                <span class="sidebar-nav-label">Folders</span>
-            </a>
-            <a href="{{ url_for('main.dashboard') }}" class="sidebar-nav-item {{ 'active' if active_page == 'dashboard' and current_tag_id }}" title="Tags">
-                <div class="sidebar-nav-icon"><i class="fas fa-tag"></i></div>
-                <span class="sidebar-nav-label">Tags</span>
-            </a>
+            <div class="sidebar-nav-flyout-wrap">
+                <button type="button" class="sidebar-nav-item {{ 'active' if active_page == 'dashboard' and current_folder_id }}" title="Folders" onclick="toggleSidebarFlyout(event, 'foldersFlyout')">
+                    <div class="sidebar-nav-icon"><i class="fas fa-folder"></i></div>
+                    <span class="sidebar-nav-label">Folders</span>
+                </button>
+                <div class="sidebar-nav-flyout" id="foldersFlyout">
+                    <a href="{{ url_for('main.dashboard') }}" class="sidebar-flyout-item {{ 'active' if not current_folder_id }}">
+                        <i class="fas fa-th-large"></i> All documents
+                    </a>
+                    {% for folder in folders %}
+                    <a href="{{ url_for('main.dashboard', folder_id=folder.id) }}" class="sidebar-flyout-item {{ 'active' if current_folder_id == folder.id }}">
+                        <i class="fas fa-folder"></i> {{ folder.name }}
+                    </a>
+                    {% else %}
+                    <div class="sidebar-flyout-empty">No folders yet</div>
+                    {% endfor %}
+                    <button type="button" class="sidebar-flyout-item sidebar-flyout-add" data-bs-toggle="modal" data-bs-target="#folderModal">
+                        <i class="fas fa-plus"></i> New folder
+                    </button>
+                </div>
+            </div>
+            <div class="sidebar-nav-flyout-wrap">
+                <button type="button" class="sidebar-nav-item {{ 'active' if active_page == 'dashboard' and current_tag_id }}" title="Tags" onclick="toggleSidebarFlyout(event, 'tagsFlyout')">
+                    <div class="sidebar-nav-icon"><i class="fas fa-tag"></i></div>
+                    <span class="sidebar-nav-label">Tags</span>
+                </button>
+                <div class="sidebar-nav-flyout" id="tagsFlyout">
+                    <a href="{{ url_for('main.dashboard') }}" class="sidebar-flyout-item {{ 'active' if not current_tag_id }}">
+                        <i class="fas fa-th-large"></i> All documents
+                    </a>
+                    {% for tag in tags %}
+                    <a href="{{ url_for('main.dashboard', tag_id=tag.id) }}" class="sidebar-flyout-item {{ 'active' if current_tag_id == tag.id }}">
+                        <span class="sidebar-flyout-tag-dot" style="background: {{ tag.color }};"></span> {{ tag.name }}
+                    </a>
+                    {% else %}
+                    <div class="sidebar-flyout-empty">No tags yet</div>
+                    {% endfor %}
+                    <button type="button" class="sidebar-flyout-item sidebar-flyout-add" data-bs-toggle="modal" data-bs-target="#tagModal">
+                        <i class="fas fa-plus"></i> New tag
+                    </button>
+                </div>
+            </div>
             <a href="{{ url_for('main.statistics') }}" class="sidebar-nav-item {{ 'active' if active_page == 'statistics' }}" title="Statistics">
                 <div class="sidebar-nav-icon"><i class="fas fa-chart-bar"></i></div>
                 <span class="sidebar-nav-label">Statistics</span>
