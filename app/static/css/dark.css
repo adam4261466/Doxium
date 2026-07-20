@@ -1092,93 +1092,6 @@ footer {
   padding: 10px;
 }
 
-/* Sidebar Cards (Folders / Tags) */
-.sidebar-card {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--glass-border-soft);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.sidebar-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  cursor: pointer;
-  user-select: none;
-  transition: background 0.15s;
-}
-
-.sidebar-card-header:hover {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.sidebar-card-header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.sidebar-chevron {
-  font-size: 0.6rem;
-  transition: transform 0.2s;
-  flex-shrink: 0;
-}
-
-.sidebar-card.collapsed .sidebar-chevron {
-  transform: rotate(-90deg);
-}
-
-.sidebar-card-icon {
-  font-size: 0.8rem;
-  flex-shrink: 0;
-}
-
-.sidebar-card-title {
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: rgba(255, 255, 255, 0.5);
-  white-space: nowrap;
-  opacity: 1;
-  transition: opacity 0.2s;
-}
-
-.sidebar.collapsed .sidebar-card-title,
-.sidebar.collapsed .sidebar-count,
-.sidebar.collapsed .sidebar-chevron {
-  opacity: 0;
-  width: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.sidebar.collapsed .sidebar-card-header {
-  justify-content: center;
-  padding: 10px 8px;
-}
-
-.sidebar-count {
-  margin-left: auto;
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.06);
-  padding: 1px 6px;
-  border-radius: 999px;
-  font-weight: 600;
-}
-
-.sidebar-card-body {
-  padding: 0 6px 6px;
-}
-
-.sidebar-card.collapsed .sidebar-card-body {
-  display: none;
-}
-
 /* Sidebar Items (folder/tag entries) */
 .sidebar-item {
   display: flex;
@@ -2457,6 +2370,12 @@ footer {
 .sidebar-add-btn:hover {
   color: var(--accent);
   background: var(--accent-soft);
+}
+
+.sidebar-count {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.2);
 }
 
 .sidebar-tag-dot {
