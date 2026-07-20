@@ -507,7 +507,20 @@ def _set_user_pilot(user, is_pilot, status=None, subscription_id=None, expires_a
     if is_pilot:  # re-subscribing clears it
         user.subscription_cancelled_at = None
     db.session.commit()
+@main.route("/folders")
+@login_required
+def folders_page():
+    folders = Folder.query.filter_by(user_id=current_user.id).all()
+    counts = {f.id: File.query.filter_by(user_id=current_user.id, folder_id=f.id).count() for f in folders}
+    return render_template("folders.html", folders=folders, folder_counts=counts, active_page="folders")
 
+
+@main.route("/tags")
+@login_required
+def tags_page():
+    tags = Tag.query.filter_by(user_id=current_user.id).all()
+    counts = {t.id: len(t.files) for t in tags}
+    return render_template("tags.html", tags=tags, tag_counts=counts, active_page="tags")
 # -----------------------
 # Dashboard + File Management
 # -----------------------
