@@ -1096,21 +1096,20 @@ footer {
 
 .sidebar-nav-flyout {
   display: none;
-  position: absolute;
-  left: calc(100% + 8px);
-  top: 0;
+  position: fixed;
   min-width: 200px;
   max-height: 320px;
   overflow-y: auto;
-  background: rgba(20, 20, 30, 0.95);
+  background: rgba(20, 20, 30, 0.97);
   backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   padding: 6px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  z-index: 1000;
+  z-index: 2000;
 }
 
+.sidebar-nav-flyout.open { display: block; }
 .sidebar.collapsed .sidebar-nav-flyout { left: calc(100% + 4px); }
 .sidebar-nav-flyout.open { display: block; }
 
